@@ -382,7 +382,7 @@ git push -u origin feature/housing-category
 |---|---|---|
 | الموقع | `apps/web` | `apps/web/vercel.json` |
 | لوحة التحكم | `apps/admin` | `apps/admin/vercel.json` |
-| الـ API | `packages/api` | `packages/api/vercel.json` (الـ API كله كدالة Vercel واحدة: `packages/api/api/index.js`) |
+| الـ API | `packages/api` | `packages/api/vercel.json` (الـ API كله كدالة Vercel واحدة: `packages/api/api/index.js`، والملف الثابت الوحيد `public/robots.txt`) |
 
 - **وضع العرض** (`YUSR_DEMO=true` في الـ API و`NEXT_PUBLIC_DEMO=true` في الموقع ولوحة التحكم): بيانات
   تجريبية في الذاكرة ودفع تجريبي فقط، وشريط «نسخة تجريبية — لا يُخصم أي مبلغ» أعلى كل صفحة، والموقع

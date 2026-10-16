@@ -2,10 +2,18 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "installCommand": "npx --yes pnpm@10.28.0 install --frozen-lockfile",
-  "buildCommand": "npx --yes pnpm@10.28.0 --dir ../.. exec turbo run build --filter=@yusr/api... && mkdir -p public",
+  "buildCommand": "npx --yes pnpm@10.28.0 --dir ../.. exec turbo run build --filter=@yusr/api...",
   "outputDirectory": "public",
   "functions": {
-    "api/index.js": { "maxDuration": 60, "includeFiles": "dist/**" }
+    "api/index.js": {
+      "maxDuration": 60,
+      "includeFiles": "dist/**"
+    }
   },
-  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }]
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/index"
+    }
+  ]
 }
