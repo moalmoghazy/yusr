@@ -1,0 +1,16 @@
+{
+  // VS Code offers these when you open the project. They are what the settings below rely on.
+  "recommendations": [
+    "anthropic.claude-code",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    "yoavbls.pretty-ts-errors",
+    "expo.vscode-expo-tools",
+    "mikestead.dotenv",
+    "ms-azuretools.vscode-containers",
+    "ms-vscode-remote.remote-containers",
+    "github.vscode-github-actions",
+    "humao.rest-client"
+  ]
+}

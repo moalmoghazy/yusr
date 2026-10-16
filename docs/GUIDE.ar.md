@@ -1,0 +1,550 @@
+# دليل «يُسر» — للمالك والمطوّر
+
+هذا الدليل يشرح كيف تشغّل مشروع «يُسر» على جهازك، وأين تعدّل كل شيء، وكيف تتحقق من سلامة التعديل،
+وكيف تنشر الموقع ولوحة التحكم والـ API وتطبيق الجوال للناس. مكتوب لصاحب المشروع ولأي مطوّر يعمل عليه.
+
+> **النموذج التفاعلي ≠ المشروع.** صفحة «النموذج التفاعلي» (`apps/prototype`) عرضٌ للمنصة في ملف واحد
+> للمراجعة والعرض على الشركاء. أما المشروع الحقيقي فهو هذا المستودع كله: موقع وتطبيق ولوحة تحكم
+> وواجهة برمجية وقاعدة بيانات، وكلها مبنية ومختبرة.
+
+## المحتويات
+
+1. [لماذا TypeScript؟](#1-لماذا-typescript)
+2. [الأدوات التي تحتاجها](#2-الأدوات-التي-تحتاجها)
+3. [التشغيل — ثلاث طرق](#3-التشغيل--ثلاث-طرق)
+4. [خريطة المشروع: أين أعدّل…؟](#4-خريطة-المشروع-أين-أعدّل)
+5. [وصفات تعديل خطوة بخطوة](#5-وصفات-تعديل-خطوة-بخطوة)
+6. [التعديل بمساعدة الذكاء الاصطناعي (Claude Code)](#6-التعديل-بمساعدة-الذكاء-الاصطناعي-claude-code)
+7. [فحص الجودة قبل أي رفع](#7-فحص-الجودة-قبل-أي-رفع)
+8. [حفظ التعديلات ومشاركتها (Git و GitHub)](#8-حفظ-التعديلات-ومشاركتها-git-و-github)
+9. [النشر على الإنترنت](#9-النشر-على-الإنترنت)
+10. [تطبيق الجوال على المتاجر](#10-تطبيق-الجوال-على-المتاجر)
+11. [قائمة ما قبل الإطلاق](#11-قائمة-ما-قبل-الإطلاق)
+12. [حلول المشكلات الشائعة](#12-حلول-المشكلات-الشائعة)
+13. [مصطلحات سريعة](#13-مصطلحات-سريعة)
+
+---
+
+## 1. لماذا TypeScript؟
+
+المشروع مكتوب كله بلغة **TypeScript** (جافاسكربت مع أنواع بيانات صارمة)، وهي الخيار الأنسب لمنصة كهذه:
+
+- **لغة واحدة لكل الأجزاء**: الموقع ولوحة التحكم (Next.js)، وتطبيق iOS وAndroid (Expo / React Native)،
+  والواجهة البرمجية (NestJS). المطوّر نفسه يعمل على أي جزء، والقواعد تُكتب مرة واحدة وتُستخدم في كل مكان.
+- **أمان المبالغ والبيانات**: نوع المبلغ والعملة وحالة الحالة يُفحص قبل التشغيل، فأخطاء مثل خلط
+  الجنيه بالقرش تُكتشف وأنت تكتب، لا بعد أن يدفع متبرع.
+- **أكبر مجتمع مطورين** في مصر والخليج والعالم: سهولة التوظيف، ومكتبات جاهزة لكل بوابات الدفع.
+- **أفضل دعم من أدوات الذكاء الاصطناعي**: Claude Code وغيره يفهمون هذا النوع من المشاريع جيدًا.
+
+| الطبقة | التقنية | الدور |
+|---|---|---|
+| الموقع ولوحة التحكم | Next.js 16 + Tailwind CSS 4 | صفحات سريعة تُعرض من الخادم، عربية أولًا (RTL) |
+| تطبيق الجوال | Expo SDK 54 + React Native | تطبيق واحد لـ iOS وAndroid |
+| الواجهة البرمجية (API) | NestJS 11 على Node.js 22 | التبرعات والمدفوعات والتحقق والصلاحيات |
+| قاعدة البيانات | PostgreSQL 16 + Redis | دفتر محاسبي مزدوج القيد لا يقبل التلاعب |
+| المستودع | pnpm + Turborepo | كل الأجزاء في مستودع واحد مع حزم مشتركة |
+
+---
+
+## 2. الأدوات التي تحتاجها
+
+| الأداة | ضروري؟ | لماذا | الرابط |
+|---|---|---|---|
+| **Node.js 22 (LTS)** | نعم | يشغّل كل أجزاء المشروع | [nodejs.org](https://nodejs.org) — اختر 22.x LTS |
+| **pnpm** | نعم | مدير الحزم (يُفعَّل تلقائيًا بأمر `corepack enable`) | [pnpm.io](https://pnpm.io) |
+| **Git** | نعم | حفظ نسخ التعديلات ومشاركتها | [git-scm.com](https://git-scm.com) |
+| **VS Code** | مُستحسن جدًا | المحرر؛ المشروع مُعدّ له بالكامل | [code.visualstudio.com](https://code.visualstudio.com) |
+| **Docker Desktop** | اختياري | لتشغيل PostgreSQL وRedis على جهازك | [docker.com](https://www.docker.com/products/docker-desktop/) |
+| **حساب GitHub** | مُستحسن | حفظ المشروع، الفحص الآلي (CI)، والتشغيل السحابي (Codespaces) | [github.com](https://github.com) |
+| **Claude Code** | مُستحسن | التعديل بالأوامر النصية بالعربي | [docs.claude.com](https://docs.claude.com/en/docs/claude-code/overview) |
+| **حساب Expo + EAS CLI** | للجوال | بناء التطبيق ونشره على المتاجر | [expo.dev](https://expo.dev) |
+| **Android Studio / Xcode** | للجوال (اختياري) | محاكي أندرويد / آيفون (Xcode على Mac فقط) | [developer.android.com/studio](https://developer.android.com/studio) |
+
+عند فتح المشروع في VS Code ستظهر رسالة **«تثبيت الإضافات المقترحة»** — وافق عليها. هي تضبط التنسيق
+التلقائي عند الحفظ، وكشف الأخطاء، واقتراحات Tailwind، وتشغيل المهام بضغطة، وإضافة Claude Code.
+
+> **على Windows**: إن رفض الأمر `corepack enable` العمل، افتح الطرفية «كمسؤول» (Run as administrator)
+> ونفّذه مرة واحدة. وإن منعت PowerShell تشغيل السكربتات، استخدم «Command Prompt» أو نفّذ:
+> `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
+
+---
+
+## 3. التشغيل — ثلاث طرق
+
+### الطريقة (أ): على السحابة بدون تثبيت أي شيء — GitHub Codespaces
+
+1. ارفع المشروع إلى مستودع على GitHub (انظر [القسم 8](#8-حفظ-التعديلات-ومشاركتها-git-و-github)).
+2. من صفحة المستودع: **Code ← Codespaces ← Create codespace on main**.
+3. انتظر بضع دقائق: سيُجهَّز Node وpnpm وDocker والإضافات، وتُثبَّت الحزم وتُنشأ ملفات الإعدادات تلقائيًا.
+4. في الطرفية بالأسفل اكتب:
+
+   ```bash
+   pnpm dev:demo
+   ```
+
+5. سيفتح الموقع تلقائيًا. لوحة التحكم والـ API في تبويب **Ports**.
+
+### الطريقة (ب): على جهازك — الأسرع للتجربة (بدون قاعدة بيانات)
+
+```bash
+# مرة واحدة فقط: يفحص Node وpnpm، يثبّت الحزم، وينشئ ملفات الإعدادات بأسرار تطوير عشوائية
+node scripts/setup.mjs
+
+# التشغيل: الموقع + لوحة التحكم + الـ API ببيانات تجريبية جاهزة
+pnpm dev:demo
+```
+
+| ماذا | الرابط |
+|---|---|
+| الموقع | <http://localhost:3000> |
+| لوحة التحكم | <http://localhost:3001> |
+| الـ API ووصفه الكامل | <http://localhost:4000/v1/openapi.json> |
+
+في هذا الوضع البيانات في الذاكرة: تبدأ من جديد كل مرة تعيد فيها التشغيل، والدفع «تجريبي» لا يخصم أي أموال.
+
+### الطريقة (ج): التشغيل الكامل بقاعدة بيانات حقيقية
+
+يحتاج Docker Desktop يعمل في الخلفية:
+
+```bash
+node scripts/setup.mjs --db   # يشغّل PostgreSQL وRedis وMinIO، ينشئ الجداول، ويحمّل البيانات التجريبية
+pnpm dev
+```
+
+بعدها البيانات محفوظة بين مرات التشغيل. لتصفّح الجداول بواجهة رسومية: `pnpm db:studio`.
+لإيقاف قواعد البيانات: `pnpm infra:down`.
+
+### الدخول إلى لوحة التحكم (بيانات التجربة فقط)
+
+| الدور | رقم الهاتف |
+|---|---|
+| مشرف عام | `01000000001` |
+| مدقق ميداني | `01000000002` أو `01000000003` |
+| مسؤول مالي | `01000000004` أو `01000000005` |
+| مشرف محتوى | `01000000006` |
+
+- **رمز الـ SMS** يظهر في الطرفية التي يعمل فيها الـ API، في سطر يشبه: `[sms] → +201000000001: … 123456`.
+- **رمز تطبيق المصادقة**: أضف في Google Authenticator أو Microsoft Authenticator مفتاح الإعداد
+  `JBSWY3DPEHPK3PXP` واستخدم الرمز المكوّن من 6 أرقام.
+- هذه الحسابات موجودة في البيانات التجريبية فقط، ويرفض النظام تحميلها على قاعدة بيانات الإنتاج.
+
+### تطبيق الجوال
+
+```bash
+pnpm dev:mobile
+```
+
+- التطبيق يستخدم وحدة دفع أصلية (Stripe)، لذلك **لا يعمل داخل تطبيق Expo Go**؛ يحتاج «نسخة تطوير»
+  (development build) مرة واحدة:
+  - على أندرويد بمحاكي Android Studio: `pnpm --filter @yusr/mobile android`
+  - على آيفون (جهاز Mac + Xcode): `pnpm --filter @yusr/mobile ios`
+  - أو سحابيًا بدون Android Studio/Xcode: `pnpm --filter @yusr/mobile build:dev` (يحتاج حساب Expo)
+- لتجربته على **هاتفك الحقيقي**: الهاتف والكمبيوتر على نفس شبكة الواي فاي، وفي `apps/mobile/.env`
+  ضع عنوان جهازك بدل localhost، مثل: `EXPO_PUBLIC_API_URL=http://192.168.1.20:4000/v1`.
+
+### فحص البيئة عند أي مشكلة
+
+```bash
+node scripts/doctor.mjs
+```
+
+يفحص Node وpnpm وGit وDocker، وملفات الإعدادات، وقواعد البيانات، والمنافذ المشغولة، ويقول لك
+بالعربي والإنجليزي ماذا تصلح.
+
+---
+
+## 4. خريطة المشروع: أين أعدّل…؟
+
+| أريد أن أغيّر… | الملف أو المجلد |
+|---|---|
+| الألوان، الزوايا، الظلال، الخطوط | `packages/theme/src/tokens.ts` |
+| الشعار (هندسة حرف الياء والضمّة الذهبية) | `packages/theme/src/brand.ts` و `packages/theme/src/svg.ts` |
+| أي نص يظهر للمستخدم (عربي / إنجليزي) | `packages/i18n/src/messages/ar.ts` و `en.ts` |
+| صفحات الموقع | `apps/web/src/app/[locale]/…` (الرئيسية `page.tsx`، الحالات `cases/`، التقديم `submit/`) |
+| بطاقة الحالة وشريط التقدّم (الموقع ولوحة التحكم) | `packages/ui/src/case-card.tsx` و `progress.tsx` |
+| رأس وتذييل الموقع | `apps/web/src/components/site-header.tsx` و `site-footer.tsx` |
+| نموذج التبرع في الموقع | `apps/web/src/components/donate-panel.tsx` و `apps/web/src/lib/donate.ts` |
+| صفحات لوحة التحكم | `apps/admin/src/app/(hub)/…` |
+| شاشات تطبيق الجوال | `apps/mobile/src/app/…` ومكوناته في `apps/mobile/src/components/` |
+| تصنيفات الحالات وأيقوناتها | `packages/core/src/types.ts` و `categories.ts` |
+| المحافظات والمناطق | `packages/core/src/regions.ts` |
+| العملات، الحد الأدنى، مبالغ التبرع السريع | `packages/core/src/money.ts` (`CURRENCY_META`) |
+| مراحل الحالة (مسودة ← مراجعة ← تحقق ميداني ← منشورة…) | `packages/core/src/lifecycle.ts` |
+| الأدوار والصلاحيات | `packages/core/src/rbac.ts` |
+| بوابات الدفع | `packages/api/src/payments/gateways/` |
+| مسارات الـ API | `packages/api/src/http/endpoints/*.endpoints.ts` |
+| جداول قاعدة البيانات | `packages/api/src/db/migrations/*.sql` و `packages/api/src/db/schema.ts` |
+| الرسائل (SMS / واتساب / بريد) | `packages/api/src/notifications/templates.ts` |
+| مفاتيح وإعدادات التشغيل | `packages/api/.env`، `apps/web/.env.local`، `apps/admin/.env.local`، `apps/mobile/.env` |
+| إعدادات تطبيق الجوال (الاسم، المعرّف، الأيقونة) | `apps/mobile/app.json` و `apps/mobile/eas.json` |
+
+> **نصيحة**: لتجد مكان أي نص تراه على الشاشة، اضغط في VS Code **Ctrl+Shift+F** (أو Cmd+Shift+F على Mac)
+> واكتب جزءًا من النص العربي — ستصل إلى مفتاحه في `ar.ts`.
+
+الملفات التي تُولَّد تلقائيًا ولا تُعدَّل يدويًا: مجلدات `dist/` و`.next/`، و`packages/theme/assets/`
+(يولّدها أمر بناء الهوية)، و`docs/api/openapi.json` (يولّده `pnpm api:openapi`).
+
+---
+
+## 5. وصفات تعديل خطوة بخطوة
+
+بعد أي تعديل: شاهد النتيجة في `pnpm dev:demo` (تتحدث الصفحة تلقائيًا عند الحفظ)، ثم شغّل `pnpm check`.
+
+### 5.1 تغيير اللون الأساسي للهوية
+
+1. افتح `packages/theme/src/tokens.ts`.
+2. في `lightColors` (الوضع الفاتح) غيّر `primary` و`primaryHover` و`primarySoft`، وفي `darkColors`
+   (الوضع الداكن) غيّر نظائرها. اللون الذهبي (الضمّة) هو `highlight` في الموضعين.
+3. احفظ. أثناء `pnpm dev` يُعاد توليد ملفات الألوان تلقائيًا وتتحدث الصفحات؛ وإن لم يكن التشغيل
+   مفتوحًا نفّذ `pnpm --filter @yusr/theme build`.
+
+بديل أسرع: الدالة `themeFromBrandColors({ primary, highlight })` تبني من لونين ثيمًا كاملًا فاتحًا وداكنًا
+وتضبط التباين تلقائيًا (انظر `docs/BRAND.md` ← Changing the brand). وفي النموذج التفاعلي قسم
+«الهوية ← تخصيص الهوية» لتجربة الألوان والخطوط قبل اعتمادها، مع الكود الجاهز للنسخ.
+
+### 5.2 تعديل نص في الموقع أو التطبيق
+
+1. ابحث عن النص بـ Ctrl+Shift+F لتجد مفتاحه، مثلًا `landing.heroTitle`.
+2. عدّله في `packages/i18n/src/messages/ar.ts`، وعدّل ترجمته بنفس المفتاح في `en.ts`.
+3. الاختبارات تتأكد أن كل مفتاح موجود في اللغتين؛ إن نسيت واحدًا سيخبرك `pnpm check`.
+
+### 5.3 تغيير مبالغ التبرع السريع
+
+في `packages/core/src/money.ts` داخل `CURRENCY_META`، غيّر `quickAmounts` للعملة المطلوبة، مثلًا:
+`EGP: { …, quickAmounts: [50, 100, 250, 500] }`. البطاقات تعرض أول ثلاثة، ونموذج التبرع يعرضها كلها.
+
+### 5.4 إضافة تصنيف حالات جديد (مثال: «سكن كريم»)
+
+1. `packages/core/src/types.ts`: أضف `'housing'` إلى `CASE_CATEGORIES`.
+2. `packages/core/src/categories.ts`: أضف سطر `housing` بأيقونته ولونه وهل هو مستحق للزكاة افتراضيًا،
+   وأضف اسم الأيقونة (مثل `'home'`) إلى قائمة الأيقونات المسموحة في أعلى الملف. الأيقونات المتاحة في
+   `packages/ui/src/icons.ts`، ويستخدمها الموقع والتطبيق ولوحة التحكم معًا.
+3. `packages/i18n/src/messages/ar.ts` و`en.ts`: أضف اسم التصنيف («سكن كريم» / «Decent housing») في
+   `categories` ووصفه القصير في `categoryDescriptions`.
+4. قاعدة البيانات: أنشئ ملف هجرة جديدًا `packages/api/src/db/migrations/0001_housing_category.sql`:
+
+   ```sql
+   ALTER TYPE case_category ADD VALUE 'housing';
+   ```
+
+   (`packages/api/src/db/schema.ts` يقرأ قائمة التصنيفات من `CASE_CATEGORIES` تلقائيًا.)
+5. `pnpm db:migrate` ثم `pnpm check`.
+
+### 5.5 إضافة حقل أو جدول في قاعدة البيانات
+
+قاعدة واحدة مهمة: **لا تعدّل ملف هجرة طُبّق من قبل** — أضف دائمًا ملفًا جديدًا بالرقم التالي.
+
+1. ملف جديد في `packages/api/src/db/migrations/` مثل `0002_case_video.sql`:
+
+   ```sql
+   ALTER TABLE cases ADD COLUMN video_url text;
+   ```
+
+2. أضف الحقل في `packages/api/src/db/schema.ts` (وفي `rows.ts` و`memory.ts` إن كان سيُقرأ في الكود).
+3. `pnpm db:migrate` — يطبّق الملفات الجديدة فقط، كل ملف في معاملة مستقلة، ويرفض أي ملف قديم تغيّر.
+
+### 5.6 إضافة موظف إلى لوحة التحكم
+
+```bash
+pnpm staff:create --phone 01001234567 --name "سارة الشريف" --role field_auditor
+```
+
+- الأدوار: `super_admin` (مشرف عام)، `financial_officer` (مالي)، `content_moderator` (محتوى)،
+  `field_auditor` (مدقق ميداني). كرّر `--role` لأكثر من دور.
+- يطبع الأمر **مفتاح تطبيق المصادقة مرة واحدة**: يضيفه الموظف في تطبيق المصادقة على هاتفه
+  («إدخال مفتاح إعداد»)، ثم يدخل لوحة التحكم برقم هاتفه + رمز SMS + رمز التطبيق.
+- إن فقد الموظف هاتفه: نفس الأمر مع `--reset-authenticator` يصدر مفتاحًا جديدًا ويُبطل القديم.
+- كل تشغيل يُسجَّل في سجل التدقيق.
+
+### 5.7 تفعيل بوابة دفع حقيقية (مثال: Paymob)
+
+1. من لوحة Paymob (بيئة الاختبار أولًا) خذ: Secret key، Public key، HMAC secret، ورقمي تكامل البطاقة
+   والمحفظة.
+2. ضعها في `packages/api/.env`:
+
+   ```bash
+   PAYMENTS_MODE=live
+   PAYMOB_SECRET_KEY=…
+   PAYMOB_PUBLIC_KEY=…
+   PAYMOB_HMAC_SECRET=…
+   PAYMOB_INTEGRATION_CARD=…
+   PAYMOB_INTEGRATION_WALLET=…
+   ```
+
+3. سجّل رابط الإشعارات (webhook) في لوحة Paymob: `https://api.<نطاقك>/v1/webhooks/paymob`.
+4. نفس الفكرة لـ Fawry وStripe وMoyasar (مدى) وInstaPay — كل المتغيرات مشروحة في
+   `packages/api/.env.example`، والتفاصيل في `docs/PAYMENTS.md`.
+
+### 5.8 شارة إشراف وزارة التضامن
+
+في `apps/web/.env.local`: `NEXT_PUBLIC_SHOW_SUPERVISION=true` لإظهارها (أو `false` لإخفائها حتى يكتمل
+الإشهار)، و`NEXT_PUBLIC_MOSS_REGISTRATION_NUMBER=` لرقم الإشهار. وفي التطبيق: `extra.showSupervision`
+داخل `apps/mobile/app.json`.
+
+---
+
+## 6. التعديل بمساعدة الذكاء الاصطناعي (Claude Code)
+
+يمكنك طلب التعديلات بالعربي كما تطلبها من مطوّر. المشروع فيه ملف `CLAUDE.md` يقرؤه Claude Code تلقائيًا
+فيعرف بنية المشروع وقواعده (النصوص في ملفات الترجمة، المبالغ بالقروش، الهجرات كملفات جديدة، إلخ).
+
+**التثبيت**: إضافة «Claude Code» في VS Code (مقترحة ضمن إضافات المشروع)، أو من الطرفية:
+
+```bash
+npm install -g @anthropic-ai/claude-code
+claude          # داخل مجلد المشروع
+```
+
+**أمثلة طلبات:**
+
+- «أضف تصنيف حالات جديد اسمه "سكن كريم" بأيقونة بيت، مع الترجمة والهجرة اللازمة.»
+- «غيّر مبالغ التبرع السريع بالجنيه إلى 20 و50 و100 و200.»
+- «أضف صفحة "من نحن" للموقع بالعربي والإنجليزي، ورابطًا لها في التذييل.»
+- «في لوحة التحكم، أضف عمود "آخر تبرع" في جدول المتبرعين.»
+- «شغّل pnpm check وأصلح أي خطأ يظهر.»
+
+**طريقة عمل آمنة:**
+
+1. طلب واحد واضح في كل مرة.
+2. راجع التغييرات المقترحة قبل قبولها (اطلب منه شرحها إن لم تكن واضحة).
+3. شاهد النتيجة في `pnpm dev:demo` بالعربي والإنجليزي، فاتح وداكن، وعلى عرض الهاتف.
+4. `pnpm check` يجب أن ينجح.
+5. احفظ التعديل في Git (القسم 8).
+
+> لا تلصق أبدًا مفاتيح حقيقية (بوابات الدفع، قاعدة الإنتاج) في أي محادثة؛ ضعها في ملفات `.env` فقط.
+
+---
+
+## 7. فحص الجودة قبل أي رفع
+
+```bash
+pnpm check
+```
+
+يشغّل بالترتيب: **التنسيق** (Prettier) ← **كشف الأخطاء** (ESLint) ← **فحص الأنواع** (TypeScript) ←
+**الاختبارات** (حوالي 200 اختبار). إن ظهرت مشكلة:
+
+| الأمر | يصلح |
+|---|---|
+| `pnpm format` | التنسيق كله تلقائيًا |
+| `pnpm lint:fix` | ما يمكن إصلاحه آليًا من ملاحظات ESLint |
+| `pnpm --filter @yusr/<الحزمة> test` | تشغيل اختبارات حزمة واحدة، مثل `@yusr/core` |
+
+اختبارات قاعدة البيانات (التي تحاول كسر قواعد الدفتر المحاسبي) تعمل عند ضبط
+`YUSR_TEST_DATABASE_URL`، مثل: `postgres://yusr:yusr@localhost:5432/yusr` بعد `pnpm infra:up`.
+
+وفي VS Code: **Terminal ← Run Task** فيه كل هذه الأوامر جاهزة بالضغط، و**F5** لتشغيل الـ API أو
+الموقع مع إمكانية التوقف عند أي سطر (debugging).
+
+على GitHub يعمل نفس الفحص آليًا (CI) مع كل رفع وكل طلب دمج، ويبني تطبيق الجوال لأندرويد وiOS
+وصور Docker. اجعل نجاحه شرطًا للدمج: **Settings ← Branches ← Branch protection ← Require status checks**.
+
+---
+
+## 8. حفظ التعديلات ومشاركتها (Git و GitHub)
+
+### أول مرة
+
+```bash
+git init
+git add .
+git commit -m "يُسر: النسخة الأولى"
+```
+
+ثم أنشئ مستودعًا **خاصًا (Private)** على GitHub واتبع التعليمات التي يعرضها لربطه ورفع المشروع
+(`git remote add origin …` ثم `git push -u origin main`).
+
+ملفات الأسرار (`.env` و`.env.local`) مستثناة تلقائيًا ولن تُرفع أبدًا.
+
+### كل يوم
+
+```bash
+git checkout -b feature/housing-category   # فرع للتعديل
+# … عدّل واختبر …
+pnpm check
+git add .
+git commit -m "إضافة تصنيف سكن كريم"
+git push -u origin feature/housing-category
+```
+
+ثم افتح **Pull Request** على GitHub: يعمل الفحص الآلي، تراجع التغييرات، ثم تدمجها في `main`.
+
+---
+
+## 9. النشر على الإنترنت
+
+### نسخة تجريبية مجانية (للعرض)
+
+قبل الإطلاق الحقيقي يمكن نشر المشروع كله كنسخة تجريبية مجانية للعرض على الشركاء والفريق:
+
+| الجزء | المكان | الإعداد الجاهز في المستودع |
+|---|---|---|
+| الـ API | Render (الخطة المجانية) | `render.yaml`: من Render ← New ← Blueprint ← اختر المستودع |
+| الموقع | Vercel (Hobby) | `apps/web/vercel.json`: Root Directory = `apps/web` |
+| لوحة التحكم | Vercel (Hobby) | `apps/admin/vercel.json`: Root Directory = `apps/admin` |
+
+- **وضع العرض** (`YUSR_DEMO=true` في الـ API و`NEXT_PUBLIC_DEMO=true` في الموقع ولوحة التحكم): بيانات
+  تجريبية في الذاكرة ودفع تجريبي فقط، وشريط «نسخة تجريبية — لا يُخصم أي مبلغ» أعلى كل صفحة، والموقع
+  محجوب عن محركات البحث، وشارة وزارة التضامن مخفية. يرفض الـ API هذا الوضع مع قاعدة بيانات حقيقية.
+- متغيرات Vercel للموقع: `YUSR_API_URL` (عنوان Render + `/v1`)، `NEXT_PUBLIC_SITE_URL`، `NEXT_PUBLIC_DEMO=true`،
+  `NEXT_PUBLIC_SHOW_SUPERVISION=false`، `UPLOAD_ORIGIN` (عنوان Render)، `YUSR_API_TIMEOUT_MS=90000`.
+  وللوحة التحكم: `YUSR_API_URL` و`NEXT_PUBLIC_DEMO=true` و`YUSR_API_TIMEOUT_MS=90000`.
+- في Render: `PUBLIC_WEB_URL` و`PUBLIC_ADMIN_URL` (عنوانا Vercel)، و`CORS_ORIGINS` (عنوان الموقع).
+- **حدود المجانية**: خادم Render المجاني ينام بعد 15 دقيقة بلا زيارات، وأول فتح بعدها يأخذ حوالي دقيقة
+  (يظهر للزائر «جارٍ التحميل»)، والبيانات التجريبية تبدأ من جديد عند كل استيقاظ. وخطة Vercel المجانية
+  للاستخدام الشخصي غير التجاري — للإطلاق الفعلي استخدم البنية التالية.
+- **الدخول للوحة التحكم في النسخة التجريبية**: رقم مشرف تجريبي (`01000000001`)، ورمز الـ SMS يظهر في
+  سجلات Render (Logs)، ورمز تطبيق المصادقة من المفتاح التجريبي `JBSWY3DPEHPK3PXP`.
+
+### البنية المقترحة للإطلاق الحقيقي
+
+| الجزء | الخدمة المقترحة | ملاحظات |
+|---|---|---|
+| الموقع | Vercel | الأنسب لـ Next.js، ونسخة معاينة لكل طلب دمج |
+| لوحة التحكم | Vercel (مشروع ثانٍ) | نطاق فرعي مثل `admin.<نطاقك>` |
+| الـ API + العامل الخلفي | Railway أو Render أو Fly.io | من صورة Docker الجاهزة `infra/docker/api.Dockerfile` |
+| PostgreSQL 16 | Neon أو Supabase أو Railway | فعّل النسخ الاحتياطي والاستعادة لنقطة زمنية |
+| Redis | Upstash | |
+| ملفات الحالات (التقارير والمستندات) | Cloudflare R2 | حاويتان: `yusr-documents` (خاصة) و`yusr-public` (للنسخ المحجوبة) |
+| المراقبة | Sentry (الأخطاء) + PostHog (الاستخدام) | المفاتيح في متغيرات البيئة |
+
+كلها تبدأ بخطط مجانية أو منخفضة التكلفة؛ راجع أسعارها الحالية عند الاشتراك.
+
+### الخطوات
+
+**1) قاعدة البيانات وRedis والتخزين**
+أنشئ قاعدة PostgreSQL 16 وخذ رابطها (`DATABASE_URL`)، وقاعدة Upstash Redis (`REDIS_URL`)، وحاويتي R2 مع
+مفتاح وصول (`S3_ENDPOINT` و`S3_ACCESS_KEY_ID` و`S3_SECRET_ACCESS_KEY`). في إعدادات CORS لحاوية
+`yusr-documents` اسمح بطلبات `PUT` من نطاق موقعك (لرفع مستندات الحالات).
+
+**2) الـ API**
+- أنشئ خدمة من مستودع GitHub مع ملف Docker: `infra/docker/api.Dockerfile`.
+- متغيرات البيئة: انسخ القائمة من `packages/api/.env.example` بقيم الإنتاج، مع `NODE_ENV=production`
+  و`PAYMENTS_MODE=live`. ولّد كل سر بقيمة عشوائية طويلة:
+
+  ```bash
+  node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"   # لكل سر
+  node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"      # لـ DATA_KEY_BASE64
+  ```
+
+  > ⚠️ **احتفظ بنسخة آمنة من `DATA_KEY_BASE64`**: به تُشفَّر أرقام الهوية القومية؛ إن ضاع لا يمكن
+  > قراءتها مرة أخرى.
+
+- أمر ما قبل النشر (Pre-deploy / Release command): `node dist/db/migrate.js` — يحدّث الجداول قبل كل إصدار.
+- مسار فحص الصحة: `/health/ready`.
+- خدمة ثانية من نفس الصورة للعامل الخلفي بالأمر `node dist/notifications/worker.main.js`، وضع
+  `RUN_WORKER=false` في خدمة الـ API.
+
+**3) أول مشرف عام**
+من طرفية خدمة الـ API (Shell / Console في لوحة الاستضافة):
+
+```bash
+node dist/db/create-staff.js --phone 01001234567 --name "اسمك" --role super_admin
+```
+
+احفظ المفتاح الذي يظهر في تطبيق المصادقة على هاتفك. (لن تعمل حسابات التجربة على الإنتاج، وهذا مقصود.)
+
+**4) الموقع على Vercel**
+- Import Project ← اختر المستودع ← **Root Directory**: `apps/web`.
+- **Build Command**: `pnpm turbo run build --filter=@yusr/web...`
+- متغيرات البيئة: `YUSR_API_URL=https://api.<نطاقك>/v1`، `NEXT_PUBLIC_SITE_URL=https://<نطاقك>`،
+  `UPLOAD_ORIGIN` (عنوان حاوية R2)، و`NEXT_PUBLIC_SHOW_SUPERVISION` و`NEXT_PUBLIC_MOSS_REGISTRATION_NUMBER`،
+  و`APPLE_TEAM_ID` و`ANDROID_CERT_SHA256` لروابط التطبيق.
+- ملاحظة: المتغيرات التي تبدأ بـ `NEXT_PUBLIC_` تُثبَّت وقت البناء؛ بعد تغييرها أعد النشر (Redeploy).
+
+**5) لوحة التحكم على Vercel** — مشروع ثانٍ بنفس الطريقة: Root Directory `apps/admin`، Build Command
+`pnpm turbo run build --filter=@yusr/admin...`، ومتغير واحد: `YUSR_API_URL`.
+
+**6) النطاقات (DNS)**: `<نطاقك>` للموقع، `admin.<نطاقك>` للوحة التحكم، `api.<نطاقك>` للـ API. ثم في
+متغيرات الـ API: `PUBLIC_API_URL` و`PUBLIC_WEB_URL` و`PUBLIC_ADMIN_URL` و`CORS_ORIGINS` بالعناوين الحقيقية.
+
+**7) روابط إشعارات الدفع**: سجّل `https://api.<نطاقك>/v1/webhooks/<البوابة>` في لوحة كل بوابة.
+
+**8) التجربة النهائية**: تبرع حقيقي صغير بكل وسيلة دفع حتى يصل الإيصال، ثم استرداد واحد من لوحة التحكم.
+
+> بديل الاستضافة الذاتية: `docker compose -f infra/docker-compose.yml --profile apps up --build` يشغّل
+> كل شيء (قواعد البيانات + الهجرات + الـ API + العامل + الموقع + لوحة التحكم) على أي خادم فيه Docker.
+
+---
+
+## 10. تطبيق الجوال على المتاجر
+
+**الحسابات**: Apple Developer Program (99 دولارًا سنويًا؛ حساب المؤسسات يتطلب رقم D-U-N-S)، وGoogle Play
+Console (25 دولارًا مرة واحدة)، وحساب مجاني على [expo.dev](https://expo.dev).
+
+**قبل أول بناء** عدّل في `apps/mobile/app.json`:
+- `ios.bundleIdentifier` و`android.package` (حاليًا `org.yusr.app`) إلى معرّف جهتك.
+- النطاق في `associatedDomains` و`intentFilters` و`extra.webUrl`، ومعرّف التاجر لـ Apple Pay في إعدادات Stripe.
+- وفي `apps/mobile/eas.json`: `EXPO_PUBLIC_API_URL` و`EXPO_PUBLIC_WEB_URL` بعناوينك الحقيقية.
+
+**البناء والنشر:**
+
+```bash
+npm install -g eas-cli
+eas login
+cd apps/mobile
+eas init                                   # يربط التطبيق بحسابك على Expo (مرة واحدة)
+eas build --profile production --platform all
+eas submit --profile production --platform ios       # ثم android
+```
+
+- `--profile preview` يبني نسخة للتجربة الداخلية (ملف APK لأندرويد) قبل المتاجر.
+- التعديلات على الشاشات والنصوص فقط تُرسل للمستخدمين فورًا بدون مراجعة متجر: `eas update --channel production`.
+  أي تعديل في المكتبات الأصلية أو `app.json` يحتاج بناءً جديدًا.
+
+> **سياسات التبرع في المتاجر**: تسمح Apple بجمع التبرعات داخل التطبيق للجهات غير الربحية المعتمدة
+> لديها مع دعم Apple Pay، وإلا يجب أن يتم التبرع عبر صفحة في المتصفح. راجع إرشادات App Store الحالية
+> (القسم 3.2) وسياسة Google Play للتبرعات قبل التقديم، وجهّز إثبات الإشهار.
+
+---
+
+## 11. قائمة ما قبل الإطلاق
+
+- [ ] إشهار الجمعية/المؤسسة لدى وزارة التضامن الاجتماعي، ورقم الإشهار ظاهر في الموقع.
+- [ ] عقود بوابات الدفع (Paymob / Fawry / InstaPay، وStripe أو Moyasar إن لزم) وتجربة كل وسيلة في بيئة الاختبار.
+- [ ] صفحتا **سياسة الخصوصية** و**الشروط والأحكام** (يكتب محتواهما مستشار قانوني) ورابطهما في التذييل والتطبيق.
+- [ ] كل الأسرار عشوائية في الإنتاج، ونسخة آمنة من `DATA_KEY_BASE64` خارج الخوادم.
+- [ ] النسخ الاحتياطي لقاعدة البيانات مفعّل، وجرّبت الاستعادة مرة.
+- [ ] المشرف العام الأول بأمر `create-staff`، وكل موظف بحسابه وتطبيق مصادقة على هاتفه.
+- [ ] Sentry وPostHog مفعّلان، وتنبيهات الأخطاء تصل إلى الفريق.
+- [ ] مراجعة أمنية واختبار اختراق (انظر `docs/SECURITY.md`).
+- [ ] تبرع حقيقي صغير واسترداده من البداية للنهاية.
+- [ ] شروط المتاجر الخاصة بالتبرعات داخل التطبيق.
+
+---
+
+## 12. حلول المشكلات الشائعة
+
+| المشكلة | الحل |
+|---|---|
+| `pnpm: command not found` | `corepack enable` (كمسؤول على Windows) أو `npm install -g pnpm@10` |
+| `Port 3000 is already in use` | تشغيل سابق ما زال يعمل: أغلق الطرفية القديمة، أو شغّل `node scripts/doctor.mjs` لمعرفة المنفذ |
+| `ECONNREFUSED … 5432` | قاعدة البيانات لا تعمل: شغّل Docker Desktop ثم `pnpm infra:up` — أو استخدم `pnpm dev:demo` |
+| البناء فشل: `Failed to fetch font … Google Fonts` | البناء ينزّل الخطوط من Google مرة واحدة؛ تأكد من اتصال الإنترنت |
+| تعديل في `packages/` لا يظهر | `pnpm dev` يعيد بناء الحزم تلقائيًا؛ إن لم يحدث أعد تشغيله |
+| `… has changed since it was applied` | عدّلت ملف هجرة قديمًا: أرجعه كما كان وضع التعديل في ملف جديد |
+| تطبيق الجوال: `Invalid hook call` أو اختلاف إصدار React | لا تغيّر إصدار React في حزمة وحدها؛ كل الإصدارات موحدة في `pnpm-workspace.yaml`. نفّذ `pnpm install` |
+| Expo Go لا يفتح التطبيق | التطبيق يحتاج نسخة تطوير (انظر «تطبيق الجوال» في القسم 3) |
+| الهاتف لا يصل إلى الـ API | استخدم عنوان الكمبيوتر على الشبكة (مثل `192.168.1.20`) بدل `localhost` في `apps/mobile/.env` |
+| `Refusing to load demo data into a production database` | مقصود: البيانات التجريبية لا تُحمَّل على الإنتاج أبدًا |
+
+---
+
+## 13. مصطلحات سريعة
+
+| المصطلح | المعنى |
+|---|---|
+| **API** | الخادم الذي يحفظ البيانات وينفّذ العمليات؛ الموقع والتطبيق ولوحة التحكم يتحدثون معه |
+| **هجرة (Migration)** | ملف SQL يغيّر بنية قاعدة البيانات، يُطبّق مرة واحدة بالترتيب |
+| **متغيرات البيئة (`.env`)** | إعدادات ومفاتيح خارج الكود، تختلف بين جهازك والإنتاج |
+| **Commit / Push** | حفظ نسخة من التعديل / رفعها إلى GitHub |
+| **Pull Request** | طلب دمج تعديل في النسخة الرئيسية بعد مراجعته وفحصه |
+| **CI** | الفحص الآلي على GitHub مع كل رفع |
+| **Deploy** | نشر نسخة جديدة على الإنترنت |
+| **Development build** | نسخة من تطبيق الجوال للتطوير، تُبنى مرة وتتحدث تلقائيًا مع الكود |
+| **Webhook** | إشعار ترسله بوابة الدفع للـ API عند اكتمال العملية |
+
+---
+
+للتفاصيل الفنية: [البنية](ARCHITECTURE.md) · [المدفوعات](PAYMENTS.md) · [الأمان](SECURITY.md) ·
+[التشغيل وأدوات الفريق](OPERATIONS.md) · [الهوية البصرية](BRAND.md) · [الجوال](MOBILE.md) · [خطة التنفيذ](ROADMAP.md)

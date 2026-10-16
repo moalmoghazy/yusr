@@ -1,0 +1,8 @@
+# Keep LF line endings in the repository whatever the operating system.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.webp binary
+*.ttf binary
+*.woff2 binary
+*.ico binary

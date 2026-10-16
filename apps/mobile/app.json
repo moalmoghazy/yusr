@@ -1,0 +1,91 @@
+{
+  "expo": {
+    "name": "يُسر",
+    "slug": "yusr",
+    "scheme": "yusr",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "org.yusr.app",
+      "supportsTablet": true,
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "CFBundleAllowMixedLocalizations": true
+      },
+      "associatedDomains": ["applinks:yusr.org"]
+    },
+    "android": {
+      "package": "org.yusr.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#13725F"
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "yusr.org",
+              "pathPrefix": "/ar/cases"
+            },
+            {
+              "scheme": "https",
+              "host": "yusr.org",
+              "pathPrefix": "/en/cases"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-web-browser",
+      [
+        "expo-localization",
+        {
+          "supportedLocales": {
+            "ios": ["ar", "en"],
+            "android": ["ar", "en"]
+          }
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-mark.png",
+          "imageWidth": 120,
+          "backgroundColor": "#F4F7F6",
+          "dark": {
+            "backgroundColor": "#0A1311"
+          }
+        }
+      ],
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.org.yusr",
+          "enableGooglePay": false
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "supportsRTL": true,
+      "apiUrl": "http://localhost:4000/v1",
+      "showSupervision": true,
+      "webUrl": "https://yusr.org",
+      "stripeMerchantCountry": "US"
+    }
+  }
+}

@@ -1,0 +1,27 @@
+@import 'tailwindcss';
+@import '@yusr/theme/tokens.css';
+@import '@yusr/theme/tailwind.css';
+
+@source '../../../../packages/ui/src';
+
+:root {
+  --y-font-sans: var(--font-plex-arabic), 'IBM Plex Sans', 'Segoe UI', Tahoma, Arial, sans-serif;
+  --y-font-display: var(--font-plex-arabic), 'Segoe UI', Tahoma, sans-serif;
+  --y-font-logo: var(--font-reem-kufi), var(--font-plex-arabic), 'Segoe UI', Tahoma, sans-serif;
+  --y-font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+@layer base {
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--y-font-sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@utility bg-brand-pattern {
+  background-image: var(--y-pattern);
+  background-size: var(--y-pattern-size);
+}

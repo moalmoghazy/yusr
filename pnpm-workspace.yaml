@@ -1,0 +1,21 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# One React for the whole monorepo. React Native's renderer requires the exact React version
+# its Expo SDK ships (SDK 54 → React 19.1.0), and two copies of React (or of its types) in one
+# install break hooks at runtime and JSX types at compile time. Next.js accepts any React 19.
+# When you upgrade the Expo SDK, update these four lines together with apps/mobile/package.json.
+overrides:
+  react: 19.1.0
+  react-dom: 19.1.0
+  '@types/react': ~19.1.10
+  '@types/react-dom': ~19.1.9
+
+# pnpm 10 blocks dependency lifecycle scripts by default; allow the native builds we rely on.
+onlyBuiltDependencies:
+  - '@swc/core'
+  - '@tailwindcss/oxide'
+  - esbuild
+  - sharp
+  - unrs-resolver

@@ -1,0 +1,45 @@
+{
+  // A ready-to-code environment: open the repository in GitHub Codespaces ("Code → Codespaces →
+  // Create codespace") or in VS Code with the Dev Containers extension ("Reopen in Container").
+  // Node 22, pnpm, Docker (for PostgreSQL/Redis/MinIO) and the recommended extensions are set up,
+  // dependencies are installed and the local .env files are created on first start.
+  "name": "Yusr",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "containerEnv": {
+    "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0",
+    "NEXT_TELEMETRY_DISABLED": "1",
+    "TURBO_TELEMETRY_DISABLED": "1"
+  },
+  "postCreateCommand": "sudo corepack enable && node scripts/setup.mjs",
+  "forwardPorts": [3000, 3001, 4000, 8081],
+  "portsAttributes": {
+    "3000": { "label": "Website", "onAutoForward": "openBrowser" },
+    "3001": { "label": "Control hub", "onAutoForward": "notify" },
+    "4000": { "label": "API", "onAutoForward": "silent" },
+    "8081": { "label": "Expo (Metro)", "onAutoForward": "silent" }
+  },
+  "hostRequirements": { "cpus": 4, "memory": "8gb" },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "anthropic.claude-code",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "yoavbls.pretty-ts-errors",
+        "expo.vscode-expo-tools",
+        "mikestead.dotenv",
+        "ms-azuretools.vscode-containers",
+        "github.vscode-github-actions",
+        "humao.rest-client"
+      ]
+    },
+    "codespaces": {
+      "openFiles": ["docs/GUIDE.ar.md"]
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "name": "@yusr/theme",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Yusr design tokens — one TypeScript source of truth compiled to CSS variables, a Tailwind v4 theme and a React Native theme.",
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "exports": {
+    ".": {
+      "@yusr/source": "./src/index.ts",
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./tokens.css": "./dist/tokens.css",
+    "./tailwind.css": "./dist/tailwind.css",
+    "./assets/*": "./assets/*"
+  },
+  "files": [
+    "dist",
+    "src",
+    "assets"
+  ],
+  "scripts": {
+    "build": "tsup && tsx scripts/build-css.ts",
+    "dev": "tsup --watch --onSuccess \"tsx scripts/build-css.ts\"",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --conditions=@yusr/source --import tsx --test test/*.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "@yusr/config": "workspace:*",
+    "tsup": "^8.5.0",
+    "tsx": "^4.20.6",
+    "typescript": "^6.0.0"
+  }
+}

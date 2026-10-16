@@ -1,0 +1,26 @@
+{
+  "name": "@yusr/prototype",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Clickable, bilingual prototype of the whole Yusr platform (donor web, mobile app, control hub, brand, architecture) built from the real shared packages into one self-contained HTML file.",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@yusr/core": "workspace:*",
+    "@yusr/i18n": "workspace:*",
+    "@yusr/sdk": "workspace:*",
+    "@yusr/theme": "workspace:*",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "~19.1.10",
+    "@types/react-dom": "~19.1.9",
+    "@yusr/config": "workspace:*",
+    "esbuild": "^0.25.10",
+    "typescript": "^6.0.0"
+  }
+}

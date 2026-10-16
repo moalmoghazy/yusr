@@ -1,0 +1,30 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "agentGuidance": false,
+  "envMode": "loose",
+  "globalEnv": ["NODE_ENV"],
+  "tasks": {
+    "build": {
+      "description": "Builds the packages, the API (dist/), the Next.js apps (.next/) and the prototype.",
+      "dependsOn": ["^build"],
+      "env": ["NEXT_PUBLIC_*", "NEXT_OUTPUT", "EXPO_PUBLIC_*"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
+    },
+    "typecheck": {
+      "description": "TypeScript, without emitting files.",
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "description": "node:test suites; YUSR_TEST_DATABASE_URL adds the PostgreSQL ones.",
+      "dependsOn": ["^build"],
+      "env": ["YUSR_TEST_DATABASE_URL"],
+      "outputs": []
+    },
+    "dev": {
+      "description": "Development servers with live reload.",
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

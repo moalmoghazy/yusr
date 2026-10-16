@@ -1,0 +1,52 @@
+{
+  "name": "@yusr/core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Framework-free domain logic for Yusr: money, progress, case lifecycle, RBAC, payments routing, fees and double-entry ledger postings.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "@yusr/source": "./src/index.ts",
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./schemas": {
+      "@yusr/source": "./src/schemas.ts",
+      "import": {
+        "types": "./dist/schemas.d.ts",
+        "default": "./dist/schemas.js"
+      },
+      "require": {
+        "types": "./dist/schemas.d.cts",
+        "default": "./dist/schemas.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --conditions=@yusr/source --import tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "@yusr/config": "workspace:*",
+    "tsup": "^8.5.0",
+    "tsx": "^4.20.6",
+    "typescript": "^6.0.0"
+  }
+}

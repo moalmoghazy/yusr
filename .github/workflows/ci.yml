@@ -1,0 +1,115 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: 22
+  TURBO_TELEMETRY_DISABLED: 1
+  NEXT_TELEMETRY_DISABLED: 1
+
+jobs:
+  verify:
+    name: Format, lint, build, typecheck and test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+    env:
+      # The SQL suites create throwaway databases and try to break the ledger invariants.
+      YUSR_TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: PostgreSQL client
+        run: psql --version || (sudo apt-get update && sudo apt-get install -y postgresql-client)
+      - name: Format
+        run: pnpm format:check
+      - name: Lint
+        run: pnpm lint
+      - name: Build
+        run: pnpm turbo run build --filter=!@yusr/mobile
+      - name: Typecheck
+        run: pnpm turbo run typecheck --filter=!@yusr/mobile
+      - name: Test
+        run: pnpm turbo run test
+      - name: Migrations and demo data on a fresh database
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/yusr_ci
+        run: |
+          psql postgres://postgres:postgres@localhost:5432/postgres -c 'CREATE DATABASE yusr_ci'
+          pnpm --filter @yusr/api db:migrate:deploy
+          pnpm --filter @yusr/api db:migrate:deploy
+          pnpm db:seed
+      - name: Prototype (one-file build of every surface)
+        run: pnpm --filter @yusr/prototype build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prototype
+          path: apps/prototype/dist/index.html
+
+  mobile:
+    name: Mobile app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm --filter @yusr/mobile typecheck
+      - name: Expo config
+        working-directory: apps/mobile
+        run: npx expo config --type public > /dev/null
+      - name: Bundle for Android and iOS (Metro + Hermes)
+        working-directory: apps/mobile
+        run: npx expo export --platform android --platform ios --output-dir /tmp/mobile-export
+
+  images:
+    name: Container images
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - { name: api, dockerfile: infra/docker/api.Dockerfile, args: '' }
+          - { name: web, dockerfile: infra/docker/next.Dockerfile, args: 'APP=web' }
+          - { name: admin, dockerfile: infra/docker/next.Dockerfile, args: 'APP=admin' }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          build-args: ${{ matrix.args }}
+          push: false
+          tags: yusr/${{ matrix.name }}:${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}

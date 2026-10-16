@@ -1,0 +1,61 @@
+{
+  "name": "@yusr/i18n",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Arabic-first i18n for Yusr: typed ar/en dictionaries, CLDR plural rules, Arabic-Indic digits and money/date formatters, React bindings.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "@yusr/source": "./src/index.ts",
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./react": {
+      "@yusr/source": "./src/react.tsx",
+      "import": {
+        "types": "./dist/react.d.ts",
+        "default": "./dist/react.js"
+      },
+      "require": {
+        "types": "./dist/react.d.cts",
+        "default": "./dist/react.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --conditions=@yusr/source --import tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@yusr/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=19.1.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "@types/react": "~19.1.10",
+    "@yusr/config": "workspace:*",
+    "tsup": "^8.5.0",
+    "tsx": "^4.20.6",
+    "typescript": "^6.0.0"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "@yusr/admin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Control hub for the Yusr team: overview, case pipeline, finance (maker-checker), audit. Next.js App Router, staff-only, two-factor sign-in.",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3001",
+    "build": "next build",
+    "start": "next start --port 3001",
+    "typecheck": "next typegen && tsc --noEmit"
+  },
+  "dependencies": {
+    "@yusr/core": "workspace:*",
+    "@yusr/i18n": "workspace:*",
+    "@yusr/sdk": "workspace:*",
+    "@yusr/theme": "workspace:*",
+    "@yusr/ui": "workspace:*",
+    "next": "^16.0.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.14",
+    "@types/node": "^22.18.0",
+    "@types/react": "~19.1.10",
+    "@types/react-dom": "~19.1.9",
+    "@yusr/config": "workspace:*",
+    "tailwindcss": "^4.1.14",
+    "typescript": "^6.0.0"
+  }
+}

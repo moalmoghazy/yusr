@@ -1,0 +1,30 @@
+{
+  // Terminal → Run Task… (or Ctrl/Cmd+Shift+P → "Tasks: Run Task").
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Yusr: demo (website + hub + API, no database)",
+      "type": "shell",
+      "command": "pnpm dev:demo",
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": { "kind": "build", "isDefault": true }
+    },
+    { "label": "Yusr: dev (with PostgreSQL)", "type": "shell", "command": "pnpm dev", "isBackground": true, "problemMatcher": [] },
+    { "label": "Yusr: mobile app (Expo)", "type": "shell", "command": "pnpm dev:mobile", "isBackground": true, "problemMatcher": [] },
+    { "label": "Yusr: start databases (Docker)", "type": "shell", "command": "pnpm infra:up", "problemMatcher": [] },
+    { "label": "Yusr: create tables + demo data", "type": "shell", "command": "pnpm db:migrate && pnpm db:seed", "problemMatcher": [] },
+    { "label": "Yusr: browse the database (Drizzle Studio)", "type": "shell", "command": "pnpm db:studio", "isBackground": true, "problemMatcher": [] },
+    {
+      "label": "Yusr: check everything (format, lint, types, tests)",
+      "type": "shell",
+      "command": "pnpm check",
+      "problemMatcher": ["$tsc"],
+      "group": { "kind": "test", "isDefault": true }
+    },
+    { "label": "Yusr: fix formatting and lint", "type": "shell", "command": "pnpm format && pnpm lint:fix", "problemMatcher": [] },
+    { "label": "Yusr: rebuild the prototype", "type": "shell", "command": "pnpm prototype", "problemMatcher": [] },
+    { "label": "Yusr: export the API description (OpenAPI)", "type": "shell", "command": "pnpm api:openapi", "problemMatcher": [] },
+    { "label": "Yusr: environment doctor", "type": "shell", "command": "node scripts/doctor.mjs", "problemMatcher": [] }
+  ]
+}

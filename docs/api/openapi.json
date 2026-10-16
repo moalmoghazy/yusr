@@ -1,0 +1,3994 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Yusr API",
+    "version": "docs",
+    "description": "Donations, case pipeline and operations for the Yusr platform. Amounts are integers in minor units (piasters, halalas, cents). Text fields that face donors are `{ ar, en }`. Send `Accept-Language` for server-side messages and `X-Request-Id` to correlate support tickets."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4000"
+    }
+  ],
+  "tags": [
+    {
+      "name": "System"
+    },
+    {
+      "name": "Payments"
+    },
+    {
+      "name": "Catalog"
+    },
+    {
+      "name": "Donations"
+    },
+    {
+      "name": "Submissions"
+    },
+    {
+      "name": "Auth"
+    },
+    {
+      "name": "Me"
+    },
+    {
+      "name": "Operations · Cases"
+    },
+    {
+      "name": "Operations · Finance"
+    },
+    {
+      "name": "Operations · People"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "health.live",
+        "tags": [
+          "System"
+        ],
+        "summary": "Liveness probe",
+        "description": "Open to guests; a Bearer token is read when sent.",
+        "security": [
+          {},
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "{ status, release, uptimeSeconds }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "{ status, release, uptimeSeconds } (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "health.ready",
+        "tags": [
+          "System"
+        ],
+        "summary": "Readiness probe: PostgreSQL and Redis reachable",
+        "description": "Open to guests; a Bearer token is read when sent.",
+        "security": [
+          {},
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "{ status, database, cache }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "{ status, database, cache } (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/webhooks/{provider}": {
+      "post": {
+        "operationId": "webhooks.receive",
+        "tags": [
+          "Payments"
+        ],
+        "summary": "Payment notifications (Paymob, Fawry, Stripe, Moyasar)",
+        "description": "The signature is checked on the exact bytes before anything is read. Replays are acknowledged without being applied again; an amount or currency that differs from the order parks the donation for review instead of crediting it.\n\nOpen to guests; a Bearer token is read when sent.\n\nRate limit: 600 per 60s per IP.",
+        "security": [
+          {},
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "Provider payload, verified byte for byte"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ received, status }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "{ received, status } (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/openapi.json": {
+      "get": {
+        "operationId": "openapi",
+        "tags": [
+          "System"
+        ],
+        "summary": "This API as OpenAPI 3.1",
+        "description": "Open to guests; a Bearer token is read when sent.\n\nCached for guests for 300s.",
+        "security": [
+          {},
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OpenAPI document",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "OpenAPI document (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/stats": {
+      "get": {
+        "operationId": "stats.get",
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Headline numbers for the landing page",
+        "description": "Open to guests; a Bearer token is read when sent.\n\nCached for guests for 60s.",
+        "security": [
+          {},
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "PlatformStats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "PlatformStats (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/cases": {
+      "get": {
+        "operationId": "cases.list",
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Browse published cases",
+        "description": "Filter by category, governorate, completion range, urgency and zakat eligibility. Cursor-paginated.\n\nOpen to guests; a Bearer token is read when sent.\n\nCached for guests for 15s.",
+        "security": [
+          {},
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "categories",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "maxItems": 30,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "medical",
+                  "debt_relief",
+                  "education",
+                  "orphans",
+                  "relief"
+                ]
+              }
+            }
+          },
+          {
+            "name": "regions",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "maxItems": 30,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$"
+              }
+            }
+          },
+          {
+            "name": "urgentOnly",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "zakatOnly",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "includeFunded",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "minProgress",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "maxProgress",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": "urgent",
+              "type": "string",
+              "enum": [
+                "urgent",
+                "closest",
+                "newest",
+                "least_funded"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 12,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Page<CaseSummary>",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Page<CaseSummary> (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "cases.submit",
+        "tags": [
+          "Submissions"
+        ],
+        "summary": "Submit a case for review",
+        "description": "Starts the pipeline under_review → field_verified → published. A repeat national ID is flagged for reviewers, never rejected.\n\nRequires a signed-in session.\n\nRate limit: 10 per 86400s per user.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "medical",
+                      "debt_relief",
+                      "education",
+                      "orphans",
+                      "relief"
+                    ]
+                  },
+                  "submitterRelation": {
+                    "type": "string",
+                    "enum": [
+                      "self",
+                      "family",
+                      "volunteer"
+                    ]
+                  },
+                  "title": {
+                    "type": "object",
+                    "properties": {
+                      "ar": {
+                        "type": "string",
+                        "maxLength": 120
+                      },
+                      "en": {
+                        "type": "string",
+                        "maxLength": 120
+                      }
+                    }
+                  },
+                  "story": {
+                    "type": "object",
+                    "properties": {
+                      "ar": {
+                        "type": "string",
+                        "maxLength": 6000
+                      },
+                      "en": {
+                        "type": "string",
+                        "maxLength": 6000
+                      }
+                    }
+                  },
+                  "region": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$"
+                  },
+                  "city": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "currency": {
+                    "default": "EGP",
+                    "type": "string",
+                    "enum": [
+                      "EGP",
+                      "SAR",
+                      "USD"
+                    ]
+                  },
+                  "goalMinor": {
+                    "type": "integer",
+                    "minimum": 100000,
+                    "maximum": 1000000000
+                  },
+                  "isUrgent": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "deadline": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "beneficiary": {
+                    "default": {},
+                    "type": "object",
+                    "properties": {
+                      "pseudonym": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "ar": {
+                                "type": "string",
+                                "maxLength": 60
+                              },
+                              "en": {
+                                "type": "string",
+                                "maxLength": 60
+                              }
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "nationalId": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "pattern": "^(\\d{14}|\\d{10})$"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "phone": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "pattern": "^\\+[1-9]\\d{7,14}$"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "householdSize": {
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 30
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "documents": {
+                    "minItems": 1,
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "national_id",
+                            "medical_report",
+                            "price_quote",
+                            "invoice",
+                            "debt_proof",
+                            "court_ruling",
+                            "school_record",
+                            "field_report",
+                            "disbursement_proof"
+                          ]
+                        },
+                        "storageKey": {
+                          "type": "string",
+                          "minLength": 8,
+                          "maxLength": 300
+                        },
+                        "sha256": {
+                          "type": "string",
+                          "pattern": "^[a-f0-9]{64}$"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "storageKey",
+                        "sha256"
+                      ]
+                    }
+                  },
+                  "consent": {
+                    "type": "boolean",
+                    "const": true
+                  }
+                },
+                "required": [
+                  "category",
+                  "submitterRelation",
+                  "title",
+                  "story",
+                  "region",
+                  "goalMinor",
+                  "documents",
+                  "consent"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "SubmitCaseResult",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "SubmitCaseResult (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/cases/{slug}": {
+      "get": {
+        "operationId": "cases.get",
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "A case page: story, verified documents (redacted), disbursement plan and recent donations",
+        "description": "Open to guests; a Bearer token is read when sent.\n\nCached for guests for 15s.",
+        "security": [
+          {},
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CaseDetail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "CaseDetail (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/donations/live": {
+      "get": {
+        "operationId": "donations.live",
+        "tags": [
+          "Donations"
+        ],
+        "summary": "The latest donations for the live ticker (anonymous donors stay anonymous)",
+        "description": "Open to guests; a Bearer token is read when sent.\n\nCached for guests for 5s.",
+        "security": [
+          {},
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 12,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "LiveDonation[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "LiveDonation[] (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/donations/quote": {
+      "post": {
+        "operationId": "donations.quote",
+        "tags": [
+          "Donations"
+        ],
+        "summary": "Price a donation: provider, fee, amount charged and what reaches the case",
+        "description": "Open to guests; a Bearer token is read when sent.\n\nRate limit: 120 per 60s per IP.",
+        "security": [
+          {},
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "caseId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "amountMinor": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 1000000000
+                  },
+                  "currency": {
+                    "type": "string",
+                    "enum": [
+                      "EGP",
+                      "SAR",
+                      "USD"
+                    ]
+                  },
+                  "method": {
+                    "type": "string",
+                    "enum": [
+                      "card",
+                      "apple_pay",
+                      "mada",
+                      "vodafone_cash",
+                      "fawry",
+                      "instapay"
+                    ]
+                  },
+                  "coverFees": {
+                    "default": false,
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "caseId",
+                  "amountMinor",
+                  "currency",
+                  "method"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "DonationBreakdown",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "DonationBreakdown (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/donations": {
+      "post": {
+        "operationId": "donations.create",
+        "tags": [
+          "Donations"
+        ],
+        "summary": "Start a donation (guest checkout allowed) and get the next checkout step",
+        "description": "Idempotent: repeating a request with the same Idempotency-Key and body returns the same donation and checkout step; the same key with a different body is refused. The receipt token in the response lets a guest open the receipt.\n\nOpen to guests; a Bearer token is read when sent.\n\nRate limit: 30 per 600s per IP.",
+        "security": [
+          {},
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "description": "16–128 URL-safe characters, one per donation attempt (a UUID works).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "caseId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "amountMinor": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 1000000000
+                  },
+                  "currency": {
+                    "type": "string",
+                    "enum": [
+                      "EGP",
+                      "SAR",
+                      "USD"
+                    ]
+                  },
+                  "method": {
+                    "type": "string",
+                    "enum": [
+                      "card",
+                      "apple_pay",
+                      "mada",
+                      "vodafone_cash",
+                      "fawry",
+                      "instapay"
+                    ]
+                  },
+                  "coverFees": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "anonymous": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "type": {
+                    "default": "sadaqah",
+                    "type": "string",
+                    "enum": [
+                      "sadaqah",
+                      "zakat",
+                      "general"
+                    ]
+                  },
+                  "dedication": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 140
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "donor": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "minLength": 2,
+                                "maxLength": 80
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "email": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "maxLength": 254,
+                                "format": "email",
+                                "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "phone": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "pattern": "^\\+[1-9]\\d{7,14}$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "locale": {
+                    "default": "ar",
+                    "type": "string",
+                    "enum": [
+                      "ar",
+                      "en"
+                    ]
+                  },
+                  "returnUrl": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "caseId",
+                  "amountMinor",
+                  "currency",
+                  "method"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "CreateDonationResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "CreateDonationResponse (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/donations/{id}": {
+      "get": {
+        "operationId": "donations.get",
+        "tags": [
+          "Donations"
+        ],
+        "summary": "A receipt, for its donor, finance staff, or anyone holding its receipt token",
+        "description": "Open to guests; a Bearer token is read when sent.",
+        "security": [
+          {},
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Receipt-Token",
+            "in": "header",
+            "required": false,
+            "description": "From the create response or the receipt email; lets a guest open the receipt.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "DonationReceipt",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "DonationReceipt (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/uploads": {
+      "post": {
+        "operationId": "uploads.create",
+        "tags": [
+          "Submissions"
+        ],
+        "summary": "A 10-minute upload link into private storage (step 1 of submitting a document)",
+        "description": "PUT the file to the returned URL with the returned headers, then reference its key when submitting the case.\n\nRequires a signed-in session.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "national_id",
+                      "medical_report",
+                      "price_quote",
+                      "invoice",
+                      "debt_proof",
+                      "court_ruling",
+                      "school_record",
+                      "field_report",
+                      "disbursement_proof"
+                    ]
+                  },
+                  "contentType": {
+                    "type": "string",
+                    "enum": [
+                      "application/pdf",
+                      "image/jpeg",
+                      "image/png",
+                      "image/webp",
+                      "image/heic"
+                    ]
+                  },
+                  "sizeBytes": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 20971520
+                  }
+                },
+                "required": [
+                  "kind",
+                  "contentType",
+                  "sizeBytes"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "UploadTicket",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "UploadTicket (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/otp": {
+      "post": {
+        "operationId": "auth.requestOtp",
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Send a 6-digit sign-in code by SMS/WhatsApp",
+        "description": "Codes expire after 5 minutes and allow 5 attempts; a phone can ask again after 60 seconds (Retry-After on 429).\n\nOpen to guests; a Bearer token is read when sent.",
+        "security": [
+          {},
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "phone": {
+                    "type": "string",
+                    "pattern": "^\\+[1-9]\\d{7,14}$"
+                  },
+                  "locale": {
+                    "default": "ar",
+                    "type": "string",
+                    "enum": [
+                      "ar",
+                      "en"
+                    ]
+                  }
+                },
+                "required": [
+                  "phone"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "{ expiresInSeconds, resendInSeconds }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "{ expiresInSeconds, resendInSeconds } (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/otp/verify": {
+      "post": {
+        "operationId": "auth.verifyOtp",
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Exchange the code for a session (staff add their authenticator code)",
+        "description": "Open to guests; a Bearer token is read when sent.\n\nRate limit: 30 per 900s per IP.",
+        "security": [
+          {},
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "phone": {
+                    "type": "string",
+                    "pattern": "^\\+[1-9]\\d{7,14}$"
+                  },
+                  "code": {
+                    "type": "string",
+                    "pattern": "^\\d{6}$"
+                  },
+                  "totp": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^\\d{6}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "name": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 2,
+                        "maxLength": 80
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "locale": {
+                    "type": "string",
+                    "enum": [
+                      "ar",
+                      "en"
+                    ]
+                  }
+                },
+                "required": [
+                  "phone",
+                  "code"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Session (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/oauth/{provider}": {
+      "post": {
+        "operationId": "auth.oauth",
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Sign in with a Google or Apple ID token",
+        "description": "The token is verified against the provider keys (RS256, audience = our client IDs).\n\nOpen to guests; a Bearer token is read when sent.\n\nRate limit: 30 per 900s per IP.",
+        "security": [
+          {},
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "idToken": {
+                    "type": "string",
+                    "minLength": 20,
+                    "maxLength": 8000
+                  },
+                  "nonce": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "totp": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^\\d{6}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "locale": {
+                    "type": "string",
+                    "enum": [
+                      "ar",
+                      "en"
+                    ]
+                  }
+                },
+                "required": [
+                  "idToken"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Session (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/refresh": {
+      "post": {
+        "operationId": "auth.refresh",
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Rotate the refresh token and get a new access token",
+        "description": "Each refresh token works once. Presenting a used one revokes the whole login (SESSION_REVOKED).\n\nOpen to guests; a Bearer token is read when sent.\n\nRate limit: 60 per 900s per IP.",
+        "security": [
+          {},
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refreshToken": {
+                    "type": "string",
+                    "minLength": 20,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "refreshToken"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Session (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/logout": {
+      "post": {
+        "operationId": "auth.logout",
+        "tags": [
+          "Auth"
+        ],
+        "summary": "End this login on every device that shares it",
+        "description": "Open to guests; a Bearer token is read when sent.",
+        "security": [
+          {},
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refreshToken": {
+                    "type": "string",
+                    "minLength": 20,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "refreshToken"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Done"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/mfa/enroll": {
+      "post": {
+        "operationId": "auth.enrollMfa",
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Start authenticator-app enrollment (returns the secret and an otpauth:// link for the QR code)",
+        "description": "Requires a signed-in session.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "{ secret, otpauthUri }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "{ secret, otpauthUri } (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/mfa/confirm": {
+      "post": {
+        "operationId": "auth.confirmMfa",
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Confirm enrollment with a first code; staff permissions need it from then on",
+        "description": "Requires a signed-in session.\n\nRate limit: 10 per 900s per user.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "pattern": "^\\d{6}$"
+                  }
+                },
+                "required": [
+                  "code"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Done"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me": {
+      "get": {
+        "operationId": "me.get",
+        "tags": [
+          "Me"
+        ],
+        "summary": "The signed-in profile, with a verified identity for the support chat (Chatwoot)",
+        "description": "Requires a signed-in session.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Profile (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/donations": {
+      "get": {
+        "operationId": "me.donations",
+        "tags": [
+          "Me"
+        ],
+        "summary": "My donations and receipts",
+        "description": "Requires a signed-in session.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "DonationReceipt[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "DonationReceipt[] (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/notifications": {
+      "get": {
+        "operationId": "me.notifications",
+        "tags": [
+          "Me"
+        ],
+        "summary": "Receipts, \"case funded\" and \"money disbursed\" updates",
+        "description": "Requires a signed-in session.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "DonorNotification[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "DonorNotification[] (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/notifications/read": {
+      "post": {
+        "operationId": "me.markNotificationsRead",
+        "tags": [
+          "Me"
+        ],
+        "summary": "Mark notifications as read",
+        "description": "Requires a signed-in session.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ids": {
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    }
+                  }
+                },
+                "required": [
+                  "ids"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Done"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/overview": {
+      "get": {
+        "operationId": "admin.overview",
+        "tags": [
+          "Operations · Cases"
+        ],
+        "summary": "Dashboard: money in, pipeline counts, 30-day series, payment mix, recent activity",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `cases:read`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "x-permission": "cases:read",
+        "responses": {
+          "200": {
+            "description": "AdminOverview",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "AdminOverview (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/cases": {
+      "get": {
+        "operationId": "admin.cases.list",
+        "tags": [
+          "Operations · Cases"
+        ],
+        "summary": "Cases in any status, newest first",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `cases:read`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "under_review",
+                "field_verified",
+                "published",
+                "funded",
+                "closed",
+                "paused",
+                "rejected"
+              ]
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          }
+        ],
+        "x-permission": "cases:read",
+        "responses": {
+          "200": {
+            "description": "AdminCase[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "AdminCase[] (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/cases/{id}": {
+      "get": {
+        "operationId": "admin.cases.get",
+        "tags": [
+          "Operations · Cases"
+        ],
+        "summary": "A case with its history, auditor and every document",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `cases:read`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-permission": "cases:read",
+        "responses": {
+          "200": {
+            "description": "AdminCase",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "AdminCase (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "admin.cases.edit",
+        "tags": [
+          "Operations · Cases"
+        ],
+        "summary": "Edit wording, translations and flags",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `cases:edit`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "object",
+                    "properties": {
+                      "ar": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "en": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      }
+                    },
+                    "required": [
+                      "ar",
+                      "en"
+                    ]
+                  },
+                  "summary": {
+                    "type": "object",
+                    "properties": {
+                      "ar": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 240
+                      },
+                      "en": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 240
+                      }
+                    },
+                    "required": [
+                      "ar",
+                      "en"
+                    ]
+                  },
+                  "story": {
+                    "type": "object",
+                    "properties": {
+                      "ar": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 6000
+                      },
+                      "en": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 6000
+                      }
+                    },
+                    "required": [
+                      "ar",
+                      "en"
+                    ]
+                  },
+                  "zakatEligible": {
+                    "type": "boolean"
+                  },
+                  "isUrgent": {
+                    "type": "boolean"
+                  },
+                  "deadline": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "cases:edit",
+        "responses": {
+          "200": {
+            "description": "AdminCase",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "AdminCase (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/cases/{id}/transitions": {
+      "post": {
+        "operationId": "admin.cases.transition",
+        "tags": [
+          "Operations · Cases"
+        ],
+        "summary": "Move a case through the pipeline (draft → under_review → field_verified → published → funded → closed)",
+        "description": "Allowed moves and who may make them come from @yusr/core (CASE_TRANSITIONS). Rejecting or pausing needs a reason. \"funded\" is reached only by the ledger.\n\nRequires a staff session with two-factor authentication.\n\nPermission: `cases:review`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "to": {
+                    "type": "string",
+                    "enum": [
+                      "draft",
+                      "under_review",
+                      "field_verified",
+                      "published",
+                      "funded",
+                      "closed",
+                      "paused",
+                      "rejected"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "to"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "cases:review",
+        "responses": {
+          "200": {
+            "description": "AdminCase",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "AdminCase (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/cases/{id}/priority": {
+      "patch": {
+        "operationId": "admin.cases.prioritize",
+        "tags": [
+          "Operations · Cases"
+        ],
+        "summary": "Set the priority used to order the catalog (0–100)",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `cases:prioritize`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "priority": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100
+                  }
+                },
+                "required": [
+                  "priority"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "cases:prioritize",
+        "responses": {
+          "200": {
+            "description": "AdminCase",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "AdminCase (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/cases/{id}/plan": {
+      "put": {
+        "operationId": "admin.cases.plan",
+        "tags": [
+          "Operations · Cases"
+        ],
+        "summary": "Set the disbursement plan: who is paid, for what, how much (fixed once published)",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `cases:edit`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "lines": {
+                    "minItems": 1,
+                    "maxItems": 12,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "payeeType": {
+                          "type": "string",
+                          "enum": [
+                            "hospital",
+                            "pharmacy",
+                            "creditor",
+                            "school",
+                            "vendor",
+                            "landlord",
+                            "beneficiary"
+                          ]
+                        },
+                        "payee": {
+                          "type": "object",
+                          "properties": {
+                            "ar": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 120
+                            },
+                            "en": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 120
+                            }
+                          },
+                          "required": [
+                            "ar",
+                            "en"
+                          ]
+                        },
+                        "purpose": {
+                          "type": "object",
+                          "properties": {
+                            "ar": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 300
+                            },
+                            "en": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 300
+                            }
+                          },
+                          "required": [
+                            "ar",
+                            "en"
+                          ]
+                        },
+                        "amountMinor": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "payeeAccount": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "minLength": 6,
+                              "maxLength": 64
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "payeeType",
+                        "payee",
+                        "purpose",
+                        "amountMinor"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "lines"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "cases:edit",
+        "responses": {
+          "200": {
+            "description": "AdminCase",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "AdminCase (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/cases/{id}/verification": {
+      "post": {
+        "operationId": "admin.verification.assign",
+        "tags": [
+          "Operations · Cases"
+        ],
+        "summary": "Assign a field auditor (posts to #field-ops and the Baserow visits board)",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `verifications:assign`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "auditorId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "visitAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "auditorId"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "verifications:assign",
+        "responses": {
+          "201": {
+            "description": "VerificationTask",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "VerificationTask (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/verification-tasks": {
+      "get": {
+        "operationId": "admin.verification.list",
+        "tags": [
+          "Operations · Cases"
+        ],
+        "summary": "Open and recent field visits (auditors see their own)",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `cases:read`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "x-permission": "cases:read",
+        "responses": {
+          "200": {
+            "description": "VerificationTask[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "VerificationTask[] (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/verification-tasks/{id}/checklist": {
+      "patch": {
+        "operationId": "admin.verification.checklist",
+        "tags": [
+          "Operations · Cases"
+        ],
+        "summary": "Tick an item of the visit checklist",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `verifications:perform`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "item": {
+                    "type": "string",
+                    "enum": [
+                      "identity",
+                      "residence",
+                      "documents",
+                      "cost",
+                      "alternatives"
+                    ]
+                  },
+                  "checked": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "item",
+                  "checked"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "verifications:perform",
+        "responses": {
+          "200": {
+            "description": "VerificationTask",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "VerificationTask (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/verification-tasks/{id}/complete": {
+      "post": {
+        "operationId": "admin.verification.complete",
+        "tags": [
+          "Operations · Cases"
+        ],
+        "summary": "File the visit report with the recommended amount (moves the case to field_verified)",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `verifications:perform`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "recommendedMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000000
+                  },
+                  "notes": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 2000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "recommendedMinor"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "verifications:perform",
+        "responses": {
+          "200": {
+            "description": "AdminCase",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "AdminCase (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/documents/{id}/original": {
+      "get": {
+        "operationId": "admin.documents.original",
+        "tags": [
+          "Operations · Cases"
+        ],
+        "summary": "A 5-minute link to the unredacted original (every opening is audited)",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `documents:read_private`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-permission": "documents:read_private",
+        "responses": {
+          "200": {
+            "description": "{ url, expiresInSeconds }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "{ url, expiresInSeconds } (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/documents/{id}/redacted": {
+      "post": {
+        "operationId": "admin.documents.presignRedacted",
+        "tags": [
+          "Operations · Cases"
+        ],
+        "summary": "Upload link for the redacted copy shown on the case page",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `documents:redact`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "contentType": {
+                    "type": "string",
+                    "enum": [
+                      "application/pdf",
+                      "image/jpeg",
+                      "image/png",
+                      "image/webp",
+                      "image/heic"
+                    ]
+                  },
+                  "sizeBytes": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 20971520
+                  }
+                },
+                "required": [
+                  "contentType",
+                  "sizeBytes"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "documents:redact",
+        "responses": {
+          "200": {
+            "description": "UploadTicket",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "UploadTicket (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/documents/{id}/redacted/confirm": {
+      "post": {
+        "operationId": "admin.documents.confirmRedacted",
+        "tags": [
+          "Operations · Cases"
+        ],
+        "summary": "Publish the uploaded redacted copy",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `documents:redact`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 300
+                  }
+                },
+                "required": [
+                  "key"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "documents:redact",
+        "responses": {
+          "200": {
+            "description": "{ publicUrl }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "{ publicUrl } (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/ledger": {
+      "get": {
+        "operationId": "admin.ledger",
+        "tags": [
+          "Operations · Finance"
+        ],
+        "summary": "Double-entry ledger lines (donations, fees, refunds, payouts, settlements)",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `finance:read`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "donation",
+                "refund",
+                "payout",
+                "settlement"
+              ]
+            }
+          },
+          {
+            "name": "account",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            }
+          }
+        ],
+        "x-permission": "finance:read",
+        "responses": {
+          "200": {
+            "description": "LedgerLine[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "LedgerLine[] (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/donations": {
+      "get": {
+        "operationId": "admin.donations.list",
+        "tags": [
+          "Operations · Finance"
+        ],
+        "summary": "Donations with masked donor contact",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `finance:read`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "requires_action",
+                "awaiting_transfer",
+                "succeeded",
+                "failed",
+                "canceled",
+                "expired",
+                "refunded",
+                "partially_refunded",
+                "needs_review"
+              ]
+            }
+          }
+        ],
+        "x-permission": "finance:read",
+        "responses": {
+          "200": {
+            "description": "AdminDonation[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "AdminDonation[] (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/donations/{id}/confirm-transfer": {
+      "post": {
+        "operationId": "admin.donations.confirmTransfer",
+        "tags": [
+          "Operations · Finance"
+        ],
+        "summary": "Reconcile an InstaPay / bank transfer against the bank statement",
+        "description": "The received amount must equal the amount the donor was asked to send (AMOUNT_MISMATCH otherwise).\n\nRequires a staff session with two-factor authentication.\n\nPermission: `finance:reconcile`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "bankReference": {
+                    "type": "string",
+                    "minLength": 4,
+                    "maxLength": 64
+                  },
+                  "receivedMinor": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "bankReference",
+                  "receivedMinor"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "finance:reconcile",
+        "responses": {
+          "200": {
+            "description": "AdminDonation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "AdminDonation (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/donations/{id}/refunds": {
+      "post": {
+        "operationId": "admin.refunds.request",
+        "tags": [
+          "Operations · Finance"
+        ],
+        "summary": "Request a refund (maker) — a second officer approves it",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `finance:refunds`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "amountMinor": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "finance:refunds",
+        "responses": {
+          "201": {
+            "description": "Refund",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Refund (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/refunds": {
+      "get": {
+        "operationId": "admin.refunds.list",
+        "tags": [
+          "Operations · Finance"
+        ],
+        "summary": "Refund requests and their approvals",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `finance:read`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "x-permission": "finance:read",
+        "responses": {
+          "200": {
+            "description": "Refund[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Refund[] (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/refunds/{id}/approve": {
+      "post": {
+        "operationId": "admin.refunds.approve",
+        "tags": [
+          "Operations · Finance"
+        ],
+        "summary": "Approve a refund (checker ≠ maker); calls the gateway and posts the ledger",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `finance:approve`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-permission": "finance:approve",
+        "responses": {
+          "200": {
+            "description": "Refund",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Refund (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/refunds/{id}/reject": {
+      "post": {
+        "operationId": "admin.refunds.reject",
+        "tags": [
+          "Operations · Finance"
+        ],
+        "summary": "Reject a refund request",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `finance:approve`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "finance:approve",
+        "responses": {
+          "200": {
+            "description": "Refund",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Refund (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/payouts": {
+      "get": {
+        "operationId": "admin.payouts.list",
+        "tags": [
+          "Operations · Finance"
+        ],
+        "summary": "Payouts to hospitals, creditors, schools and vendors",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `finance:read`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "x-permission": "finance:read",
+        "responses": {
+          "200": {
+            "description": "Payout[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Payout[] (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "admin.payouts.request",
+        "tags": [
+          "Operations · Finance"
+        ],
+        "summary": "Request a payout for a line of the disbursement plan (maker)",
+        "description": "Refused beyond what the case fund holds after pending payouts and approved refunds (INSUFFICIENT_CASE_FUNDS).\n\nRequires a staff session with two-factor authentication.\n\nPermission: `finance:payouts`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "caseId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "lineId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "amountMinor": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "payeeAccount": {
+                    "type": "string",
+                    "minLength": 6,
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "caseId",
+                  "lineId"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "finance:payouts",
+        "responses": {
+          "201": {
+            "description": "Payout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Payout (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/payouts/{id}/approve": {
+      "post": {
+        "operationId": "admin.payouts.approve",
+        "tags": [
+          "Operations · Finance"
+        ],
+        "summary": "Approve a payout (checker ≠ maker)",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `finance:approve`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-permission": "finance:approve",
+        "responses": {
+          "200": {
+            "description": "Payout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Payout (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/payouts/{id}/reject": {
+      "post": {
+        "operationId": "admin.payouts.reject",
+        "tags": [
+          "Operations · Finance"
+        ],
+        "summary": "Reject a payout request",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `finance:approve`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "finance:approve",
+        "responses": {
+          "200": {
+            "description": "Payout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Payout (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/payouts/{id}/mark-paid": {
+      "post": {
+        "operationId": "admin.payouts.markPaid",
+        "tags": [
+          "Operations · Finance"
+        ],
+        "summary": "Record the bank transfer; posts the ledger and tells the case’s donors where their money went",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `finance:payouts`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "bankReference": {
+                    "type": "string",
+                    "minLength": 4,
+                    "maxLength": 64
+                  },
+                  "proofDocumentId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "bankReference"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "finance:payouts",
+        "responses": {
+          "200": {
+            "description": "Payout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Payout (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/crm/donors": {
+      "get": {
+        "operationId": "admin.crm.donors",
+        "tags": [
+          "Operations · People"
+        ],
+        "summary": "Donors with giving totals and segments (contacts masked)",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `crm:read`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "x-permission": "crm:read",
+        "responses": {
+          "200": {
+            "description": "DonorRow[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "DonorRow[] (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/crm/volunteers": {
+      "get": {
+        "operationId": "admin.crm.volunteers",
+        "tags": [
+          "Operations · People"
+        ],
+        "summary": "Field volunteers: submissions, visits, status",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `crm:read`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "x-permission": "crm:read",
+        "responses": {
+          "200": {
+            "description": "VolunteerRow[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "VolunteerRow[] (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/team": {
+      "get": {
+        "operationId": "admin.team.list",
+        "tags": [
+          "Operations · People"
+        ],
+        "summary": "Staff, their roles and two-factor status",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `cases:read`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "x-permission": "cases:read",
+        "responses": {
+          "200": {
+            "description": "TeamMember[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "TeamMember[] (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/team/{id}/roles": {
+      "put": {
+        "operationId": "admin.team.roles",
+        "tags": [
+          "Operations · People"
+        ],
+        "summary": "Change someone’s roles (the platform always keeps one super admin)",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `team:manage`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "roles": {
+                    "minItems": 1,
+                    "maxItems": 7,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "donor",
+                        "beneficiary",
+                        "volunteer",
+                        "field_auditor",
+                        "content_moderator",
+                        "financial_officer",
+                        "super_admin"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "roles"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "team:manage",
+        "responses": {
+          "200": {
+            "description": "TeamMember",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "TeamMember (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/audit": {
+      "get": {
+        "operationId": "admin.audit",
+        "tags": [
+          "Operations · People"
+        ],
+        "summary": "Append-only audit log: who did what, when, before and after",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `audit:read`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500
+            }
+          }
+        ],
+        "x-permission": "audit:read",
+        "responses": {
+          "200": {
+            "description": "AuditEntry[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "AuditEntry[] (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Problem": {
+        "type": "object",
+        "required": [
+          "type",
+          "title",
+          "status",
+          "error",
+          "requestId"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "requestId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "error": {
+            "type": "object",
+            "required": [
+              "code",
+              "message"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "VALIDATION_FAILED",
+                  "NOT_FOUND",
+                  "FORBIDDEN",
+                  "AMOUNT_TOO_LOW",
+                  "AMOUNT_TOO_HIGH_FOR_GUEST",
+                  "CASE_NOT_DONATABLE",
+                  "ZAKAT_NOT_ELIGIBLE",
+                  "METHOD_NOT_AVAILABLE",
+                  "DEDICATION_TOO_LONG",
+                  "INVALID_TRANSITION",
+                  "FORBIDDEN_TRANSITION",
+                  "REASON_REQUIRED",
+                  "LEDGER_UNBALANCED",
+                  "CURRENCY_MISMATCH",
+                  "AMOUNT_MISMATCH",
+                  "IDEMPOTENCY_CONFLICT",
+                  "PAYMENT_PROVIDER_ERROR",
+                  "INVALID_SIGNATURE",
+                  "DONATION_NOT_REFUNDABLE",
+                  "REFUND_EXCEEDS_DONATION",
+                  "INSUFFICIENT_CASE_FUNDS",
+                  "SELF_APPROVAL_FORBIDDEN",
+                  "RATE_LIMITED",
+                  "UNAUTHENTICATED",
+                  "OTP_INVALID",
+                  "OTP_EXPIRED",
+                  "SESSION_REVOKED",
+                  "INTERNAL"
+                ]
+              },
+              "message": {
+                "type": "string",
+                "description": "For developers. Apps show the localized text for `code`."
+              },
+              "details": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "x-status-by-code": {
+          "VALIDATION_FAILED": 422,
+          "NOT_FOUND": 404,
+          "FORBIDDEN": 403,
+          "UNAUTHENTICATED": 401,
+          "SESSION_REVOKED": 401,
+          "OTP_INVALID": 422,
+          "OTP_EXPIRED": 410,
+          "RATE_LIMITED": 429,
+          "AMOUNT_TOO_LOW": 422,
+          "AMOUNT_TOO_HIGH_FOR_GUEST": 422,
+          "CASE_NOT_DONATABLE": 409,
+          "ZAKAT_NOT_ELIGIBLE": 422,
+          "METHOD_NOT_AVAILABLE": 422,
+          "DEDICATION_TOO_LONG": 422,
+          "INVALID_TRANSITION": 409,
+          "FORBIDDEN_TRANSITION": 403,
+          "REASON_REQUIRED": 422,
+          "LEDGER_UNBALANCED": 409,
+          "CURRENCY_MISMATCH": 422,
+          "AMOUNT_MISMATCH": 422,
+          "IDEMPOTENCY_CONFLICT": 409,
+          "PAYMENT_PROVIDER_ERROR": 502,
+          "INVALID_SIGNATURE": 401,
+          "DONATION_NOT_REFUNDABLE": 409,
+          "REFUND_EXCEEDS_DONATION": 422,
+          "INSUFFICIENT_CASE_FUNDS": 409,
+          "SELF_APPROVAL_FORBIDDEN": 403
+        }
+      }
+    }
+  }
+}

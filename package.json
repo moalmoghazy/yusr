@@ -1,0 +1,44 @@
+{
+  "name": "yusr",
+  "private": true,
+  "description": "يُسر (Yusr) — transparent donation & social-support platform. Monorepo: web, admin, mobile, API and shared packages.",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "doctor": "node scripts/doctor.mjs",
+    "dev": "turbo run dev --filter=!@yusr/mobile",
+    "dev:demo": "YUSR_STORAGE=memory turbo run dev --filter=!@yusr/mobile",
+    "dev:mobile": "pnpm --filter @yusr/mobile dev",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
+    "infra:up": "docker compose -f infra/docker-compose.yml up -d",
+    "infra:down": "docker compose -f infra/docker-compose.yml down",
+    "db:migrate": "pnpm --filter @yusr/api db:migrate",
+    "db:seed": "pnpm --filter @yusr/api db:seed",
+    "db:studio": "pnpm --filter @yusr/api db:studio",
+    "staff:create": "pnpm --filter @yusr/api staff:create",
+    "api:openapi": "pnpm --filter @yusr/api openapi",
+    "prototype": "pnpm --filter @yusr/prototype build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@next/eslint-plugin-next": "^16.0.0",
+    "eslint": "^10.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.0.0",
+    "globals": "^17.0.0",
+    "prettier": "^3.6.2",
+    "turbo": "^2.5.8",
+    "typescript": "^6.0.0",
+    "typescript-eslint": "^8.50.0"
+  }
+}

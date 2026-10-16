@@ -1,0 +1,14 @@
+# Keep the Docker build context small, and never bake local secrets into an image.
+**/node_modules
+**/.next
+**/dist
+**/.turbo
+**/.expo
+**/coverage
+**/*.tsbuildinfo
+**/.env
+**/.env.local
+**/.env.*.local
+apps/mobile/ios
+apps/mobile/android
+.git

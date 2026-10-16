@@ -1,0 +1,51 @@
+{
+  "name": "@yusr/ui",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared React components for the Yusr website and control hub (shadcn-style, Tailwind v4, RTL-first): the case card, donation progress, buttons, badges, cards and the shared icon set.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "@yusr/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./icons": {
+      "@yusr/source": "./src/icons.ts",
+      "types": "./dist/icons.d.ts",
+      "default": "./dist/icons.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --conditions=@yusr/source --import tsx --test test/*.test.tsx"
+  },
+  "dependencies": {
+    "@yusr/core": "workspace:*",
+    "@yusr/i18n": "workspace:*",
+    "@yusr/theme": "workspace:*",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.3.1"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "@types/react": "~19.1.10",
+    "@types/react-dom": "~19.1.9",
+    "@yusr/config": "workspace:*",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "tsup": "^8.5.0",
+    "tsx": "^4.20.6",
+    "typescript": "^6.0.0"
+  }
+}

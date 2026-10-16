@@ -1,0 +1,51 @@
+{
+  // Run and Debug (F5): breakpoints work in the TypeScript sources.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "API (debug, demo data)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/packages/api",
+      "runtimeArgs": ["--env-file-if-exists=.env", "--conditions=@yusr/source", "--import", "tsx"],
+      "program": "${workspaceFolder}/packages/api/src/main.ts",
+      "env": { "YUSR_STORAGE": "memory" },
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "API (debug, PostgreSQL)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/packages/api",
+      "runtimeArgs": ["--env-file-if-exists=.env", "--conditions=@yusr/source", "--import", "tsx"],
+      "program": "${workspaceFolder}/packages/api/src/main.ts",
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Website (Next.js server, debug)",
+      "type": "node-terminal",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/web",
+      "command": "pnpm dev"
+    },
+    {
+      "name": "Control hub (Next.js server, debug)",
+      "type": "node-terminal",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/admin",
+      "command": "pnpm dev"
+    },
+    {
+      "name": "Test the open file",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${fileDirname}/..",
+      "runtimeArgs": ["--conditions=@yusr/source", "--import", "tsx", "--test"],
+      "program": "${file}",
+      "skipFiles": ["<node_internals>/**"],
+      "console": "integratedTerminal"
+    }
+  ]
+}

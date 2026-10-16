@@ -1,0 +1,38 @@
+{
+  // Format with Prettier and fix lint problems on every save.
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": { "source.fixAll.eslint": "explicit" },
+  "eslint.useFlatConfig": true,
+  "eslint.workingDirectories": [{ "mode": "auto" }],
+  "[sql]": { "editor.formatOnSave": false },
+  "[markdown]": { "editor.formatOnSave": false, "editor.wordWrap": "on" },
+
+  // The project's TypeScript, not the one bundled with VS Code.
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+
+  // Tailwind class suggestions inside cn(…) / cx(…) and the CSS files that use @theme.
+  "tailwindCSS.experimental.classRegex": [
+    ["cn\\(([^)]*)\\)", "[\"'`]([^\"'`]*)[\"'`]"],
+    ["cx\\(([^)]*)\\)", "[\"'`]([^\"'`]*)[\"'`]"]
+  ],
+  "files.associations": { "*.css": "tailwindcss" },
+
+  // Arabic text: render right-to-left runs correctly and keep invisible characters visible.
+  "editor.unicodeHighlight.ambiguousCharacters": false,
+  "editor.renderControlCharacters": true,
+
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.next": true,
+    "**/.turbo": true,
+    "**/.expo": true,
+    "pnpm-lock.yaml": true
+  }
+}

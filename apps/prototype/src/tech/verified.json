@@ -1,0 +1,57 @@
+{
+  "at": "2026-10-09T19:47:18.059Z",
+  "node": "v22.22.2",
+  "postgres": "psql (PostgreSQL) 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)",
+  "suites": [
+    {
+      "package": "core",
+      "tests": 46,
+      "pass": 46,
+      "fail": 0,
+      "skipped": 0,
+      "durationMs": 1575
+    },
+    {
+      "package": "i18n",
+      "tests": 12,
+      "pass": 12,
+      "fail": 0,
+      "skipped": 0,
+      "durationMs": 282
+    },
+    {
+      "package": "theme",
+      "tests": 27,
+      "pass": 27,
+      "fail": 0,
+      "skipped": 0,
+      "durationMs": 277
+    },
+    {
+      "package": "sdk",
+      "tests": 17,
+      "pass": 17,
+      "fail": 0,
+      "skipped": 0,
+      "durationMs": 635
+    },
+    {
+      "package": "ui",
+      "tests": 12,
+      "pass": 12,
+      "fail": 0,
+      "skipped": 0,
+      "durationMs": 505
+    },
+    {
+      "package": "api",
+      "tests": 85,
+      "pass": 85,
+      "fail": 0,
+      "skipped": 0,
+      "durationMs": 10533
+    }
+  ],
+  "total": 199,
+  "failed": 0
+}
