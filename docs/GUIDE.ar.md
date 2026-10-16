@@ -375,26 +375,29 @@ git push -u origin feature/housing-category
 
 ### نسخة تجريبية مجانية (للعرض)
 
-قبل الإطلاق الحقيقي يمكن نشر المشروع كله كنسخة تجريبية مجانية للعرض على الشركاء والفريق:
+قبل الإطلاق الحقيقي يمكن نشر المشروع كله مجانًا كنسخة تجريبية للعرض على الشركاء والفريق، على Vercel
+وحده (بدون بطاقة بنكية): ثلاثة مشاريع من نفس المستودع.
 
-| الجزء | المكان | الإعداد الجاهز في المستودع |
+| الجزء | Root Directory في Vercel | الإعداد الجاهز |
 |---|---|---|
-| الـ API | Render (الخطة المجانية) | `render.yaml`: من Render ← New ← Blueprint ← اختر المستودع |
-| الموقع | Vercel (Hobby) | `apps/web/vercel.json`: Root Directory = `apps/web` |
-| لوحة التحكم | Vercel (Hobby) | `apps/admin/vercel.json`: Root Directory = `apps/admin` |
+| الموقع | `apps/web` | `apps/web/vercel.json` |
+| لوحة التحكم | `apps/admin` | `apps/admin/vercel.json` |
+| الـ API | `packages/api` | `packages/api/vercel.json` (الـ API كله كدالة Vercel واحدة: `packages/api/api/index.js`) |
 
 - **وضع العرض** (`YUSR_DEMO=true` في الـ API و`NEXT_PUBLIC_DEMO=true` في الموقع ولوحة التحكم): بيانات
   تجريبية في الذاكرة ودفع تجريبي فقط، وشريط «نسخة تجريبية — لا يُخصم أي مبلغ» أعلى كل صفحة، والموقع
   محجوب عن محركات البحث، وشارة وزارة التضامن مخفية. يرفض الـ API هذا الوضع مع قاعدة بيانات حقيقية.
-- متغيرات Vercel للموقع: `YUSR_API_URL` (عنوان Render + `/v1`)، `NEXT_PUBLIC_SITE_URL`، `NEXT_PUBLIC_DEMO=true`،
-  `NEXT_PUBLIC_SHOW_SUPERVISION=false`، `UPLOAD_ORIGIN` (عنوان Render)، `YUSR_API_TIMEOUT_MS=90000`.
-  وللوحة التحكم: `YUSR_API_URL` و`NEXT_PUBLIC_DEMO=true` و`YUSR_API_TIMEOUT_MS=90000`.
-- في Render: `PUBLIC_WEB_URL` و`PUBLIC_ADMIN_URL` (عنوانا Vercel)، و`CORS_ORIGINS` (عنوان الموقع).
-- **حدود المجانية**: خادم Render المجاني ينام بعد 15 دقيقة بلا زيارات، وأول فتح بعدها يأخذ حوالي دقيقة
-  (يظهر للزائر «جارٍ التحميل»)، والبيانات التجريبية تبدأ من جديد عند كل استيقاظ. وخطة Vercel المجانية
-  للاستخدام الشخصي غير التجاري — للإطلاق الفعلي استخدم البنية التالية.
+- **متغيرات الـ API**: `YUSR_DEMO=true`، `YUSR_STORAGE=memory`، `RUN_WORKER=false`، `NODEJS_HELPERS=0`،
+  `PUBLIC_API_URL` و`PUBLIC_WEB_URL` و`PUBLIC_ADMIN_URL` (العناوين الثلاثة)، `CORS_ORIGINS` (عنوان الموقع)،
+  وأسرار عشوائية: `JWT_SECRET` و`OTP_PEPPER` و`NATIONAL_ID_PEPPER` و`RECEIPT_TOKEN_SECRET` و`SIMULATOR_SECRET`
+  و`DATA_KEY_BASE64` (32 بايت base64).
+- **متغيرات الموقع**: `YUSR_API_URL` (عنوان الـ API + `/v1`)، `NEXT_PUBLIC_SITE_URL`، `NEXT_PUBLIC_DEMO=true`،
+  `NEXT_PUBLIC_SHOW_SUPERVISION=false`، `UPLOAD_ORIGIN` (عنوان الـ API). **ولوحة التحكم**: `YUSR_API_URL` و`NEXT_PUBLIC_DEMO=true`.
+- **حدود المجانية**: البيانات التجريبية في ذاكرة الدالة، فتبدأ من جديد كلما أُعيد تشغيلها بعد فترة
+  هدوء (أول طلب بعدها يأخذ ثانيتين تقريبًا). وخطة Vercel المجانية للاستخدام الشخصي غير التجاري — للإطلاق
+  الفعلي استخدم البنية التالية. (بديل: `render.yaml` يشغّل الـ API على Render، ويطلب Render بطاقة للتحقق.)
 - **الدخول للوحة التحكم في النسخة التجريبية**: رقم مشرف تجريبي (`01000000001`)، ورمز الـ SMS يظهر في
-  سجلات Render (Logs)، ورمز تطبيق المصادقة من المفتاح التجريبي `JBSWY3DPEHPK3PXP`.
+  سجلات مشروع الـ API على Vercel (Logs)، ورمز تطبيق المصادقة من المفتاح التجريبي `JBSWY3DPEHPK3PXP`.
 
 ### البنية المقترحة للإطلاق الحقيقي
 

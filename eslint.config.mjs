@@ -77,7 +77,7 @@ export default defineConfig(
 
   // CommonJS files (Metro, Babel and other tool configs).
   {
-    files: ['**/*.cjs', 'apps/mobile/*.js'],
+    files: ['**/*.cjs', 'apps/mobile/*.js', 'packages/api/api/*.js'],
     languageOptions: { sourceType: 'commonjs', globals: globals.node },
     rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
