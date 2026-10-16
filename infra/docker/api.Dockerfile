@@ -20,7 +20,8 @@ RUN pnpm install --frozen-lockfile
 COPY --from=prune /repo/out/full/ .
 RUN pnpm turbo run build --filter=@yusr/api...
 # Keep the production dependencies only, from the same lockfile, so every image is reproducible.
-RUN pnpm install --frozen-lockfile --prod
+# (Switching to production-only rebuilds node_modules; allow that without a terminal to confirm it.)
+RUN pnpm install --frozen-lockfile --prod --config.confirm-modules-purge=false
 
 FROM node:22-alpine AS runtime
 ENV NODE_ENV=production PORT=4000
