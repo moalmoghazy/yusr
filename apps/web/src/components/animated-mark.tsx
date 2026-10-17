@@ -2,34 +2,57 @@
 
 import { brand } from '@yusr/theme';
 import { Icon } from '@yusr/ui';
-import { useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 /**
  * «الضمّة الذهبية», drawn live: the bowl of ي is written, its two dots appear, then the golden ḍamma
- * falls into place with a ripple. The drop leans towards the pointer; a click on the mark (or the
- * button) plays it again. With reduced motion the finished mark is shown still.
+ * falls into place with a ripple. Wherever the pointer moves on the page, the ḍamma moves towards it
+ * (the nearer, the less); a click on the mark (or the button) plays it again. With reduced motion
+ * the finished mark is shown still.
  */
 export function AnimatedMark({ label, replayLabel }: { label: string; replayLabel: string }) {
   const { logo } = brand;
   const [run, setRun] = useState(0);
   const stage = useRef<HTMLDivElement>(null);
 
-  const lean = (event: PointerEvent<HTMLDivElement>) => {
-    const box = event.currentTarget.getBoundingClientRect();
-    const x = (event.clientX - box.left) / box.width - 0.5;
-    const y = (event.clientY - box.top) / box.height - 0.5;
-    event.currentTarget.style.setProperty('--ym-x', x.toFixed(3));
-    event.currentTarget.style.setProperty('--ym-y', y.toFixed(3));
-  };
-  const settle = () => {
-    stage.current?.style.setProperty('--ym-x', '0');
-    stage.current?.style.setProperty('--ym-y', '0');
-  };
+  // Follow the pointer across the whole page: a unit direction from the mark to the pointer, scaled
+  // by distance (full lean from ~320px away), written to two CSS variables once per frame.
+  useEffect(() => {
+    const element = stage.current;
+    if (!element || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let frame = 0;
+    let target = { x: 0, y: 0 };
+    const paint = () => {
+      frame = 0;
+      element.style.setProperty('--ym-x', target.x.toFixed(3));
+      element.style.setProperty('--ym-y', target.y.toFixed(3));
+    };
+    const follow = (event: PointerEvent) => {
+      const box = element.getBoundingClientRect();
+      const dx = event.clientX - (box.left + box.width / 2);
+      const dy = event.clientY - (box.top + box.height * 0.3);
+      const distance = Math.hypot(dx, dy) || 1;
+      const reach = Math.min(distance / 320, 1);
+      target = { x: (dx / distance) * reach, y: (dy / distance) * reach };
+      if (!frame) frame = requestAnimationFrame(paint);
+    };
+    const rest = () => {
+      target = { x: 0, y: 0 };
+      if (!frame) frame = requestAnimationFrame(paint);
+    };
+    window.addEventListener('pointermove', follow, { passive: true });
+    document.documentElement.addEventListener('pointerleave', rest);
+    return () => {
+      window.removeEventListener('pointermove', follow);
+      document.documentElement.removeEventListener('pointerleave', rest);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, []);
   const replay = () => setRun((value) => value + 1);
 
   return (
     <div className="flex flex-col items-center gap-5">
-      <div ref={stage} className="ym-stage" onPointerMove={lean} onPointerLeave={settle} onClick={replay}>
+      <div ref={stage} className="ym-stage" onClick={replay}>
         <svg key={run} viewBox="-18 -18 100 100" className="ym-mark" role="img" aria-label={label}>
           <defs>
             <radialGradient id="ym-glow" cx="50%" cy="42%" r="50%">

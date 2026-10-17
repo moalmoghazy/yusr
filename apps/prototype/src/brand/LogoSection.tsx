@@ -291,19 +291,18 @@ function WordmarkConstruction() {
     for (let y = Math.ceil(box.y / 4) * 4; y <= box.y + box.h; y += 4) ys.push(y);
     return { xs, ys };
   }, [box.x, box.y, box.w, box.h]);
-  const between = (g.sin[0] + g.sin[1]) / 2;
-  const [dammaX, dammaY] = wordmark.damma.transform.match(/-?[\d.]+/g)!.map(Number) as [number, number];
+  const [dammaX = 0, dammaY = 0] = wordmark.damma.d.match(/-?[\d.]+/g)!.map(Number);
   const markers = [
-    // 1 — the round end of ر's tail.
-    { n: 1, x: g.tail.x, y: row, to: [g.tail.x, g.tail.y + half + 0.7] },
-    // 2 — the soft bowl between two teeth of س (pointed at from above, between the teeth).
-    { n: 2, x: between, y: vy + 6.2, to: [between, g.baseline - half - 1] },
+    // 1 — ر: one upright dropping below the line.
+    { n: 1, x: g.ra, y: row, to: [g.ra, g.descender + 0.7] },
+    // 2 — the ي's broad turn into the baseline (pointed at from above, right of the ي).
+    { n: 2, x: g.ya + 10, y: vy + 6.2, to: [g.ya + half * 0.7, g.baseline] },
     // 3 — the dots of ي.
-    { n: 3, x: g.ya, y: row, to: [g.ya, g.dots + wordmark.dots[0].r + 0.7] },
+    { n: 3, x: wordmark.dots[0].cx, y: row, to: [wordmark.dots[0].cx, wordmark.dots[0].cy + wordmark.dots[0].r + 0.7] },
     // 4 — the ḍamma.
-    { n: 4, x: dammaX - 13, y: dammaY + 1.5, to: [dammaX - 6.4, dammaY + 0.6] },
+    { n: 4, x: dammaX - 22, y: dammaY + 1.5, to: [dammaX - 14, dammaY + 1] },
   ] as const;
-  const lines = [g.top, g.teeth, g.baseline, g.dots];
+  const lines = [g.top, g.baseline, g.bottom];
   return (
     <svg viewBox={`${box.x} ${box.y} ${box.w} ${box.h}`} className="construction-svg wordmark-svg" role="img" aria-label={t('proto.brand.wordmark')}>
       <g className="cg-grid">
@@ -317,13 +316,8 @@ function WordmarkConstruction() {
       {lines.map((y) => (
         <line key={y} x1={box.x + 1} y1={y} x2={box.x + box.w - 1} y2={y} className="cg-axis cg-axis-strong" />
       ))}
-      {/* Fillet guides: the circles each tooth of س turns around. */}
-      {g.sin.map((x) => (
-        <g key={x}>
-          <circle cx={x + g.fillet} cy={g.baseline - g.fillet} r={g.fillet} className="cg-guide" />
-          <circle cx={x - g.fillet} cy={g.baseline - g.fillet} r={g.fillet} className="cg-guide" />
-        </g>
-      ))}
+      {/* The circle the ي turns around into the baseline. */}
+      <circle cx={g.ya - g.turn} cy={g.baseline - g.turn} r={g.turn} className="cg-guide" />
       <g className="cg-shapes">
         <WordmarkShapes ink="var(--primary)" drop="var(--highlight)" />
         <g transform={`translate(${lockup.markX} 0)`}>

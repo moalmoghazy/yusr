@@ -45,7 +45,7 @@ export const en: Messages = {
     howItWorks: 'How it works',
     transparency: 'Transparency',
     submitCase: 'Submit a case',
-    identity: 'Visual identity',
+    about: 'About us',
     account: 'My giving',
     admin: 'Control hub',
     menu: 'Menu',
@@ -445,6 +445,19 @@ export const en: Messages = {
     notificationDisbursed: '{amount} paid to {payee} for “{title}”',
     notificationReceipt: 'Your receipt {number} is ready',
   },
+  about: {
+    title: 'About us',
+    description: 'Yusr is a giving platform built for fair distribution and lasting, genuine giving that reaches people in need with transparency and dignity.',
+    question: 'Who are we?',
+    lead: 'Yusr is a giving platform. Our aim is fair distribution and lasting, genuine giving that reaches people in need — with transparency, and with dignity.',
+    body: 'We believe trust is built on clarity, and that real kindness needs no noise. So we visit every case before it is published, follow every pound from the moment it is given until it is paid directly to the hospital, the school or the creditor, and keep the names, faces and private lives of the people we serve to ourselves. We want giving to be easy for the giver, dignified for the receiver, and honest at every step in between.',
+    values: {
+      fair: { title: 'Fair distribution', body: 'Those in greatest need first, by clear criteria.' },
+      lasting: { title: 'Lasting giving', body: 'We follow every case until it is complete — not once and done.' },
+      open: { title: 'Full transparency', body: 'A receipt for every gift, and a documented trail for every pound.' },
+      dignity: { title: 'Dignity first', body: 'No photos, and nothing that identifies the people we help.' },
+    },
+  },
   identity: {
     title: 'Visual identity',
     description: 'The Yusr mark, “the golden ḍamma”, and the “garden of giving” pattern.',
@@ -454,7 +467,7 @@ export const en: Messages = {
     patternName: 'The garden of giving',
     replay: 'Replay',
     logoStory:
-      'The ḍamma is the small mark that turns يسر into يُسر, “ease”. We drew it as a golden drop resting above the curve of the letter yā’, with the letter’s two dots side by side beneath the curve, in its own colour. The curve is also a pair of open hands: a small gift, held carefully, that changes the meaning of someone’s day.',
+      'The ḍamma is the small mark that turns يسر into يُسر, “ease”. We drew it as it is written — a round head with a short tail — tilted at 45°, in gold, resting above the curve of the letter yā’, with the letter’s two dots side by side beneath the curve, in its own colour. The curve is also a pair of open hands: a small gift, held carefully, that changes the meaning of someone’s day.',
     patternStory:
       'A pattern from the star-and-strapwork tilework of al-Andalus: an eight-pointed star, linked to its neighbours by interlaced bands that draw octagonal cells between them. In the heart of each star, a rosette of seven golden drops — the ḍamma of the logo, repeated seven times like the seven ears: one gift that multiplies. Where four tiles meet, a small lozenge holds a seed.',
     starLabel: 'One star of the garden of giving, enlarged: seven golden drops at its heart, like the seven ears',

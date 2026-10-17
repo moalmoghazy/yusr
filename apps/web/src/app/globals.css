@@ -122,10 +122,11 @@
   opacity: 0;
 }
 
-/* The drop leans towards the pointer, and the glow follows a little. */
+/* The ḍamma moves towards the pointer wherever it is on the page (animated-mark.tsx sets --ym-x/y,
+   a direction scaled by distance, each in -1…1); the glow follows a little. */
 .ym-lean {
-  transform: translate(calc(var(--ym-x) * 5px), calc(var(--ym-y) * 4px)) rotate(calc(var(--ym-x) * 14deg));
-  transition: transform 0.5s cubic-bezier(0.34, 1.4, 0.5, 1);
+  transform: translate(calc(var(--ym-x) * 6px), calc(var(--ym-y) * 6px)) rotate(calc(var(--ym-x) * 16deg));
+  transition: transform 0.45s cubic-bezier(0.34, 1.4, 0.5, 1);
 }
 
 .ym-glow {

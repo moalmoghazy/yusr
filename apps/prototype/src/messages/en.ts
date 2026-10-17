@@ -170,7 +170,7 @@ export const protoEn: Widen<typeof protoAr> = {
       eyebrow: 'Visual identity',
       title: 'The golden ḍamma',
       story:
-        'The ḍamma is the small mark that turns يسر into يُسر, “ease”. We drew it as a golden drop resting above the curve of the letter yā’, with the letter’s two dots side by side beneath the curve, in its own colour. The curve is also a pair of open hands: a small gift, held carefully, that changes the meaning of someone’s day.',
+        'The ḍamma is the small mark that turns يسر into يُسر, “ease”. We drew it as it is written — a round head with a short tail — tilted at 45°, in gold, resting above the curve of the letter yā’, with the letter’s two dots side by side beneath the curve, in its own colour. The curve is also a pair of open hands: a small gift, held carefully, that changes the meaning of someone’s day.',
       anatomy: {
         bowl: 'The yā’ bowl / open hands',
         dots: 'The two dots of yā’, side by side under the curve',
@@ -248,17 +248,16 @@ export const protoEn: Widen<typeof protoAr> = {
         'Drawn on a 64-unit grid: the curve is a half-ellipse with the two dots of yā’ side by side beneath its lowest point, on one line, and the ḍamma is a drop tilted the way a hand writes it.',
       lockups: 'Mark and name',
       lockupsBody: 'The mark leads in the reading direction: right of the Arabic name, left of the Latin one.',
-      wordmark: 'The name, drawn with the mark’s pen',
+      wordmark: 'The name, in a geometric Kufi',
       wordmarkBody:
-        'We don’t set «يُسر» in a font: its letters are drawn with the pen that drew the yā’ of the mark. One line at the curve’s weight, round at both ends, with no sharp corner anywhere — even the teeth of the sīn meet the line through soft curves. The word stands on the curve’s own baseline, so name and mark read as one drawing, and they look the same on every screen with no font to load.',
+        'We don’t set «يُسر» in a ready-made font: it is lettered in a heavy geometric Kufi with round tops. The yā’ and the three teeth of the sīn stand at one height on a broad baseline, the yā’ turns into it through a single curve, and the rā’ is one upright that drops below the line. Above the yā’, the ḍamma as it is written — a round head with a level tail — in gold. The word stands on the bowl’s own line and looks the same on every screen, with no font to load.',
       wordmarkParts: {
-        stroke: 'One line at the curve’s weight, round at both ends',
-        corners: 'Soft corners: the teeth of the sīn meet the line in curves',
-        dots: 'The dots of yā’, the same size and height as the mark’s',
-        damma: 'The ḍamma: the mark’s golden drop at 78%',
+        stroke: 'The rā’: one upright, dropping below the line',
+        corners: 'The yā’ turns into the line through one broad curve',
+        dots: 'The two round dots of the yā’, under its stem',
+        damma: 'The ḍamma as it is written: a round head, a level tail',
       },
-      wordmarkGuides:
-        'Shared lines: the yā’ tooth reaches the ends of the curve, the word stands on its lowest point, and the dots of word and mark sit on one line.',
+      wordmarkGuides: 'Shared lines: the letters reach the top of the bowl’s ends, and the baseline sits on its lowest edge.',
       backgrounds: 'Screen backgrounds',
       backgroundsBody:
         '1920 × 1200 px, generated from the brand file: the pattern shows at the edges and clears behind the logo, and the logo is drawn without fonts, so it looks the same anywhere. Files in packages/theme/assets/backgrounds.',

@@ -45,7 +45,37 @@ export interface LogoGeometry {
   bounds: { x: number; y: number; width: number; height: number };
 }
 
-const DROP_PATH = 'M32 8.5c0 0-7.6 9.1-7.6 14.1a7.6 7.6 0 0 0 15.2 0c0-5-7.6-14.1-7.6-14.1Z';
+const r2 = (value: number) => Math.round(value * 100) / 100;
+
+/**
+ * A ḍamma as it is written: a round head with a short tail leaving from the bottom of the head.
+ * At `angle` 0 the tail runs straight out to the left, level with the head's bottom (as above
+ * the lettered «يُسر»); a negative angle turns it anticlockwise, so -45 sends the tail down and to
+ * the left. Returned as one filled path (head and tail drawn in the same direction, so they join).
+ */
+export function dammaPath(cx: number, cy: number, r: number, options: { angle?: number; tail?: number; tailWidth?: number } = {}): string {
+  const { angle = 0, tail = 2 * r, tailWidth = 0.7 * r } = options;
+  const turn = (angle * Math.PI) / 180;
+  const at = (x: number, y: number): [number, number] => [cx + x * Math.cos(turn) - y * Math.sin(turn), cy + x * Math.sin(turn) + y * Math.cos(turn)];
+  const p = ([x, y]: [number, number]) => `${r2(x)} ${r2(y)}`;
+  const h = tailWidth / 2;
+  const level = r - h; // the tail's centre line, so its lower edge meets the bottom of the head
+  // Head: a circle, clockwise on screen.
+  const head = `M${p(at(r, 0))}A${r2(r)} ${r2(r)} 0 1 1 ${p(at(-r, 0))}A${r2(r)} ${r2(r)} 0 1 1 ${p(at(r, 0))}Z`;
+  // Tail: a capsule from under the head's centre out to the left, also clockwise.
+  const tailPath = [
+    `M${p(at(0, level - h))}`,
+    `L${p(at(0, level + h))}`,
+    `L${p(at(-tail, level + h))}`,
+    `A${r2(h)} ${r2(h)} 0 0 1 ${p(at(-tail, level - h))}`,
+    'Z',
+  ].join('');
+  return head + tailPath;
+}
+
+/** The mark's ḍamma: a real ḍamma, its tail turned 45° down to the left, its head over the bowl's mouth. */
+const DAMMA = { cx: 36.2, cy: 15.6, r: 6.8, angle: -45 } as const;
+const DAMMA_PATH = dammaPath(DAMMA.cx, DAMMA.cy, DAMMA.r, { angle: DAMMA.angle });
 
 /**
  * The explored versions of the mark, kept side by side so the identity can be switched
@@ -65,9 +95,9 @@ export const LOGO_VARIANTS = {
       ],
     },
     dotsMinSize: 20,
-    drop: { d: DROP_PATH, transform: 'translate(3 -5.5) rotate(-145 32 21.5)' },
-    guides: { bowl: { cx: 32, cy: 24, rx: 19.5, ry: 21 }, drop: { cx: 35.63, cy: 15.1, r: 7.6 } },
-    bounds: { x: 8.7, y: 7.5, width: 46.6, height: 50.3 },
+    drop: { d: DAMMA_PATH, transform: 'translate(0 0)' },
+    guides: { bowl: { cx: 32, cy: 24, rx: 19.5, ry: 21 }, drop: { cx: DAMMA.cx, cy: DAMMA.cy, r: DAMMA.r } },
+    bounds: { x: 8.7, y: r2(DAMMA.cy - DAMMA.r), width: 46.6, height: r2(57.8 - (DAMMA.cy - DAMMA.r)) },
   },
   /** Previous: hollow dots cut into the curve itself, on its centre line. */
   dotsInCurve: {
@@ -81,8 +111,8 @@ export const LOGO_VARIANTS = {
       ],
     },
     dotsMinSize: 20,
-    drop: { d: DROP_PATH, transform: 'translate(3 1) rotate(-145 32 21.5)' },
-    guides: { bowl: { cx: 32, cy: 30.5, rx: 19.5, ry: 21 }, drop: { cx: 35.63, cy: 21.6, r: 7.6 } },
+    drop: { d: DAMMA_PATH, transform: 'translate(0 6.5)' },
+    guides: { bowl: { cx: 32, cy: 30.5, rx: 19.5, ry: 21 }, drop: { cx: DAMMA.cx, cy: DAMMA.cy + 6.5, r: DAMMA.r } },
     bounds: { x: 8.7, y: 14, width: 46.6, height: 41.3 },
   },
 } as const satisfies Record<string, LogoGeometry>;
@@ -109,7 +139,7 @@ export const brand: BrandConfig = {
   tagline: { ar: 'فإنّ مع العسر يسرًا', en: 'With hardship comes ease' },
   descriptor: { ar: 'منصة عطاء موثوقة وشفافة', en: 'Trusted, transparent giving' },
   logo: LOGO_VARIANTS.dotsBelow,
-  wordmark: 'typeset',
+  wordmark: 'lettered',
   contact: { email: 'care@yusr.example', phone: '+20 100 000 0000', website: 'https://yusr.example' },
   legal: {
     entity: { ar: 'مؤسسة يُسر للتنمية المجتمعية', en: 'Yusr Community Development Foundation' },

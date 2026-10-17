@@ -8,8 +8,9 @@ by the website, the control hub, the mobile app, receipts and the prototype.
 
 ## The mark — «الضمّة الذهبية» (the golden ḍamma)
 
-The ḍamma is the small mark that turns يسر into **يُسر** — "ease". The logo holds it as a golden drop
-above an open curve: the bowl of the letter **ي**, with its **two dots beneath it, solid, close
+The ḍamma is the small mark that turns يسر into **يُسر** — "ease". The logo holds it as it is written —
+**a round head with a short tail**, in gold, tilted 45° so the tail points down to the left — above
+an open curve: the bowl of the letter **ي**, with its **two dots beneath it, solid, close
 together and in the same colour as the curve**. Read another way, the curve is a pair of cupped
 hands. A small gift, held carefully, that changes the meaning of someone's day.
 
@@ -17,7 +18,7 @@ hands. A small gift, held carefully, that changes the meaning of someone's day.
 |---|---|
 | `packages/theme/assets/logo-mark.svg` | The mark on light backgrounds |
 | `packages/theme/assets/logo-mark-inverse.svg` | The mark on the primary colour or photos |
-| `packages/theme/assets/logo-ar.svg`, `logo-en.svg` | Mark + name, set in the logo face (Reem Kufi) |
+| `packages/theme/assets/logo-ar.svg`, `logo-en.svg` | Mark + name: the Arabic lettered in Kufi, the Latin set in Reem Kufi |
 | `packages/theme/assets/app-icon.svg` | 1024 × 1024 app icon (rendered to PNG for iOS / Android) |
 | `packages/theme/assets/backgrounds/*.svg` | 1920 × 1200 screen backgrounds: emerald, light and dark |
 
@@ -25,21 +26,29 @@ hands. A small gift, held carefully, that changes the meaning of someone's day.
   draw from it, so there is one logo, not copies.
 - **Small sizes**: below 20 px the two dots join into one short stroke (as ي is written by hand
   in Ruqʿa), so the mark stays legible in a tab or a notification.
-- **Clear space**: at least the height of the drop on every side. **Minimum size**: 16 px (mark),
+- The ḍamma is drawn by `dammaPath()` (head radius, tail twice as long, tail 0.7 of the radius
+  thick, level with the head's bottom), turned by `angle`; the mark uses -45°.
+- **Animated**: the website's «من نحن» page (`/about`) draws the mark live and replays on click;
+  the ḍamma moves towards the pointer wherever it is on the page.
+- **Clear space**: at least the height of the ḍamma on every side. **Minimum size**: 16 px (mark),
   96 px wide (mark + wordmark).
-- **Don't** recolour the drop (it is always the highlight gold), outline the mark, rotate it, or
+- **Don't** recolour the ḍamma (it is always the highlight gold), outline the mark, rotate it, or
   place it on busy imagery without the inverse version.
 
 ### The name
 
-«يُسر» (and «Yusr») beside the mark is set in **Reem Kufi**, the *logo face*
-(`typography.fonts.logo`, `--y-font-logo`, `font-logo`). It is kept apart from the heading face,
-so headings can change without touching the logo. The mark leads in the reading direction: right
-of the Arabic name, left of the Latin one.
+The Arabic name «يُسر» beside the mark is **lettered in a geometric Kufi** (`wordmark.ts`), not set
+in a font: one heavy weight with round tops; ي and the three teeth of س at one height on a broad
+baseline, meeting it in square inside corners; the ي turning into the line through one broad
+curve; ر a single upright dropping below the line; two round dots under the ي; and above it the
+ḍamma as it is written — a round head with a level tail — in gold. Its teeth reach the top of the
+mark's bowl and its baseline sits on the bowl's lowest edge, so word and mark line up. It needs no
+font, so it looks the same everywhere.
 
-A lettered alternative is kept in `wordmark.ts`: «يُسر» drawn with the mark's own pen (one line
-at the bowl's weight, round ends, the teeth of س joined by smooth bowls, the same dots and drop).
-Set `brand.wordmark = 'lettered'` to use it everywhere; the default is `'typeset'`.
+«Yusr» (and «يُسر» when `brand.wordmark = 'typeset'`) is set in **Reem Kufi**, the *logo face*
+(`typography.fonts.logo`, `--y-font-logo`, `font-logo`), kept apart from the heading face so
+headings can change without touching the logo. The mark leads in the reading direction: right of
+the Arabic name, left of the Latin one.
 
 ### Screen backgrounds
 

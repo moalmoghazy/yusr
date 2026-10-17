@@ -187,9 +187,9 @@ describe('Logo', () => {
     assert.ok(tiny.includes('<line '));
   });
 
-  it('sets the name in the logo face beside the mark, in both languages', async () => {
+  it('can set the Arabic name in the logo face, and always sets the English one there', async () => {
     const { Logo } = await import('../src/index');
-    const ar = renderToStaticMarkup(<Logo locale="ar" size={32} />);
+    const ar = renderToStaticMarkup(<Logo locale="ar" size={32} wordmark="typeset" />);
     assert.ok(ar.includes('aria-label="شعار يُسر"') && ar.includes('role="img"'));
     assert.ok(ar.includes('>يُسر</span>') && ar.includes('font-logo'), 'the logo face, not the heading face');
     assert.equal((ar.match(/<circle /g) ?? []).length, 2, 'the mark’s two dots');
@@ -197,11 +197,11 @@ describe('Logo', () => {
     assert.ok(en.includes('>Yusr</span>') && en.includes('font-logo'));
   });
 
-  it('can letter «يُسر» with the mark’s pen instead', async () => {
+  it('letters «يُسر» in Kufi beside the mark by default', async () => {
     const { Logo } = await import('../src/index');
     const { lockup, wordmark } = await import('@yusr/theme');
-    const ar = renderToStaticMarkup(<Logo locale="ar" size={32} wordmark="lettered" />);
-    assert.ok(ar.includes(`d="${wordmark.stroke.d}"`) && ar.includes('stroke-linejoin="round"'), 'the word is one round stroke');
+    const ar = renderToStaticMarkup(<Logo locale="ar" size={32} />);
+    assert.ok(ar.includes(`d="${wordmark.stroke.d}"`) && ar.includes('stroke-linecap="round"'), 'the word is drawn, with round ends');
     assert.ok(ar.includes(`translate(${lockup.markX} 0)`), 'the mark shares the word’s grid');
     assert.equal((ar.match(/<circle /g) ?? []).length, 4, 'two dots in the word, two in the mark');
     assert.ok(!ar.includes('يُسر<'), 'no text: the word is drawn');

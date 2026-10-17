@@ -9,6 +9,7 @@ import {
   andalusianPattern,
   arabicLockup,
   arabicWordmark,
+  dammaPath,
   displayStack,
   logoBackgroundSvg,
   logoLockupSvg,
@@ -140,39 +141,44 @@ describe('logo geometry', () => {
 
 describe('wordmark', () => {
   const logo = brand.logo;
-  const baseline = logo.guides.bowl.cy + logo.guides.bowl.ry;
   const numbers = (d: string) => d.match(/-?\d+(?:\.\d+)?/g)!.map(Number);
 
-  it('is lettered in the mark’s own stroke, sitting on the bowl’s baseline', () => {
-    assert.equal(wordmark.stroke.width, logo.bowl.strokeWidth);
+  it('is lettered in a heavy Kufi whose teeth reach the top of the bowl and sit on its lowest edge', () => {
+    const { guides } = wordmark;
+    const half = logo.bowl.strokeWidth / 2;
+    assert.equal(guides.top, logo.guides.bowl.cy - half);
+    assert.equal(guides.bottom, logo.guides.bowl.cy + logo.guides.bowl.ry + half);
+    assert.ok(wordmark.stroke.width > logo.bowl.strokeWidth, 'a heavier weight than the bowl');
+    assert.ok(Math.abs(guides.baseline + wordmark.stroke.width / 2 - guides.bottom) < 0.02, 'the baseline stroke ends on the bowl’s lowest edge');
     const [startX, startY] = numbers(wordmark.stroke.d);
-    assert.equal(startY, logo.guides.bowl.cy, 'the tooth of ي is as tall as the bowl');
-    assert.ok(wordmark.stroke.d.includes(` ${baseline}`), 'the letters run on the bowl’s lowest line');
-    assert.equal(startX, 72);
+    assert.equal(startX, 72, 'the word starts at the ي');
+    assert.ok(Math.abs(startY! - wordmark.stroke.width / 2 - guides.top) < 0.02, 'with a round end at the shared top');
   });
 
-  it('draws the dots of ي exactly like the mark’s, centred under its tooth', () => {
+  it('stands ي and the teeth of س at one height, evenly spaced, with ر dropping below the line on the left', () => {
+    const { guides } = wordmark;
+    assert.ok(guides.ya > guides.sin[0] && guides.sin[0] > guides.sin[1] && guides.sin[1] > guides.sin[2] && guides.sin[2] > guides.ra);
+    assert.ok(Math.abs(guides.sin[0] - guides.sin[1] - (guides.sin[1] - guides.sin[2])) < 0.2, 'teeth evenly spaced');
+    assert.ok(guides.descender > guides.bottom, 'ر ends below the line');
+    assert.ok(guides.turn > wordmark.stroke.width / 2, 'the ي turns into the line through a curve, round inside too');
+  });
+
+  it('puts two round dots under the ي and a written ḍamma above it', () => {
     const [a, b] = wordmark.dots;
-    const [markA, markB] = logo.dots.items;
-    assert.equal(a.r, markA.r);
-    assert.equal(a.cy, markA.cy, 'same height as the mark’s dots');
-    assert.equal(b.cx - a.cx, markB.cx - markA.cx, 'same spacing');
-    assert.equal((a.cx + b.cx) / 2, 72);
+    assert.equal(a.r, b.r);
+    assert.ok(a.cy > wordmark.guides.bottom && a.cx < b.cx && Math.abs(b.cx - wordmark.guides.ya) < 0.1, 'under the ي, the right dot under its stem');
+    assert.ok((wordmark.damma.d.match(/M/g) ?? []).length === 2, 'a head and a tail');
+    const [headX = NaN, headY = NaN] = numbers(wordmark.damma.d);
+    assert.ok(headY < wordmark.guides.top, 'the ḍamma floats above the letters');
+    assert.ok(Math.abs(headX - 72) < 12, 'over the ي');
   });
 
-  it('writes the ḍamma with the logo’s golden drop, smaller, above the ي', () => {
-    assert.equal(wordmark.damma.d, logo.drop.d);
-    assert.match(wordmark.damma.transform, /rotate\(-145\) scale\(0\.78\)/);
-    const [tx = NaN, ty = NaN] = numbers(wordmark.damma.transform);
-    assert.ok(ty < logo.guides.bowl.cy - logo.bowl.strokeWidth / 2, 'the ḍamma floats above the tooth');
-    assert.ok(Math.abs(tx - 72) < 8, 'and stays over it');
-  });
-
-  it('keeps every part inside its bounds and adapts to its options', () => {
+  it('keeps every part inside its bounds', () => {
     const { x, y, width, height } = wordmark.bounds;
-    assert.ok(x < 20 && x + width > 72 && y < 20 && y + height > 60 && height < 64);
-    const taller = arabicWordmark(logo, { sinHeight: 18 });
-    assert.notEqual(taller.stroke.d, wordmark.stroke.d);
+    assert.ok(x < wordmark.guides.ra && x + width > 72 && y < wordmark.guides.top && y + height >= wordmark.guides.descender);
+    const moved = arabicWordmark(logo, { right: 80 });
+    assert.equal(moved.guides.ya, 80);
+    assert.ok(Math.abs(moved.bounds.x - x - 8) < 0.02, 'the whole word moves with its right edge');
   });
 
   it('locks up with the mark on the right, both on one grid, and letters the Arabic asset', () => {
@@ -185,14 +191,14 @@ describe('wordmark', () => {
         vx + vw >= layout.markX + logo.bounds.x + logo.bounds.width &&
         vy + vh >= wordmark.bounds.y + wordmark.bounds.height,
     );
-    const lettered = logoLockupSvg('ar', defaultTheme, { ...brand, wordmark: 'lettered' });
+    const lettered = logoLockupSvg('ar');
     assert.ok(!lettered.includes('<text'), 'the lettered name needs no font');
     assert.ok(lettered.includes(wordmark.stroke.d) && lettered.includes(`translate(${layout.markX} 0)`));
   });
 
-  it('sets the name in the logo face by default, whatever the headings use', () => {
-    assert.equal(brand.wordmark, 'typeset');
-    const ar = logoLockupSvg('ar');
+  it('letters the Arabic name by default; the typeset name and the English name use the logo face', () => {
+    assert.equal(brand.wordmark, 'lettered');
+    const ar = logoLockupSvg('ar', defaultTheme, { ...brand, wordmark: 'typeset' });
     assert.match(ar, /<text [^>]*font-family="'Reem Kufi', 'IBM Plex Sans Arabic'/, 'the logo face, as a valid XML attribute');
     assert.ok(ar.includes('>يُسر</text>') && ar.includes('translate(136 0)'), 'the mark on the right, the name beside it');
     assert.ok(logoLockupSvg('en').includes('Reem Kufi') && logoLockupSvg('en').includes('>Yusr</text>'));
@@ -203,19 +209,26 @@ describe('wordmark', () => {
     assert.ok(cssText(defaultTheme).includes('--y-font-logo: "Reem Kufi"'));
     assert.ok(tailwindThemeCss(defaultTheme).includes('--font-logo: var(--y-font-logo);'));
   });
+});
 
-  it('softens every corner: the teeth of س are joined by smooth bowls', () => {
-    const { guides } = wordmark;
-    const gap = guides.sin[0] - guides.sin[1];
-    assert.equal(guides.fillet, gap / 2, 'no straight run, and no sharp inside corner, between the teeth');
-    assert.ok(guides.fillet - wordmark.stroke.width / 2 > 2.5, 'the inside of each corner stays visibly round');
-    assert.equal(guides.baseline, logo.guides.bowl.cy + logo.guides.bowl.ry);
-    assert.equal(guides.top, logo.guides.bowl.cy);
-    assert.equal(guides.dots, logo.dots.items[0].cy);
-    assert.ok(guides.teeth > guides.top && guides.teeth < guides.baseline);
-    assert.ok(guides.tail.x < guides.sin[2] && guides.tail.y > guides.baseline, 'ر ends below the line, on the left');
+describe('the ḍamma', () => {
+  it('is written as a round head with a tail level with its bottom, and turns as a whole', () => {
+    const level = dammaPath(0, 0, 10);
+    assert.equal((level.match(/M/g) ?? []).length, 2);
+    assert.ok(level.includes('A10 10 0 1 1 -10 0'), 'the head is a circle of the given radius');
+    assert.ok(level.includes('L-20 10'), 'the tail reaches twice the radius to the left, its lower edge on the head’s bottom');
+    assert.notEqual(dammaPath(0, 0, 10, { angle: -45 }), level);
   });
 
+  it('crowns the mark turned 45°, its head over the bowl’s mouth', () => {
+    const { drop, bowl } = brand.logo.guides;
+    assert.ok(drop.cy + drop.r < bowl.cy, 'the head floats above the bowl’s ends');
+    assert.ok(Math.abs(drop.cx - bowl.cx) < drop.r, 'over the middle of the bowl');
+    assert.ok(brand.logo.drop.d.startsWith(`M${Math.round((drop.cx + drop.r * Math.SQRT1_2) * 100) / 100} `), 'the head turned by 45°');
+  });
+});
+
+describe('display faces', () => {
   it('sets headings in the text family’s bold by default, with the alternatives one switch away', () => {
     assert.ok(defaultTheme.typography.fonts.display.startsWith('"IBM Plex Sans Arabic"'));
     assert.equal(defaultTheme.typography.fonts.display, defaultTheme.typography.fonts.sans.replace(', Arial', ''), 'the same stack as the text');
@@ -228,7 +241,7 @@ describe('wordmark', () => {
   });
 
   it('makes a screen background with the lockup centred and the pattern kept away from it', () => {
-    const typeset = logoBackgroundSvg();
+    const typeset = logoBackgroundSvg({}, defaultTheme, { ...brand, wordmark: 'typeset' });
     assert.ok(
       typeset.includes('>يُسر</text>') && typeset.includes('@import url("https://fonts.googleapis.com/css2?family=Reem+Kufi'),
       'the set name carries its face',

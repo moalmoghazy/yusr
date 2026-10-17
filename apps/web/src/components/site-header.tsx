@@ -14,7 +14,7 @@ export function SiteHeader({ locale, theme }: { locale: Locale; theme: ThemePref
     { href: `${href(locale)}#how`, label: t('nav.howItWorks') },
     { href: `${href(locale)}#transparency`, label: t('nav.transparency') },
     { href: href(locale, '/submit'), label: t('nav.submitCase') },
-    { href: href(locale, '/identity'), label: t('nav.identity') },
+    { href: href(locale, '/about'), label: t('nav.about') },
   ];
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur-md">
