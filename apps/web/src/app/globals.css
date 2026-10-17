@@ -246,3 +246,73 @@
     opacity: 0.55;
   }
 }
+
+/* ------------------------------------------------------------------ Pattern construction (/identity) */
+.pc-svg {
+  width: min(100%, 30rem);
+  height: auto;
+  overflow: visible;
+}
+
+.pc-ground {
+  fill: var(--background);
+}
+
+.pc-neighbours {
+  color: var(--primary);
+  opacity: 0.3;
+}
+
+.pc-lines {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+}
+
+.pc-drops {
+  fill: var(--highlight);
+}
+
+.pc-tile {
+  fill: none;
+  stroke: var(--foreground);
+  stroke-width: 0.6;
+  stroke-dasharray: 3 3;
+  opacity: 0.45;
+}
+
+.pc-guide {
+  fill: none;
+  stroke: var(--highlight);
+  stroke-width: 0.6;
+  stroke-dasharray: 2 2.4;
+}
+
+.pc-lattice {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pc-rosette {
+  fill: var(--highlight);
+}
+
+.pc-marker line {
+  stroke: var(--foreground);
+  stroke-width: 0.7;
+  stroke-opacity: 0.55;
+}
+
+.pc-marker circle {
+  fill: var(--foreground);
+}
+
+.pc-marker text {
+  fill: var(--background);
+  font-family: var(--y-font-sans);
+  font-size: 8px;
+  font-weight: 700;
+}
