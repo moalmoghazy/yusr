@@ -45,6 +45,7 @@ export const en: Messages = {
     howItWorks: 'How it works',
     transparency: 'Transparency',
     submitCase: 'Submit a case',
+    identity: 'Visual identity',
     account: 'My giving',
     admin: 'Control hub',
     menu: 'Menu',
@@ -443,6 +444,15 @@ export const en: Messages = {
     notificationFunded: '“{title}” is fully funded — thank you for your part',
     notificationDisbursed: '{amount} paid to {payee} for “{title}”',
     notificationReceipt: 'Your receipt {number} is ready',
+  },
+  identity: {
+    title: 'Visual identity',
+    description: 'The Yusr mark, “the golden ḍamma”, and the “garden of giving” pattern.',
+    logo: 'The mark',
+    logoName: 'The golden ḍamma',
+    pattern: 'The pattern',
+    patternName: 'The garden of giving',
+    replay: 'Replay',
   },
   submit: {
     title: 'Submit a case',

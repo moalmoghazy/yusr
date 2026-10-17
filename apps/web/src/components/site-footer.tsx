@@ -26,6 +26,9 @@ export function SiteFooter({ locale }: { locale: Locale }) {
           <Link className="text-muted-foreground hover:text-primary" href={href(locale, '/submit')}>
             {t('nav.submitCase')}
           </Link>
+          <Link className="text-muted-foreground hover:text-primary" href={href(locale, '/identity')}>
+            {t('nav.identity')}
+          </Link>
         </nav>
         <div className="flex flex-col gap-2 text-sm">
           <h2 className="mb-1 font-bold text-foreground">{t('footer.help')}</h2>

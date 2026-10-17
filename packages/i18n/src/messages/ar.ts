@@ -50,6 +50,7 @@ export const ar = {
     howItWorks: 'كيف نعمل',
     transparency: 'الشفافية',
     submitCase: 'قدّم حالة',
+    identity: 'الهوية البصرية',
     account: 'عطائي',
     admin: 'لوحة التحكم',
     menu: 'القائمة',
@@ -509,6 +510,15 @@ export const ar = {
     notificationFunded: 'اكتمل تمويل «{title}» — شكرًا لمساهمتك',
     notificationDisbursed: 'صُرف {amount} إلى {payee} لحالة «{title}»',
     notificationReceipt: 'إيصال تبرعك رقم {number} جاهز',
+  },
+  identity: {
+    title: 'الهوية البصرية',
+    description: 'شعار يُسر «الضمّة الذهبية» ونقشة «روضة العطاء».',
+    logo: 'الشعار',
+    logoName: 'الضمّة الذهبية',
+    pattern: 'النقشة',
+    patternName: 'روضة العطاء',
+    replay: 'إعادة الحركة',
   },
   submit: {
     title: 'قدّم حالة',
