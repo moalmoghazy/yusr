@@ -13,8 +13,8 @@
 | | الرابط |
 |---|---|
 | الموقع | <https://yusr-eg.vercel.app> |
-| لوحة التحكم | <https://yusr-eg-hub.vercel.app> |
-| الـ API | <https://yusr-eg-api.vercel.app/v1/openapi.json> |
+| لوحة التحكم | <https://yusr-hub.vercel.app> |
+| الـ API | <https://yusr-api.vercel.app/v1/openapi.json> |
 
 نسخة للعرض: الحالات والتبرعات افتراضية ولا يُخصم أي مبلغ (انظر [الدليل](docs/GUIDE.ar.md) ← النشر ← نسخة تجريبية مجانية).
 
