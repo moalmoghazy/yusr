@@ -101,8 +101,8 @@ name together. The apps load fonts by name, so also change:
 
 Andalusian geometry: the eight-pointed star of the Alhambra's tilework (two squares — the
 *khatam*), joined to its neighbours by strapwork that draws octagonal cells between the stars.
-Inside each star, a rosette of **eight golden drops** — the ḍamma of the logo, repeated: a single
-gift that multiplies, *"like a grain that sprouts seven ears."* Where four tiles meet, a small
+Inside each star, a rosette of **seven golden drops** — the ḍamma of the logo, repeated once for each
+of the verse's seven ears: a single gift that multiplies, *"like a grain that sprouts seven ears."* Where four tiles meet, a small
 lozenge holds one seed.
 
 - Computed from one number (the tile size, 144 px) in `pattern.ts`, so it repeats seamlessly;

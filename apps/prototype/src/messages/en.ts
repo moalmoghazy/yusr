@@ -222,13 +222,13 @@ export const protoEn: Widen<typeof protoAr> = {
       pattern: {
         title: 'The garden of giving',
         story:
-          'A pattern from the star-and-strapwork tilework of al-Andalus: an eight-pointed star, linked to its neighbours by interlaced bands that draw octagonal cells between them. In the heart of each star, a rosette of eight golden drops — the ḍamma of the logo, repeated eight times: one gift that multiplies. Where four tiles meet, a small lozenge holds a seed.',
+          'A pattern from the star-and-strapwork tilework of al-Andalus: an eight-pointed star, linked to its neighbours by interlaced bands that draw octagonal cells between them. In the heart of each star, a rosette of seven golden drops — the ḍamma of the logo, repeated seven times like the seven ears: one gift that multiplies. Where four tiles meet, a small lozenge holds a seed.',
         verse: '“…like a grain that sprouts seven ears, in every ear a hundred grains.”',
         verseSource: 'Qur’an 2:261',
         parts: {
           star: 'The eight-pointed star (khatam): two crossed squares',
           strapwork: 'Interlaced bands joining each star to the next',
-          rosette: 'A rosette of eight drops: the logo’s ḍamma, multiplied',
+          rosette: 'A rosette of seven drops: the logo’s ḍamma, multiplied like the seven ears',
           seed: 'The seed lozenge where four tiles meet',
         },
         construction: 'One tile, repeating without seams',

@@ -3,9 +3,9 @@
  *
  * Andalusian geometry: the eight-pointed star of the Alhambra's tilework (two squares,
  * the khatam), joined to its neighbours by strapwork (lacería) that draws octagonal
- * cells between the stars. In each star, a rosette of eight golden drops — the ḍamma of
- * the logo, repeated eight times: a single gift that multiplies, "like a grain that
- * sprouts seven ears". Where four tiles meet, a small lozenge holds one seed.
+ * cells between the stars. In each star, a rosette of seven golden drops — the ḍamma of
+ * the logo, repeated seven times for the seven ears of the verse: a single gift that
+ * multiplies, "like a grain that sprouts seven ears". Where four tiles meet, a small lozenge holds one seed.
  *
  * Everything is computed from one number (the tile size), so the tile repeats seamlessly:
  * every strapwork line ends exactly on an edge midpoint or a corner shared with the next tile.
@@ -18,13 +18,14 @@ export interface PatternGeometry {
   tile: number;
   /** Stroked: the star, the strapwork and the corner lozenges. */
   lattice: string;
-  /** Filled: the eight drops of each rosette. */
+  /** Filled: the seven drops of each rosette. */
   rosette: string;
   /** Filled: the seed at each corner lozenge. */
   seeds: string;
 }
 
-const EIGHT = [0, 45, 90, 135, 180, 225, 270, 315] as const;
+/** The rosette's seven drops, evenly spaced, the first pointing straight up (-90°): the seven ears of Al-Baqarah 261. */
+const SEVEN = Array.from({ length: 7 }, (_, index) => -90 + (index * 360) / 7);
 const round = (value: number) => Math.round(value * 100) / 100;
 const point = (cx: number, cy: number, r: number, degrees: number): [number, number] => [
   cx + r * Math.cos((degrees * Math.PI) / 180),
@@ -82,8 +83,8 @@ export function andalusianPattern(tile = 144): PatternGeometry {
   for (const [x, y] of corners)
     lattice.push(`M${round(x)} ${round(y - half)}L${round(x + half)} ${round(y)}L${round(x)} ${round(y + half)}L${round(x - half)} ${round(y)}Z`);
 
-  // The rosette: eight drops, round ends near the centre, tips reaching for the star's points.
-  const rosette = EIGHT.map((degrees) => dropPath(...point(c, c, 0.07 * tile, degrees), 0.026 * tile, 0.13 * tile, degrees)).join('');
+  // The rosette: seven drops, round ends near the centre, tips reaching out into the star.
+  const rosette = SEVEN.map((degrees) => dropPath(...point(c, c, 0.07 * tile, degrees), 0.026 * tile, 0.13 * tile, degrees)).join('');
   const seeds = corners.map(([x, y]) => circlePath(x, y, 0.018 * tile)).join('');
   return { tile, lattice: lattice.join(''), rosette, seeds };
 }

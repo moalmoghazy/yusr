@@ -273,9 +273,9 @@ describe('brand pattern', () => {
     assert.deepEqual(ends, ['0,0', '0,144', '0,72', '144,0', '144,144', '144,72', '72,0', '72,144'].sort());
   });
 
-  it('holds a rosette of eight drops and a seed at each corner', () => {
+  it('holds a rosette of seven drops — the seven ears — and a seed at each corner', () => {
     const geometry = andalusianPattern(144);
-    assert.equal(geometry.rosette.match(/M/g)?.length, 8);
+    assert.equal(geometry.rosette.match(/M/g)?.length, 7);
     assert.equal(geometry.seeds.match(/M/g)?.length, 4);
   });
 
