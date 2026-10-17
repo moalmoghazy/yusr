@@ -229,7 +229,7 @@ export const en: Messages = {
     donorsTab: 'Donors',
     beneficiary: 'Beneficiary',
     redactedNotice:
-      'We show copies with personal details redacted to protect the beneficiary’s dignity and privacy. Originals are visible to our audit team only.',
+      'We show copies with personal details redacted to protect the beneficiary’s dignity and privacy. The originals are kept at Yusr’s head office and are available for inspection there, as well as to our audit and review team.',
     redacted: 'Redacted',
     verifiedBy: 'Verified by',
     disbursementPlan: 'Disbursement plan',

@@ -101,7 +101,7 @@ export interface CaseDocumentPublic {
   kind: DocumentKind;
   title: Localized;
   pages: number;
-  /** Public copies are always redacted; originals are only visible to auditors. */
+  /** Public copies are always redacted; originals can be inspected at the head office and by the audit and review team. */
   redacted: boolean;
   verifiedBy: Localized;
   issuedAt: string;
