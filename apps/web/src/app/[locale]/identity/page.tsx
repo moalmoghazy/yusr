@@ -2,7 +2,7 @@ import { brand } from '@yusr/theme';
 import { textFor } from '@yusr/ui';
 import type { Metadata } from 'next';
 import { AnimatedMark } from '@/components/animated-mark';
-import { PatternConstruction } from '@/components/pattern-construction';
+import { StarCloseup } from '@/components/star-closeup';
 import { pageLocale, type LocaleParams } from '@/lib/page';
 
 export async function generateMetadata({ params }: { params: LocaleParams }): Promise<Metadata> {
@@ -15,12 +15,10 @@ export async function generateMetadata({ params }: { params: LocaleParams }): Pr
   };
 }
 
-const PARTS = ['star', 'strapwork', 'rosette', 'seed'] as const;
-
 /** The visual identity: the mark «الضمّة الذهبية» drawn live, and the pattern «روضة العطاء», each with its story. */
 export default async function IdentityPage({ params }: { params: LocaleParams }) {
   const locale = await pageLocale(params);
-  const { t, f } = textFor(locale);
+  const { t } = textFor(locale);
   return (
     <div className="container-page flex flex-col gap-8 py-10">
       <h1 className="font-display text-3xl font-bold md:text-4xl">{t('identity.title')}</h1>
@@ -45,9 +43,9 @@ export default async function IdentityPage({ params }: { params: LocaleParams })
 
       <section
         aria-labelledby="identity-pattern"
-        className="grid grid-cols-1 items-center gap-8 rounded-card border border-border bg-card px-5 py-8 md:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
+        className="relative grid grid-cols-1 gap-8 overflow-hidden rounded-card border border-border bg-card px-5 pt-8 md:px-10 md:pt-10 lg:min-h-[30rem] lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:pb-10"
       >
-        <div className="flex flex-col gap-4">
+        <div className="relative z-10 flex flex-col justify-center gap-4">
           <h2 id="identity-pattern" className="flex flex-col gap-1">
             <span className="text-sm font-semibold text-highlight-soft-foreground">{t('identity.pattern')}</span>
             <span className="font-display text-3xl font-bold leading-[1.4]">{t('identity.patternName')}</span>
@@ -60,20 +58,11 @@ export default async function IdentityPage({ params }: { params: LocaleParams })
             </blockquote>
             <figcaption className="text-sm text-muted-foreground">{t('identity.verseSource')}</figcaption>
           </figure>
-          <ol className="flex flex-col gap-3">
-            {PARTS.map((part, index) => (
-              <li key={part} className="flex items-center gap-3 font-semibold">
-                <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-full bg-foreground text-sm text-background">
-                  {f.number(index + 1)}
-                </span>
-                {t(`identity.parts.${part}`)}
-              </li>
-            ))}
-          </ol>
         </div>
-        <figure className="flex items-center justify-center rounded-card border border-border bg-background p-4 md:p-6">
-          <PatternConstruction label={t('identity.patternName')} number={(value) => f.number(value)} />
-        </figure>
+        {/* Bleeds to the card's edge and fades out towards the text: to the side on wide screens, upwards on phones. */}
+        <div className="relative -mx-5 h-80 [mask-image:linear-gradient(to_bottom,transparent,black_45%)] md:-mx-10 lg:absolute lg:inset-y-0 lg:end-0 lg:mx-0 lg:h-auto lg:w-1/2 lg:[mask-image:linear-gradient(to_left,black_40%,transparent_95%)] lg:rtl:[mask-image:linear-gradient(to_right,black_40%,transparent_95%)]">
+          <StarCloseup label={t('identity.starLabel')} />
+        </div>
       </section>
     </div>
   );

@@ -457,14 +457,9 @@ export const en: Messages = {
       'The ḍamma is the small mark that turns يسر into يُسر, “ease”. We drew it as a golden drop resting above the curve of the letter yā’, with the letter’s two dots side by side beneath the curve, in its own colour. The curve is also a pair of open hands: a small gift, held carefully, that changes the meaning of someone’s day.',
     patternStory:
       'A pattern from the star-and-strapwork tilework of al-Andalus: an eight-pointed star, linked to its neighbours by interlaced bands that draw octagonal cells between them. In the heart of each star, a rosette of seven golden drops — the ḍamma of the logo, repeated seven times like the seven ears: one gift that multiplies. Where four tiles meet, a small lozenge holds a seed.',
+    starLabel: 'One star of the garden of giving, enlarged: seven golden drops at its heart, like the seven ears',
     verse: '﴿كَمَثَلِ حَبَّةٍ أَنبَتَتْ سَبْعَ سَنَابِلَ فِي كُلِّ سُنبُلَةٍ مِّائَةُ حَبَّةٍ﴾',
     verseSource: '“…like a grain that sprouts seven ears, in every ear a hundred grains.” Qur’an 2:261',
-    parts: {
-      star: 'The eight-pointed star (khatam): two crossed squares',
-      strapwork: 'Interlaced bands joining each star to the next',
-      rosette: 'A rosette of seven drops: the logo’s ḍamma, multiplied like the seven ears',
-      seed: 'The seed lozenge where four tiles meet',
-    },
   },
   submit: {
     title: 'Submit a case',
