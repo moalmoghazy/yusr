@@ -152,7 +152,7 @@ export async function createServices(config: AppConfig, options: { clock?: Clock
   if (fx instanceof RefreshingFx) fx.start();
   const { gateways, simulators } = createGateways(config);
 
-  const otp = new OtpService(kv, limiter, channels, clock, { ...DEFAULT_OTP, pepper: config.auth.otpPepper });
+  const otp = new OtpService(kv, limiter, channels, clock, { ...DEFAULT_OTP, pepper: config.auth.otpPepper, revealCode: config.demo });
   const oauth = new OAuthVerifier({ clientIds: { google: config.auth.googleClientIds, apple: config.auth.appleClientIds } }, clock);
   const auth = new AuthService({
     db,

@@ -10,6 +10,8 @@ export interface OtpSender {
 }
 
 export interface OtpConfig {
+  /** Public demo only: return the code in the response (no SMS is sent there). */
+  revealCode?: boolean;
   /** Server-side pepper: codes are stored as HMAC(pepper, phone:code), never in plain text. */
   pepper: string;
   ttlSeconds: number;
@@ -43,7 +45,10 @@ export class OtpService {
     return hmacHex('sha256', this.config.pepper, `${phone}:${code}`);
   }
 
-  async request(phone: string, context: { ip: string | null; locale: Locale }): Promise<{ expiresInSeconds: number; resendInSeconds: number }> {
+  async request(
+    phone: string,
+    context: { ip: string | null; locale: Locale },
+  ): Promise<{ expiresInSeconds: number; resendInSeconds: number; demoCode?: string }> {
     const cooldown = await this.kv.ttl(`otp:cooldown:${phone}`);
     if (cooldown > 0) throw new DomainError('RATE_LIMITED', 'Wait before requesting another code', { retryAfterSeconds: cooldown });
     await this.limiter.consume(`otp:phone:${phone}`, RATE_RULES.otpPerPhone);
@@ -54,7 +59,7 @@ export class OtpService {
     await this.kv.set(`otp:code:${phone}`, JSON.stringify(stored), { ttlSeconds: this.config.ttlSeconds });
     await this.kv.set(`otp:cooldown:${phone}`, '1', { ttlSeconds: this.config.resendAfterSeconds });
     await this.sender.sendOtp(phone, code, context.locale);
-    return { expiresInSeconds: this.config.ttlSeconds, resendInSeconds: this.config.resendAfterSeconds };
+    return { expiresInSeconds: this.config.ttlSeconds, resendInSeconds: this.config.resendAfterSeconds, ...(this.config.revealCode ? { demoCode: code } : {}) };
   }
 
   /** Consumes the code. Throws OTP_EXPIRED, OTP_INVALID (with attempts left) or RATE_LIMITED. */

@@ -51,6 +51,19 @@ export function LoginForm({ locale, next }: { locale: Locale; next: string }) {
               {state.phone}
             </bdi>
           </p>
+          {state.demoCode && (
+            <p role="note" className="rounded-control bg-warning-soft p-3 text-sm text-warning-soft-foreground">
+              {t('auth.demoCode')}{' '}
+              <bdi dir="ltr" className="font-mono text-base font-bold">
+                {state.demoCode}
+              </bdi>
+              <br />
+              {t('auth.demoTotp')}{' '}
+              <bdi dir="ltr" className="font-mono font-semibold">
+                JBSWY3DPEHPK3PXP
+              </bdi>
+            </p>
+          )}
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-semibold">{t('auth.code')}</span>
             <input name="code" required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} dir="ltr" className={field} />

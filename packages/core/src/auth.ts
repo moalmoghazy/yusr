@@ -9,6 +9,8 @@ export interface OtpChallenge {
   expiresInSeconds: number;
   /** The same phone can ask for a new code after this many seconds. */
   resendInSeconds: number;
+  /** Public demo only (YUSR_DEMO): the code itself, since no SMS is sent. Never set on a real deployment. */
+  demoCode?: string;
 }
 
 export interface AuthUser {

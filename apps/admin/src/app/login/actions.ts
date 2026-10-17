@@ -10,7 +10,7 @@ import { apiTimeoutMs, apiUrl } from '@/lib/env';
 import { hubLocale } from '@/lib/i18n';
 import { sessionCookies } from '@/lib/tokens';
 
-export type LoginState = { step: 'phone'; error?: string } | { step: 'code'; phone: string; resendIn: number; error?: string };
+export type LoginState = { step: 'phone'; error?: string } | { step: 'code'; phone: string; resendIn: number; demoCode?: string; error?: string };
 
 /** Only same-site paths: `next` comes from the query string and must not become an open redirect. */
 function safeNext(value: FormDataEntryValue | null): string {
@@ -37,7 +37,7 @@ export async function login(previous: LoginState, form: FormData): Promise<Login
     if (!phone || !phoneSchema.safeParse(phone).success) return { step: 'phone', error: t('errors.VALIDATION_FAILED') };
     try {
       const challenge = await auth.requestOtp(phone, locale);
-      return { step: 'code', phone, resendIn: challenge.resendInSeconds };
+      return { step: 'code', phone, resendIn: challenge.resendInSeconds, ...(challenge.demoCode ? { demoCode: challenge.demoCode } : {}) };
     } catch (error) {
       return previous.step === 'code' ? { ...previous, error: failure(error) } : { step: 'phone', error: failure(error) };
     }

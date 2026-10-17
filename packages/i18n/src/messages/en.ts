@@ -508,6 +508,8 @@ export const en: Messages = {
     apple: 'Continue with Apple',
     resendIn: 'Resend in {seconds}s',
     totp: 'Authenticator code',
+    demoCode: 'Demo version — no SMS is sent; your code is:',
+    demoTotp: 'and the authenticator code comes from the demo key:',
     totpHint: 'Team accounts need a code from their authenticator app (e.g. Google Authenticator) with the SMS code.',
     codeSent: 'We sent a code to {phone}',
     changePhone: 'Change number',

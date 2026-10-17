@@ -73,6 +73,22 @@ async function setupAuth() {
 }
 
 describe('phone sign-in (OTP)', () => {
+  it('reveals the code in the response only in a public demo', async () => {
+    const clock = new ManualClock('2026-09-26T09:00:00Z');
+    const kv = new MemoryKv(clock);
+    const sender = new CapturingSender();
+    const real = await new OtpService(kv, new RateLimiter(kv), sender, clock, { ...DEFAULT_OTP, pepper: 'p' }).request('+201099990001', {
+      ip: null,
+      locale: 'ar',
+    });
+    assert.equal('demoCode' in real, false, 'never on a real deployment');
+    const demo = await new OtpService(kv, new RateLimiter(kv), sender, clock, { ...DEFAULT_OTP, pepper: 'p', revealCode: true }).request('+201099990002', {
+      ip: null,
+      locale: 'ar',
+    });
+    assert.equal(demo.demoCode, sender.last());
+  });
+
   it('sends a code, accepts it once and creates a donor account', async () => {
     const { auth, sender } = await setupAuth();
     await auth.requestOtp('+201099990000', { ip: '41.33.1.1', locale: 'ar' });
