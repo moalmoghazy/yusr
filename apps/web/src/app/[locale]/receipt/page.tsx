@@ -1,12 +1,13 @@
 import type { DonationReceipt, DonationStatus } from '@yusr/core';
 import { ApiError } from '@yusr/sdk';
 import { Badge, buttonClasses, cn, Icon, Logo, textFor, type BadgeTone, type IconName } from '@yusr/ui';
+import { caseShareMessage } from '@yusr/i18n';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { PrintButton, ReceiptRefresh } from '@/components/receipt-client';
 import { ShareCase } from '@/components/share-case';
-import { live } from '@/lib/api';
+import { catalog, live } from '@/lib/api';
 import { href } from '@/lib/i18n';
 import { requestOrigin } from '@/lib/origin';
 import { one, pageLocale, type LocaleParams } from '@/lib/page';
@@ -59,6 +60,13 @@ export default async function ReceiptPage({
 
   const { t, f, l } = textFor(locale);
   const outcome = OUTCOME[receipt.status];
+  // Once the gift went through, invite the donor to share the case (its share line needs the case).
+  const shared =
+    outcome === 'done'
+      ? await catalog(locale)
+          .getCase(receipt.caseSlug)
+          .catch(() => null)
+      : null;
   const title = outcome === 'done' ? t('donate.successTitle') : outcome === 'waiting' ? t('donate.pendingTitle') : t('donate.failedTitle');
   const body =
     outcome === 'done'
@@ -138,11 +146,12 @@ export default async function ReceiptPage({
         <p className="text-xs text-muted-foreground">{t('receipt.note')}</p>
       </section>
 
-      {outcome === 'done' && (
+      {shared && (
         <ShareCase
           locale={locale}
           url={`${await requestOrigin()}/${locale}/cases/${receipt.caseSlug}`}
-          title={l(receipt.caseTitle)}
+          title={l(shared.title)}
+          message={caseShareMessage(t, locale, shared)}
           lead={t('share.afterDonation')}
           className="print:hidden"
         />

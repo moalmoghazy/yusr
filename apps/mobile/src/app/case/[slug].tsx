@@ -1,4 +1,5 @@
 import { CATEGORY_META, regionByCode, type CaseDetail, type DisbursementStatus } from '@yusr/core';
+import { caseShareMessage } from '@yusr/i18n';
 import type { IconName } from '@yusr/ui/icons';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
@@ -53,7 +54,7 @@ export default function CaseScreen() {
               accessibilityRole="button"
               accessibilityLabel={t('common.share')}
               hitSlop={10}
-              onPress={() => void Share.share({ message: `${t('share.message', { title: l(item.title) })}\n${WEB_URL}/${locale}/cases/${item.slug}` })}
+              onPress={() => void Share.share({ message: `${caseShareMessage(t, locale, item)}\n${WEB_URL}/${locale}/cases/${item.slug}` })}
             >
               <Icon name="share" size={20} color={theme.colors.primary} />
             </Pressable>

@@ -167,6 +167,8 @@ export const cases = pgTable(
     submitterRelation: text('submitter_relation').$type<'self' | 'family' | 'volunteer'>().notNull(),
     title: jsonb('title').$type<Localized>().notNull(),
     summary: jsonb('summary').$type<Localized>().notNull(),
+    /** «نص المشاركة»: the case's own line for social sharing (0001_case_share_text.sql); null = composed. */
+    shareText: jsonb('share_text').$type<Localized>(),
     story: jsonb('story').$type<Localized>().notNull(),
     region: text('region').notNull(),
     currency: currency('currency').notNull().default('EGP'),

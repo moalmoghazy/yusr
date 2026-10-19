@@ -31,6 +31,8 @@ export interface SeedCase {
   closedDaysAgo?: number;
   title: Localized;
   summary: Localized;
+  /** «نص المشاركة»: the line used when the case is shared (the promise is appended); absent = composed. */
+  shareText?: Localized;
   story: Localized;
   beneficiary: Localized;
   plan: SeedPlanLine[];
@@ -59,6 +61,10 @@ export const SEED_CASES: readonly SeedCase[] = [
     urgentInHours: 79,
     createdDaysAgo: 14,
     publishedDaysAgo: 6,
+    shareText: {
+      ar: 'تبرعك يقرّبنا من إنقاذ قلب ملك ذات الست سنوات، وتستطيع أن تساهم في اكتمال تكاليف عمليتها',
+      en: 'Your gift brings us closer to saving six-year-old Malak’s heart, and you can help complete the cost of her surgery',
+    },
     title: { ar: 'عملية قلب مفتوح لطفلة عمرها ٦ سنوات', en: 'Open-heart surgery for a 6-year-old girl' },
     summary: {
       ar: 'تحتاج «ملك» إلى إصلاح ثقب بين البطينين في مستشفى جامعي بالقاهرة، وموعد العملية محدد.',
@@ -128,6 +134,10 @@ export const SEED_CASES: readonly SeedCase[] = [
     urgentInHours: 128,
     createdDaysAgo: 18,
     publishedDaysAgo: 9,
+    shareText: {
+      ar: 'تبرعك يقرّبنا من إبقاء أسرة أبو يوسف في بيتها، وتستطيع أن تساهم في سداد إيجارها المتأخر',
+      en: 'Your gift brings us closer to keeping Abu Youssef’s family in their home, and you can help pay their overdue rent',
+    },
     title: { ar: 'إيجار متأخر ١٤ شهرًا لأسرة مهددة بالطرد', en: '14 months of overdue rent for a family facing eviction' },
     summary: {
       ar: 'فقد «أبو يوسف» عمله بعد إصابة في ظهره، وتراكم الإيجار حتى صدر حكم بالإخلاء خلال أيام.',
@@ -176,6 +186,10 @@ export const SEED_CASES: readonly SeedCase[] = [
     priority: 5,
     createdDaysAgo: 21,
     publishedDaysAgo: 11,
+    shareText: {
+      ar: 'تبرعك يقرّبنا من فكّ كرب أم منة، أمٍّ لأربعة أطفال، وتستطيع أن تساهم في سداد دينها',
+      en: 'Your gift brings us closer to lifting the burden from Um Menna, a mother of four, and you can help pay off her debt',
+    },
     title: { ar: 'فكّ كرب غارمة: سداد إيصالات أمانة لأم لأربعة أطفال', en: 'Freeing a mother of four from promissory-note debt' },
     summary: {
       ar: 'وقّعت «أم منة» إيصالات أمانة لتجهيز ابنتها، ثم مرض زوجها وتعثّر السداد وصدر ضدها حكم بالحبس.',
@@ -230,6 +244,10 @@ export const SEED_CASES: readonly SeedCase[] = [
     urgentInHours: 41,
     createdDaysAgo: 5,
     publishedDaysAgo: 3,
+    shareText: {
+      ar: 'تبرعك يقرّبنا من إعادة ٢٠ أسرة إلى بيوتها بعد الحريق، وتستطيع أن تساهم في اكتمال إغاثتها',
+      en: 'Your gift brings us closer to bringing 20 families home after the fire, and you can help complete their relief',
+    },
     title: { ar: 'إغاثة ٢٠ أسرة بعد حريق في قرية بسوهاج', en: 'Relief for 20 families after a village fire in Sohag' },
     summary: {
       ar: 'التهم حريق ٢٠ منزلًا ريفيًا بأسقفها الخشبية، والأسر تقيم الآن لدى الجيران.',
@@ -291,6 +309,10 @@ export const SEED_CASES: readonly SeedCase[] = [
     zakat: true,
     createdDaysAgo: 26,
     publishedDaysAgo: 17,
+    shareText: {
+      ar: 'تبرعك يقرّبنا من ستة أشهر من الغسيل الكلوي لعم سعيد، وتستطيع أن تساهم في اكتمال تكاليف علاجه',
+      en: 'Your gift brings us closer to six months of dialysis for Uncle Saeed, and you can help complete the cost of his treatment',
+    },
     title: { ar: 'جلسات غسيل كلوي لستة أشهر لأب في الثامنة والخمسين', en: 'Six months of dialysis for a 58-year-old father' },
     summary: {
       ar: 'يحتاج «عم سعيد» إلى ثلاث جلسات أسبوعيًا في مركز خاص بعد إغلاق وحدة القرية للصيانة.',

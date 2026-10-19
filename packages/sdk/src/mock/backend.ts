@@ -64,6 +64,7 @@ import {
   type VerificationTask,
   type VolunteerRow,
 } from '@yusr/core';
+import { editCaseSchema, type EditCaseInput } from '@yusr/core/schemas';
 import type { AdminClient, LedgerQuery, YusrClient } from '../client';
 import { SEED_CASES, type SeedCase } from './cases';
 import { CURRENT_DONOR, DONORS, STAFF, VOLUNTEERS, type SeedDonor } from './people';
@@ -208,6 +209,7 @@ function toSummary(item: AdminCase): CaseSummary {
     status: item.status,
     title: item.title,
     summary: item.summary,
+    shareText: item.shareText,
     region: item.region,
     currency: item.currency,
     goalMinor: item.goalMinor,
@@ -608,6 +610,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       status: seed.status,
       title: seed.title,
       summary: seed.summary,
+      shareText: seed.shareText ?? null,
       region: seed.region,
       currency: seed.currency,
       goalMinor: toMinor(seed.goal, seed.currency),
@@ -1099,6 +1102,21 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
         emit({ type: 'case.updated', caseId });
         return next;
       },
+      editCase: (caseId: string, input: EditCaseInput) => {
+        ensure('cases:edit');
+        const parsed = editCaseSchema.safeParse(input);
+        if (!parsed.success) throw new DomainError('VALIDATION_FAILED', parsed.error.issues[0]?.message ?? 'Invalid edit');
+        const item = mustCase(caseId);
+        const { deadline, ...rest } = parsed.data;
+        const patch: Partial<AdminCase> = { ...rest, ...(deadline !== undefined ? { deadline: deadline ?? null } : {}) };
+        if (patch.isUrgent && !(patch.deadline ?? item.deadline)) throw new DomainError('VALIDATION_FAILED', 'Urgent cases need a deadline');
+        const next: AdminCase = { ...item, ...patch, updatedAt: iso(clock()) };
+        putCase(next);
+        const before = Object.fromEntries(Object.keys(patch).map((key) => [key, item[key as keyof AdminCase]]));
+        logAudit(actorRef, 'case.edited', 'case', caseId, item.reference, before, { ...patch });
+        emit({ type: 'case.updated', caseId });
+        return next;
+      },
       assignAuditor: (caseId: string, auditorId: string) => {
         ensure('verifications:assign');
         const item = mustCase(caseId);
@@ -1394,6 +1412,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       cases: wrap(sync.cases),
       transitionCase: wrap(sync.transitionCase),
       setPriority: wrap(sync.setPriority),
+      editCase: wrap(sync.editCase),
       assignAuditor: wrap(sync.assignAuditor),
       verificationTasks: wrap(sync.verificationTasks),
       updateChecklist: wrap(sync.updateChecklist),
@@ -1476,6 +1495,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       status: 'under_review',
       title: text,
       summary: { ar: storyText.ar.slice(0, 140), en: storyText.en.slice(0, 140) },
+      shareText: null,
       region: request.region,
       currency: request.currency,
       goalMinor: request.goalMinor,

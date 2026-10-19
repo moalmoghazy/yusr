@@ -81,6 +81,8 @@ export interface CaseRow {
   submitterRelation: 'self' | 'family' | 'volunteer';
   title: Localized;
   summary: Localized;
+  /** «نص المشاركة»: the case's own line for social sharing; null = composed from title and category. */
+  shareText: Localized | null;
   story: Localized;
   region: string;
   currency: Currency;

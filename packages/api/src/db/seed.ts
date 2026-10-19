@@ -205,6 +205,7 @@ export async function seedDemo(tx: Tx, options: { now: Date; cipher: FieldCipher
       submitterRelation: seed.submittedBy.relation,
       title: seed.title,
       summary: seed.summary,
+      shareText: seed.shareText ?? null,
       story: seed.story,
       region: seed.region,
       currency: seed.currency,

@@ -127,12 +127,15 @@ export const editCaseSchema = z
   .object({
     title: localized(120).optional(),
     summary: localized(240).optional(),
+    /** «نص المشاركة»; null clears it (the share line is then composed). */
+    shareText: localized(220).nullable().optional(),
     story: localized(6000).optional(),
     zakatEligible: z.boolean().optional(),
     isUrgent: z.boolean().optional(),
     deadline: z.iso.datetime().nullish(),
   })
   .refine((patch) => Object.keys(patch).length > 0, { message: 'Nothing to change' });
+export type EditCaseInput = z.input<typeof editCaseSchema>;
 
 /** The disbursement plan: who is paid, for what, how much. Fixed once the case is published. */
 export const disbursementPlanSchema = z.object({

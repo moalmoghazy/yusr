@@ -22,6 +22,20 @@ export async function transitionCase(_previous: ActionResult, form: FormData): P
   return result;
 }
 
+/** Saves a case's share line («نص المشاركة»); both languages empty clears it, so the line is composed. */
+export async function saveShareText(_previous: ActionResult, form: FormData): Promise<ActionResult> {
+  const { t } = textFor(await hubLocale());
+  const caseId = String(form.get('caseId') ?? '');
+  const ar = String(form.get('ar') ?? '').trim();
+  const en = String(form.get('en') ?? '').trim();
+  if (Boolean(ar) !== Boolean(en)) return { ok: false, message: t('admin.cases.shareTextBoth') };
+  const shareText = ar && en ? { ar, en } : null;
+  const api = await adminApi();
+  const result = await attempt(() => api.editCase(caseId, { shareText }), shareText ? t('admin.cases.shareTextSaved') : t('admin.cases.shareTextCleared'));
+  if (result?.ok) revalidatePath('/cases');
+  return result;
+}
+
 export async function togglePriority(_previous: ActionResult, form: FormData): Promise<ActionResult> {
   const { t } = textFor(await hubLocale());
   const pinned = form.get('pinned') === 'true';

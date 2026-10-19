@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CaseActions } from '@/components/case-actions';
 import { NoAccess } from '@/components/no-access';
+import { ShareTextForm } from '@/components/share-text-form';
 import { hubLocale, hubText } from '@/lib/i18n';
 import { adminApi, currentStaff } from '@/lib/session';
 
@@ -140,6 +141,9 @@ export default async function CasesPage({ searchParams }: { searchParams: Promis
                         pinned={item.priority > 0}
                         canPin={staff.permissions.has('cases:prioritize')}
                       />
+                      {staff.permissions.has('cases:edit') && (
+                        <ShareTextForm locale={locale} caseId={item.id} title={item.title} category={item.category} shareText={item.shareText} />
+                      )}
                     </td>
                   </tr>
                 );

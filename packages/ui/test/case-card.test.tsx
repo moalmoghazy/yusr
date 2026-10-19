@@ -16,6 +16,7 @@ function fixture(overrides: Partial<CaseSummary> = {}): CaseSummary {
     status: 'published',
     title: { ar: 'عملية قلب مفتوح لطفلة عمرها ٦ سنوات', en: 'Open-heart surgery for a 6-year-old' },
     summary: { ar: 'موعد العملية محدد في معهد القلب.', en: 'The surgery is booked at the National Heart Institute.' },
+    shareText: null,
     region: 'EG-C',
     currency: 'EGP',
     goalMinor: 250_000_00,

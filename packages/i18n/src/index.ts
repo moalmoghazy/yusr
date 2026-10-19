@@ -8,6 +8,7 @@ export * from './dictionary';
 export * from './locales';
 export * from './translator';
 export * from './format';
+export * from './share';
 export { ar, en };
 
 export const dictionaries: Readonly<Record<Locale, Messages>> = { ar, en };

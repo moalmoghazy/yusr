@@ -11,6 +11,7 @@ function makeCase(overrides: Partial<CaseSummary>): CaseSummary {
     status: 'published',
     title: { ar: 'عملية قلب مفتوح لطفلة', en: 'Open-heart surgery for a girl' },
     summary: { ar: 'تحتاج إلى عملية عاجلة في مستشفى جامعي', en: 'Needs urgent surgery' },
+    shareText: null,
     region: 'EG-C',
     currency: 'EGP',
     goalMinor: 100_00,

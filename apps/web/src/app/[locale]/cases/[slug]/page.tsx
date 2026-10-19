@@ -14,6 +14,7 @@ import {
   ZakatBadge,
   type BadgeTone,
 } from '@yusr/ui';
+import { caseShareMessage } from '@yusr/i18n';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -38,13 +39,14 @@ async function load(params: Params): Promise<{ locale: Locale; item: CaseDetail 
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { locale, item } = await load(params);
-  const { l } = textFor(locale);
+  const { t, l } = textFor(locale);
+  const message = caseShareMessage(t, locale, item);
   return {
     title: l(item.title),
     description: l(item.summary),
     alternates: { canonical: `/${locale}/cases/${item.slug}`, languages: { ar: `/ar/cases/${item.slug}`, en: `/en/cases/${item.slug}` } },
-    openGraph: { title: l(item.title), description: l(item.summary), type: 'article', images: [OG_IMAGE] },
-    twitter: { card: 'summary_large_image', title: l(item.title), description: l(item.summary), images: [OG_IMAGE.url] },
+    openGraph: { title: l(item.title), description: message, type: 'article', images: [OG_IMAGE] },
+    twitter: { card: 'summary_large_image', title: l(item.title), description: message, images: [OG_IMAGE.url] },
   };
 }
 
@@ -215,7 +217,7 @@ export default async function CasePage({ params, searchParams }: { params: Param
           )}
         </section>
 
-        <ShareCase locale={locale} url={caseUrl} title={l(item.title)} lead={t('share.lead')} />
+        <ShareCase locale={locale} url={caseUrl} title={l(item.title)} message={caseShareMessage(t, locale, item)} lead={t('share.lead')} />
 
         <section aria-labelledby="recent-title" className="rounded-card border border-border bg-card p-5">
           <h2 id="recent-title" className="mb-3 font-bold">

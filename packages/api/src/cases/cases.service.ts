@@ -256,6 +256,7 @@ export class CasesService {
         submitterRelation: input.submitterRelation,
         title,
         summary: { ar: story.ar.slice(0, 180), en: story.en.slice(0, 180) },
+        shareText: null,
         story,
         region: input.region,
         currency: input.currency,
@@ -393,7 +394,7 @@ export class CasesService {
   /** Content edits by moderators (wording, redacted documents, the plan) before or after publishing. */
   async editContent(
     caseId: string,
-    patch: Partial<Pick<CaseRow, 'title' | 'summary' | 'story' | 'zakatEligible' | 'isUrgent' | 'deadline'>>,
+    patch: Partial<Pick<CaseRow, 'title' | 'summary' | 'shareText' | 'story' | 'zakatEligible' | 'isUrgent' | 'deadline'>>,
     context: CallContext,
   ): Promise<void> {
     const actor = requirePermission(context.actor, 'cases:edit');

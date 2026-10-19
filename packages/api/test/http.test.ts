@@ -301,6 +301,22 @@ describe('operations', () => {
     await isApiError(adminFor(youssef).confirmTransfer(pending.id, 'CIB-7781203', pending.chargedMinor), 'FORBIDDEN', 403);
   });
 
+  it('lets a moderator write a case’s share line, shows it publicly, and clears it back to the composed one', async () => {
+    const [item] = await adminFor(youssef).cases({ status: 'published' });
+    assert.ok(item, 'the demo data has a published case');
+    const line = {
+      ar: 'تبرعك يقرّبنا من إنقاذ إيناس من حروق الدرجة الثانية، وتستطيع أن تساهم في اكتمال تكاليف علاجها',
+      en: 'Your gift brings us closer to saving Enas',
+    };
+    const edited = await adminFor(youssef).editCase(item.id, { shareText: line });
+    assert.deepEqual(edited.shareText, line);
+    assert.deepEqual((await clientFor().getCase(item.slug))?.shareText, line, 'the public case carries it');
+    await isApiError(adminFor(heba).editCase(item.id, { shareText: line }), 'FORBIDDEN', 403);
+    await isApiError(adminFor(youssef).editCase(item.id, { shareText: { ar: 'x'.repeat(221), en: 'x' } }), 'VALIDATION_FAILED', 422);
+    const cleared = await adminFor(youssef).editCase(item.id, { shareText: null });
+    assert.equal(cleared.shareText, null);
+  });
+
   it('pays a hospital through maker-checker and records it in the ledger and the audit log', async () => {
     const maker = adminFor(heba);
     const checker = adminFor(karim);

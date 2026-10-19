@@ -1,3 +1,4 @@
+import type { EditCaseInput } from '@yusr/core/schemas';
 import type {
   AdminCase,
   AdminDonation,
@@ -60,6 +61,8 @@ export interface AdminClient {
   cases(filter?: { status?: CaseStatus; q?: string }): Promise<AdminCase[]>;
   transitionCase(caseId: string, to: CaseStatus, reason?: string): Promise<AdminCase>;
   setPriority(caseId: string, priority: number): Promise<AdminCase>;
+  /** Edit a case's wording, its share line («نص المشاركة»; null = composed) and flags. */
+  editCase(caseId: string, patch: EditCaseInput): Promise<AdminCase>;
   assignAuditor(caseId: string, auditorId: string): Promise<VerificationTask>;
   verificationTasks(): Promise<VerificationTask[]>;
   updateChecklist(taskId: string, item: ChecklistItem, checked: boolean): Promise<VerificationTask>;

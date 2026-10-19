@@ -76,6 +76,11 @@ export interface CaseSummary {
   status: CaseStatus;
   title: Localized;
   summary: Localized;
+  /**
+   * «نص المشاركة»: the case's own line for social sharing, written by the team (who it helps and what
+   * the money completes). Null when not written: the share line is then composed from title and category.
+   */
+  shareText: Localized | null;
   /** ISO 3166-2 subdivision code, e.g. EG-C (Cairo) or SA-01 (Riyadh). */
   region: string;
   currency: Currency;

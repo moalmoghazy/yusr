@@ -13,6 +13,7 @@ export function toCaseSummary(row: CaseRow): CaseSummary {
     status: row.status,
     title: row.title,
     summary: row.summary,
+    shareText: row.shareText,
     region: row.region,
     currency: row.currency,
     goalMinor: row.goalMinor,

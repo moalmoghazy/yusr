@@ -11,9 +11,23 @@ import { useEffect, useState } from 'react';
  * and says where to paste it. Below them: copy the link, and — on phones — the system share sheet,
  * which reaches every installed app.
  */
-export function ShareCase({ locale, url, title, lead, className }: { locale: Locale; url: string; title: string; lead: string; className?: string }) {
+export function ShareCase({
+  locale,
+  url,
+  title,
+  message,
+  lead,
+  className,
+}: {
+  locale: Locale;
+  url: string;
+  title: string;
+  /** The share line (caseShareMessage): the case's own words or the composed ones, then Yusr's promise. */
+  message: string;
+  lead: string;
+  className?: string;
+}) {
   const { t } = textFor(locale);
-  const message = t('share.message', { title });
   const [native, setNative] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 

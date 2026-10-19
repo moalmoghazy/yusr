@@ -60,11 +60,11 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "{ status, release, uptimeSeconds }",
+            "description": "{ status, release, uptimeSeconds, demo }",
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "{ status, release, uptimeSeconds } (see @yusr/core)"
+                  "description": "{ status, release, uptimeSeconds, demo } (see @yusr/core)"
                 }
               }
             }
@@ -2047,6 +2047,32 @@
                     "required": [
                       "ar",
                       "en"
+                    ]
+                  },
+                  "shareText": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "ar": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 220
+                          },
+                          "en": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 220
+                          }
+                        },
+                        "required": [
+                          "ar",
+                          "en"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
                     ]
                   },
                   "story": {

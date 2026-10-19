@@ -9,7 +9,7 @@
  */
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { after, before, describe, it } from 'node:test';
 import { CASE_TRANSITIONS, buildDonationPostings, computeProgress, normalizeForSearch, type Posting } from '@yusr/core';
@@ -18,7 +18,7 @@ const ADMIN_URL = process.env['YUSR_TEST_DATABASE_URL'];
 const HAS_PSQL = spawnSync('psql', ['--version']).status === 0;
 const SKIP = !ADMIN_URL || !HAS_PSQL ? 'set YUSR_TEST_DATABASE_URL and install psql to run the SQL tests' : false;
 
-const MIGRATION = join(__dirname, '..', 'src', 'db', 'migrations', '0000_init.sql');
+const MIGRATIONS = join(__dirname, '..', 'src', 'db', 'migrations');
 const SCHEMA_TS = join(__dirname, '..', 'src', 'db', 'schema.ts');
 const DB_NAME = `yusr_test_${process.pid}`;
 
@@ -101,8 +101,13 @@ describe('PostgreSQL schema', { skip: SKIP }, () => {
     const created = psql(ADMIN_URL!, `DROP DATABASE IF EXISTS ${DB_NAME}; CREATE DATABASE ${DB_NAME};`);
     assert.ok(created.ok, created.err);
     url = withDatabase(ADMIN_URL!, DB_NAME);
-    const migrated = psql(url, readFileSync(MIGRATION, 'utf8'));
-    assert.ok(migrated.ok, `migration failed: ${migrated.err}`);
+    // Every migration, in file-name order, as the runner applies them.
+    for (const file of readdirSync(MIGRATIONS)
+      .filter((name) => name.endsWith('.sql'))
+      .sort()) {
+      const migrated = psql(url, readFileSync(join(MIGRATIONS, file), 'utf8'));
+      assert.ok(migrated.ok, `${file} failed: ${migrated.err}`);
+    }
     const seeded = psql(url, FIXTURES);
     assert.ok(seeded.ok, `fixtures failed: ${seeded.err}`);
   });

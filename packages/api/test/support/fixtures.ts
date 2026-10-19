@@ -58,6 +58,7 @@ export function caseRow(overrides: Partial<CaseRow> & { id: string }): CaseRow {
     submitterRelation: 'volunteer',
     title: { ar: 'عملية قلب مفتوح لطفل', en: 'Open-heart surgery for a child' },
     summary: { ar: 'ملخص', en: 'Summary' },
+    shareText: null,
     story: { ar: 'القصة', en: 'Story' },
     region: 'EG-C',
     currency: 'EGP',
