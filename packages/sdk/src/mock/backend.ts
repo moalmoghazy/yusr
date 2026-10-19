@@ -64,7 +64,7 @@ import {
   type VerificationTask,
   type VolunteerRow,
 } from '@yusr/core';
-import { editCaseSchema, type EditCaseInput } from '@yusr/core/schemas';
+import type { EditCaseInput } from '@yusr/core/schemas';
 import type { AdminClient, LedgerQuery, YusrClient } from '../client';
 import { SEED_CASES, type SeedCase } from './cases';
 import { CURRENT_DONOR, DONORS, STAFF, VOLUNTEERS, type SeedDonor } from './people';
@@ -1104,10 +1104,18 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       },
       editCase: (caseId: string, input: EditCaseInput) => {
         ensure('cases:edit');
-        const parsed = editCaseSchema.safeParse(input);
-        if (!parsed.success) throw new DomainError('VALIDATION_FAILED', parsed.error.issues[0]?.message ?? 'Invalid edit');
+        // The same limits as editCaseSchema, checked by hand so the demo bundle stays free of zod.
+        const limits: Partial<Record<keyof EditCaseInput, number>> = { title: 120, summary: 240, shareText: 220, story: 6000 };
+        for (const [key, max] of Object.entries(limits) as Array<[keyof EditCaseInput, number]>) {
+          const value = input[key] as Localized | null | undefined;
+          if (!value) continue;
+          if (![value.ar, value.en].every((text) => typeof text === 'string' && text.trim().length > 0 && text.trim().length <= max)) {
+            throw new DomainError('VALIDATION_FAILED', `${key}: 1–${max} characters in Arabic and English`);
+          }
+        }
+        if (Object.keys(input).length === 0) throw new DomainError('VALIDATION_FAILED', 'Nothing to change');
         const item = mustCase(caseId);
-        const { deadline, ...rest } = parsed.data;
+        const { deadline, ...rest } = input;
         const patch: Partial<AdminCase> = { ...rest, ...(deadline !== undefined ? { deadline: deadline ?? null } : {}) };
         if (patch.isUrgent && !(patch.deadline ?? item.deadline)) throw new DomainError('VALIDATION_FAILED', 'Urgent cases need a deadline');
         const next: AdminCase = { ...item, ...patch, updatedAt: iso(clock()) };
