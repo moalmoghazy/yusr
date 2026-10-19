@@ -11,6 +11,7 @@ import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
 import { siteUrl } from '@/lib/env';
 import { THEME_COOKIE, themeFrom } from '@/lib/i18n';
+import { OG_IMAGE } from '@/lib/og';
 import { pageLocale, type LocaleParams } from '@/lib/page';
 import { site } from '@/lib/site';
 import '../globals.css';
@@ -34,7 +35,13 @@ export async function generateMetadata({ params }: { params: LocaleParams }): Pr
     title: { default: `${t('common.appName')} — ${t('landing.eyebrow')}`, template: `%s · ${t('common.appName')}` },
     description: t('landing.heroBody'),
     alternates: { canonical: `/${locale}`, languages: { ar: '/ar', en: '/en', 'x-default': '/ar' } },
-    openGraph: { siteName: t('common.appName'), locale: locale === 'ar' ? 'ar_EG' : 'en_US', type: 'website' },
+    openGraph: {
+      siteName: t('common.appName'),
+      locale: locale === 'ar' ? 'ar_EG' : 'en_US',
+      type: 'website',
+      images: [OG_IMAGE],
+    },
+    twitter: { card: 'summary_large_image', images: [OG_IMAGE.url] },
     formatDetection: { telephone: false },
     ...(site.demo ? { robots: { index: false, follow: false } } : {}),
   };

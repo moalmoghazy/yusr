@@ -19,8 +19,11 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { DonatePanel } from '@/components/donate-panel';
+import { ShareCase } from '@/components/share-case';
 import { catalog } from '@/lib/api';
 import { href, isLocale } from '@/lib/i18n';
+import { OG_IMAGE } from '@/lib/og';
+import { requestOrigin } from '@/lib/origin';
 import { one } from '@/lib/page';
 
 type Params = Promise<{ locale: string; slug: string }>;
@@ -40,7 +43,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     title: l(item.title),
     description: l(item.summary),
     alternates: { canonical: `/${locale}/cases/${item.slug}`, languages: { ar: `/ar/cases/${item.slug}`, en: `/en/cases/${item.slug}` } },
-    openGraph: { title: l(item.title), description: l(item.summary), type: 'article' },
+    openGraph: { title: l(item.title), description: l(item.summary), type: 'article', images: [OG_IMAGE] },
+    twitter: { card: 'summary_large_image', title: l(item.title), description: l(item.summary), images: [OG_IMAGE.url] },
   };
 }
 
@@ -52,6 +56,7 @@ export default async function CasePage({ params, searchParams }: { params: Param
   const open = item.status === 'published';
   const presetMinor = Number(one((await searchParams)['amount'])) || null;
   const plannedMinor = item.disbursements.reduce((sum, line) => sum + line.amountMinor, 0);
+  const caseUrl = `${await requestOrigin()}/${locale}/cases/${item.slug}`;
 
   return (
     <div className="container-page grid grid-cols-1 gap-8 py-8 lg:grid-cols-[minmax(0,1fr)_25rem]">
@@ -209,6 +214,8 @@ export default async function CasePage({ params, searchParams }: { params: Param
             </Link>
           )}
         </section>
+
+        <ShareCase locale={locale} url={caseUrl} title={l(item.title)} lead={t('share.lead')} />
 
         <section aria-labelledby="recent-title" className="rounded-card border border-border bg-card p-5">
           <h2 id="recent-title" className="mb-3 font-bold">

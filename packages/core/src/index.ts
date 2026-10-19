@@ -14,3 +14,4 @@ export * from './references';
 export * from './admin-types';
 export * from './auth';
 export * from './phone';
+export * from './share';

@@ -53,7 +53,7 @@ export default function CaseScreen() {
               accessibilityRole="button"
               accessibilityLabel={t('common.share')}
               hitSlop={10}
-              onPress={() => void Share.share({ message: `${t('case.shareText')}\n${WEB_URL}/${locale}/cases/${item.slug}` })}
+              onPress={() => void Share.share({ message: `${t('share.message', { title: l(item.title) })}\n${WEB_URL}/${locale}/cases/${item.slug}` })}
             >
               <Icon name="share" size={20} color={theme.colors.primary} />
             </Pressable>

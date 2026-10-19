@@ -20,6 +20,12 @@ export function apiTimeoutMs(): number | undefined {
   return Number.isFinite(value) && value > 0 ? value : undefined;
 }
 
+/**
+ * The site's public address (NEXT_PUBLIC_SITE_URL). On Vercel, without it, the production domain
+ * Vercel provides (VERCEL_PROJECT_PRODUCTION_URL), so canonical links and link previews never point
+ * at localhost.
+ */
 export function siteUrl(): string {
-  return (process.env['NEXT_PUBLIC_SITE_URL'] ?? 'http://localhost:3000').replace(/\/$/, '');
+  const vercel = process.env['VERCEL_PROJECT_PRODUCTION_URL'];
+  return (process.env['NEXT_PUBLIC_SITE_URL'] ?? (vercel ? `https://${vercel}` : 'http://localhost:3000')).replace(/\/$/, '');
 }

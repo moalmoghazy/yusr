@@ -5,8 +5,10 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { PrintButton, ReceiptRefresh } from '@/components/receipt-client';
+import { ShareCase } from '@/components/share-case';
 import { live } from '@/lib/api';
 import { href } from '@/lib/i18n';
+import { requestOrigin } from '@/lib/origin';
 import { one, pageLocale, type LocaleParams } from '@/lib/page';
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -135,6 +137,16 @@ export default async function ReceiptPage({
         {receipt.dedication && <p className="rounded-control border border-dashed border-highlight/60 p-3 text-sm">«{receipt.dedication}»</p>}
         <p className="text-xs text-muted-foreground">{t('receipt.note')}</p>
       </section>
+
+      {outcome === 'done' && (
+        <ShareCase
+          locale={locale}
+          url={`${await requestOrigin()}/${locale}/cases/${receipt.caseSlug}`}
+          title={l(receipt.caseTitle)}
+          lead={t('share.afterDonation')}
+          className="print:hidden"
+        />
+      )}
 
       <div className="flex flex-wrap justify-center gap-3 print:hidden">
         <Link href={href(locale, `/cases/${receipt.caseSlug}#transparency`)} className={buttonClasses({})}>
