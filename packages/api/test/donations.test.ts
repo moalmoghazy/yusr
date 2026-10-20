@@ -88,6 +88,18 @@ describe('creating a donation', () => {
     await rejects(donations.create(request({ returnUrl: 'https://evil.example/steal' }), { actor: null, idempotencyKey: key() }), 'VALIDATION_FAILED');
   });
 
+  it('refuses more than the case still needs, saying how much that is, and accepts exactly that', async () => {
+    const { donations, db } = await setup();
+    const item = (await db.read.cases.byId(CASE_ID))!;
+    const left = item.goalMinor - item.raisedMinor;
+    await assert.rejects(
+      donations.create(request({ amountMinor: left + 1_00 }), { actor: null, idempotencyKey: key() }),
+      (error: unknown) => DomainError.is(error, 'AMOUNT_ABOVE_REMAINING') && error.details?.['remainingMinor'] === left,
+    );
+    const exact = await donations.create(request({ amountMinor: left }), { actor: null, idempotencyKey: key() });
+    assert.equal(exact.breakdown.amountMinor, left);
+  });
+
   it('lets a signed-in donor give without guest details and accepts the app scheme as return URL', async () => {
     const { donations, gateways } = await setup();
     const response = await donations.create(request({ donor: null, returnUrl: 'yusr://donations/done' }), {

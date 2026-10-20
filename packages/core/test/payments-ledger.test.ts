@@ -13,9 +13,11 @@ import {
   buildRefundPostings,
   buildSettlementPostings,
   computeDonationBreakdown,
+  convertMinor,
   feeFor,
   grossUpForFee,
   methodsForCurrency,
+  remainingInCurrency,
   resolveProvider,
   type DonationSettlement,
   type FeeRule,
@@ -127,6 +129,23 @@ describe('donation breakdown', () => {
       (e) => DomainError.is(e, 'METHOD_NOT_AVAILABLE'),
     );
     assert.doesNotThrow(() => assertDonationAllowed({ ...request, amountMinor: 100_00 }, context));
+    assert.throws(
+      () => assertDonationAllowed({ ...request, amountMinor: 1_200_00 }, { ...context, remainingMinor: 1_000_00 }),
+      (e) => DomainError.is(e, 'AMOUNT_ABOVE_REMAINING') && e.details?.['remainingMinor'] === 1_000_00,
+    );
+    assert.doesNotThrow(() => assertDonationAllowed({ ...request, amountMinor: 1_000_00 }, { ...context, remainingMinor: 1_000_00 }));
+    assert.doesNotThrow(
+      () => assertDonationAllowed({ ...request, amountMinor: 5_00 }, { ...context, remainingMinor: 5_00 }),
+      'completing a case may go under the minimum',
+    );
+  });
+
+  it('measures what a case still needs in the donor’s currency, rounded down', () => {
+    const item = { goalMinor: 10_000_00, raisedMinor: 7_000_00, currency: 'EGP' as const };
+    assert.equal(remainingInCurrency(item, 'EGP'), 3_000_00);
+    assert.equal(remainingInCurrency({ ...item, raisedMinor: 12_000_00 }, 'EGP'), 0);
+    const usd = remainingInCurrency(item, 'USD', DEMO_FX);
+    assert.ok(convertMinor(usd, 'USD', 'EGP', DEMO_FX) <= 3_000_00 + 50, 'never meaningfully past the goal');
   });
 });
 

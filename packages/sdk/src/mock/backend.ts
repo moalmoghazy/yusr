@@ -9,6 +9,7 @@ import {
   DEMO_FX,
   DomainError,
   assertDonationAllowed,
+  remainingInCurrency,
   assertTransition,
   balanceOf,
   buildDonationPostings,
@@ -385,6 +386,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
         caseStatus: target.status,
         caseZakatEligible: target.zakatEligible,
         isGuest: userId === null,
+        remainingMinor: remainingInCurrency(target, request.currency, DEMO_FX),
       });
     }
     const breakdown = computeDonationBreakdown({

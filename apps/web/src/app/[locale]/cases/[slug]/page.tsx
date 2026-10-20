@@ -208,6 +208,7 @@ export default async function CasePage({ params, searchParams }: { params: Param
               zakatEligible={item.zakatEligible}
               initialAmountMinor={presetMinor}
               attemptKey={crypto.randomUUID()}
+              remainingMinor={Math.max(0, item.goalMinor - item.raisedMinor)}
             />
           ) : (
             <Link href="#transparency" className={buttonClasses({ variant: 'soft', block: true })}>

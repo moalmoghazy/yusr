@@ -22,7 +22,7 @@ export type OfflineAction = Extract<CheckoutAction, { type: 'fawry_reference' | 
 
 export type DonateState =
   | { status: 'idle' }
-  | { status: 'error'; code: DomainErrorCode | 'generic'; fields: string[] }
+  | { status: 'error'; code: DomainErrorCode | 'generic'; fields: string[]; remainingMinor?: number }
   | { status: 'offline'; action: OfflineAction; chargedMinor: number; currency: Currency; receiptUrl: string };
 
 const text = (value: FormDataEntryValue | null): string | null => (typeof value === 'string' && value.trim() ? value.trim() : null);
@@ -68,7 +68,10 @@ export async function startDonation(_previous: DonateState, form: FormData): Pro
   try {
     created = await live(locale).createDonation(parsed.data, idempotencyKey ? { idempotencyKey } : undefined);
   } catch (error) {
-    if (error instanceof ApiError) return { status: 'error', code: error.code, fields: fieldsOf(error.details) };
+    if (error instanceof ApiError) {
+      const remaining = error.details?.['remainingMinor'];
+      return { status: 'error', code: error.code, fields: fieldsOf(error.details), ...(typeof remaining === 'number' ? { remainingMinor: remaining } : {}) };
+    }
     console.error('startDonation failed', error);
     return { status: 'error', code: 'generic', fields: [] };
   }

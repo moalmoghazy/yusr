@@ -63,6 +63,19 @@ export interface DonationContext {
   caseStatus: CaseStatus;
   caseZakatEligible: boolean;
   isGuest: boolean;
+  /** What the case still needs, in the donation's currency (remainingInCurrency); omitted = no cap. */
+  remainingMinor?: number;
+}
+
+/**
+ * What a case still needs to reach its goal, in the donor's currency. Rounded down, so a gift of
+ * exactly this amount never takes the case past its goal.
+ */
+export function remainingInCurrency(item: { goalMinor: number; raisedMinor: number; currency: Currency }, currency: Currency, fx: FxTable = DEMO_FX): number {
+  const remaining = Math.max(0, item.goalMinor - item.raisedMinor);
+  if (currency === item.currency) return remaining;
+  const expDiff = CURRENCY_META[currency].exponent - CURRENCY_META[item.currency].exponent;
+  return Math.floor(remaining * fxRate(item.currency, currency, fx) * 10 ** expDiff);
 }
 
 export const DEDICATION_MAX_LENGTH = 140;
@@ -79,7 +92,13 @@ export function assertDonationAllowed(
     throw new DomainError('METHOD_NOT_AVAILABLE', undefined, { method: request.method, currency: request.currency });
   }
   const meta = CURRENCY_META[request.currency];
-  if (!Number.isInteger(request.amountMinor) || request.amountMinor < meta.minDonationMinor) {
+  const { remainingMinor } = context;
+  if (remainingMinor !== undefined && request.amountMinor > remainingMinor) {
+    throw new DomainError('AMOUNT_ABOVE_REMAINING', undefined, { remainingMinor, currency: request.currency, field: 'amountMinor' });
+  }
+  // A gift that completes the case is welcome even when what is left is below the usual minimum.
+  const completes = remainingMinor !== undefined && request.amountMinor === remainingMinor && remainingMinor > 0;
+  if (!Number.isInteger(request.amountMinor) || (request.amountMinor < meta.minDonationMinor && !completes)) {
     throw new DomainError('AMOUNT_TOO_LOW', undefined, { minMinor: meta.minDonationMinor, currency: request.currency });
   }
   if (context.isGuest && request.amountMinor > meta.guestMaxMinor) {

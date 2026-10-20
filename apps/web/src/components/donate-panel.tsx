@@ -37,6 +37,8 @@ export interface DonatePanelProps {
   initialAmountMinor?: number | null;
   /** One idempotency key per attempt, minted on the server so hydration matches. */
   attemptKey: string;
+  /** What the case still needs (goal − raised): a larger gift is refused, and the form offers this amount instead. */
+  remainingMinor: number;
 }
 
 /**
@@ -45,14 +47,15 @@ export interface DonatePanelProps {
  * It posts to a server action, so it works before JavaScript loads; with JavaScript it shows
  * the fee and total live and keeps the donor on the page for errors and offline payments.
  */
-export function DonatePanel({ locale, caseId, currency, zakatEligible, initialAmountMinor, attemptKey }: DonatePanelProps) {
+export function DonatePanel({ locale, caseId, currency, zakatEligible, initialAmountMinor, attemptKey, remainingMinor }: DonatePanelProps) {
   const { t, f } = textFor(locale);
   const meta = CURRENCY_META[currency];
   const methods = methodsForCurrency(currency);
-  const initialMajor =
-    initialAmountMinor && initialAmountMinor >= meta.minDonationMinor
-      ? initialAmountMinor / 10 ** meta.exponent
-      : (meta.quickAmounts[1] ?? meta.quickAmounts[0]!);
+  const toMajor = (minor: number) => minor / 10 ** meta.exponent;
+  const suggested =
+    initialAmountMinor && initialAmountMinor >= meta.minDonationMinor ? toMajor(initialAmountMinor) : (meta.quickAmounts[1] ?? meta.quickAmounts[0]!);
+  // Never start above what the case still needs.
+  const initialMajor = Math.min(suggested, toMajor(remainingMinor));
 
   // Shown in the interface's digits (١٠٠ in Arabic); parseAmountInput reads either kind back.
   const digits = (value: number) => f.number(value, { useGrouping: false, maximumFractionDigits: meta.exponent });
@@ -73,7 +76,10 @@ export function DonatePanel({ locale, caseId, currency, zakatEligible, initialAm
   const provider = resolveProvider(method, currency);
   const feeMinor = amountMinor && provider ? grossUpForFee(amountMinor, feeRuleFor(provider, method)) - amountMinor : 0;
   const totalMinor = amountMinor ? amountMinor + (coverFees ? feeMinor : 0) : null;
-  const tooLow = amountMinor !== null && amountMinor < meta.minDonationMinor;
+  // The server's figure wins when it differs (someone gave in the meantime).
+  const left = state.status === 'error' && state.remainingMinor !== undefined ? state.remainingMinor : remainingMinor;
+  const tooHigh = amountMinor !== null && amountMinor > left;
+  const tooLow = amountMinor !== null && amountMinor < meta.minDonationMinor && amountMinor !== left;
   const invalid = (field: string) => state.status === 'error' && state.fields.includes(field);
 
   if (state.status === 'offline') return <OfflineInstructions locale={locale} state={state} />;
@@ -115,14 +121,26 @@ export function DonatePanel({ locale, caseId, currency, zakatEligible, initialAm
             autoComplete="off"
             value={amount}
             onChange={(event) => setAmount(event.target.value)}
-            aria-invalid={tooLow || invalid('amountMinor') || undefined}
+            aria-invalid={tooLow || tooHigh || invalid('amountMinor') || undefined}
             className="h-12 w-full rounded-control border border-input bg-card pe-16 ps-4 text-lg font-bold tabular-nums outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40 aria-[invalid]:border-destructive"
           />
           <span className="pointer-events-none absolute end-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">{f.currencyLabel(currency)}</span>
         </label>
-        <p className={cn('text-xs', tooLow ? 'text-destructive' : 'text-muted-foreground')}>
-          {t('donate.minAmount', { amount: f.money(meta.minDonationMinor, currency) })}
-        </p>
+        {tooHigh ? (
+          <div role="alert" className="flex flex-col items-start gap-2 rounded-control bg-destructive-soft p-3 text-sm text-destructive-soft-foreground">
+            <p className="flex items-start gap-2">
+              <Icon name="alert" size={17} className="mt-0.5" />
+              {t('donate.aboveRemaining', { amount: f.money(left, currency) })}
+            </p>
+            <button type="button" onClick={() => setAmount(digits(toMajor(left)))} className={buttonClasses({ variant: 'outline', size: 'sm' })}>
+              {t('donate.useRemaining', { amount: f.money(left, currency) })}
+            </button>
+          </div>
+        ) : (
+          <p className={cn('text-xs', tooLow ? 'text-destructive' : 'text-muted-foreground')}>
+            {t('donate.minAmount', { amount: f.money(meta.minDonationMinor, currency) })}
+          </p>
+        )}
       </fieldset>
 
       {/* ---------------------------------------------------------- intention */}
@@ -241,14 +259,14 @@ export function DonatePanel({ locale, caseId, currency, zakatEligible, initialAm
         </dl>
       )}
 
-      {state.status === 'error' && (
+      {state.status === 'error' && !(state.code === 'AMOUNT_ABOVE_REMAINING' && tooHigh) && (
         <p id={`${ids}-error`} role="alert" className="flex items-start gap-2 rounded-control bg-destructive-soft p-3 text-sm text-destructive-soft-foreground">
           <Icon name="alert" size={18} className="mt-0.5" />
           {state.fields.includes('donor') ? t('donate.contactRequired') : t(`errors.${state.code}`)}
         </p>
       )}
 
-      <button type="submit" disabled={pending || totalMinor === null || tooLow} className={buttonClasses({ size: 'lg', block: true })}>
+      <button type="submit" disabled={pending || totalMinor === null || tooLow || tooHigh} className={buttonClasses({ size: 'lg', block: true })}>
         <Icon name={pending ? 'refresh' : 'lock'} size={18} className={pending ? 'motion-safe:animate-spin' : undefined} />
         {pending ? t('donate.redirecting') : t('donate.pay', { amount: totalMinor === null ? '' : f.money(totalMinor, currency) })}
       </button>

@@ -69,7 +69,10 @@ function DonateForm({ target, onClose }: { target: DonateTarget; onClose: () => 
   const digits = (value: number) => f.number(value, { useGrouping: false, maximumFractionDigits: meta.exponent });
   const presetMajor = target.presetMinor && target.presetMinor >= meta.minDonationMinor ? target.presetMinor / 10 ** meta.exponent : null;
 
-  const [amount, setAmount] = useState(() => digits(presetMajor ?? meta.quickAmounts[1] ?? meta.quickAmounts[0]!));
+  // What the case still needs: a larger gift is refused, and the sheet offers this amount instead.
+  const left = Math.max(0, item.goalMinor - item.raisedMinor);
+  const leftMajor = left / 10 ** meta.exponent;
+  const [amount, setAmount] = useState(() => digits(Math.min(presetMajor ?? meta.quickAmounts[1] ?? meta.quickAmounts[0]!, leftMajor)));
   const [type, setType] = useState<DonationType>('sadaqah');
   const [method, setMethod] = useState<PaymentMethod>(methods[0]!);
   const [coverFees, setCoverFees] = useState(true);
@@ -89,10 +92,15 @@ function DonateForm({ target, onClose }: { target: DonateTarget; onClose: () => 
   const provider = resolveProvider(method, currency);
   const feeMinor = amountMinor && provider ? grossUpForFee(amountMinor, feeRuleFor(provider, method)) - amountMinor : 0;
   const totalMinor = amountMinor ? amountMinor + (coverFees ? feeMinor : 0) : null;
-  const tooLow = amountMinor !== null && amountMinor < meta.minDonationMinor;
+  const tooHigh = amountMinor !== null && amountMinor > left;
+  const tooLow = amountMinor !== null && amountMinor < meta.minDonationMinor && amountMinor !== left;
 
   async function pay() {
     setProblem(null);
+    if (tooHigh) {
+      setProblem(t('donate.aboveRemaining', { amount: f.money(left, currency) }));
+      return;
+    }
     if (amountMinor === null || tooLow) {
       setProblem(t('donate.minAmount', { amount: f.money(meta.minDonationMinor, currency, { fractionDigits: 0 }) }));
       return;
@@ -204,12 +212,25 @@ function DonateForm({ target, onClose }: { target: DonateTarget; onClose: () => 
             keyboardType="decimal-pad"
             inputMode="decimal"
             suffix={f.currencyLabel(currency)}
-            invalid={tooLow}
+            invalid={tooLow || tooHigh}
             large
           />
-          <Text variant="caption" muted color={tooLow ? theme.colors.destructive : undefined}>
-            {t('donate.minAmount', { amount: f.money(meta.minDonationMinor, currency, { fractionDigits: 0 }) })}
-          </Text>
+          {tooHigh ? (
+            <>
+              <Text variant="caption" color={theme.colors.destructive}>
+                {t('donate.aboveRemaining', { amount: f.money(left, currency) })}
+              </Text>
+              <Pressable accessibilityRole="button" onPress={() => setAmount(digits(leftMajor))} hitSlop={8}>
+                <Text variant="caption" weight="bold" color={theme.colors.primary}>
+                  {t('donate.useRemaining', { amount: f.money(left, currency) })}
+                </Text>
+              </Pressable>
+            </>
+          ) : (
+            <Text variant="caption" muted color={tooLow ? theme.colors.destructive : undefined}>
+              {t('donate.minAmount', { amount: f.money(meta.minDonationMinor, currency, { fractionDigits: 0 }) })}
+            </Text>
+          )}
         </Section>
 
         <Section title={t('donate.type')}>
@@ -332,7 +353,7 @@ function DonateForm({ target, onClose }: { target: DonateTarget; onClose: () => 
           icon="heart"
           onPress={pay}
           loading={busy}
-          disabled={amountMinor === null || tooLow}
+          disabled={amountMinor === null || tooLow || tooHigh}
         />
         <View style={styles.secure}>
           <Icon name="lock" size={13} color={theme.colors.mutedForeground} />

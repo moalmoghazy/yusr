@@ -19,6 +19,7 @@ import {
   DomainError,
   METHOD_META,
   assertDonationAllowed,
+  remainingInCurrency,
   buildDonationPostings,
   computeDonationBreakdown,
   formatReceiptNumber,
@@ -164,7 +165,12 @@ export class DonationsService {
     const item = await db.read.cases.byId(request.caseId);
     if (!item) throw new DomainError('NOT_FOUND', 'Case not found', { caseId: request.caseId });
     const actor = context.actor;
-    assertDonationAllowed(request, { caseStatus: item.status, caseZakatEligible: item.zakatEligible, isGuest: !actor });
+    assertDonationAllowed(request, {
+      caseStatus: item.status,
+      caseZakatEligible: item.zakatEligible,
+      isGuest: !actor,
+      remainingMinor: remainingInCurrency(item, request.currency, this.deps.fx.current()),
+    });
     if (!actor && !request.donor?.email && !request.donor?.phone) {
       throw new DomainError('VALIDATION_FAILED', 'Guests need an email or a mobile number for the receipt', { field: 'donor' });
     }
