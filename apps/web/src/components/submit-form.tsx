@@ -6,6 +6,7 @@ import {
   EGYPT_GOVERNORATES,
   parseAmountInput,
   SAUDI_REGIONS,
+  toE164,
   toMinor,
   type CaseCategory,
   type DocumentKind,
@@ -18,18 +19,12 @@ import { useId, useState, type FormEvent, type ReactNode } from 'react';
 import { href } from '@/lib/i18n';
 import { requestUpload, sendCase } from '@/lib/submit';
 
-type Relation = 'self' | 'family' | 'volunteer';
 type Slot = 'id' | 'proof';
 type Upload =
   | { status: 'uploading'; name: string }
   | { status: 'done'; name: string; size: number; kind: DocumentKind; storageKey: string; sha256: string }
   | { status: 'error'; name: string; message: string };
 
-const RELATIONS: ReadonlyArray<{ value: Relation; icon: IconName }> = [
-  { value: 'self', icon: 'user' },
-  { value: 'family', icon: 'users' },
-  { value: 'volunteer', icon: 'hand-heart' },
-];
 const PROOF_KINDS = ['medical_report', 'price_quote', 'invoice', 'debt_proof', 'court_ruling', 'school_record'] as const satisfies readonly DocumentKind[];
 const CONTENT_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/heic'];
 const MAX_BYTES = 20 * 1024 * 1024;
@@ -48,7 +43,8 @@ async function sha256Hex(file: File): Promise<string> {
 }
 
 /**
- * The case submission portal (for beneficiaries, their families or field volunteers).
+ * The case submission portal, for partner associations (جمعيات أهلية registered with the Ministry of
+ * Social Solidarity). Submissions by individuals are paused: shown greyed out, not selectable.
  * Documents go straight from the browser to private storage through ten-minute upload links;
  * the case then refers to them by key and hash. Nothing is published from here: every case is
  * reviewed and visited in the field first.
@@ -56,7 +52,10 @@ async function sha256Hex(file: File): Promise<string> {
 export function SubmitForm({ locale }: { locale: Locale }) {
   const { t, f, l } = textFor(locale);
   const ids = useId();
-  const [relation, setRelation] = useState<Relation>('volunteer');
+  const [orgName, setOrgName] = useState('');
+  const [orgNumber, setOrgNumber] = useState('');
+  const [contactName, setContactName] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
   const [category, setCategory] = useState<CaseCategory>('medical');
   const [title, setTitle] = useState('');
   const [story, setStory] = useState('');
@@ -82,7 +81,10 @@ export function SubmitForm({ locale }: { locale: Locale }) {
   const deadlineValid = !urgent || (deadline !== '' && deadline >= today);
   const idDoc = uploads.id?.status === 'done' ? uploads.id : null;
   const proofDoc = uploads.proof?.status === 'done' ? uploads.proof : null;
+  const contactE164 = toE164(contactPhone, currency === 'SAR' ? 'SA' : 'EG');
+  const associationValid = orgName.trim().length >= 3 && orgNumber.trim() !== '' && contactName.trim().length >= 2 && contactE164 !== null;
   const ready =
+    associationValid &&
     title.trim().length >= TITLE_MIN &&
     story.trim().length >= STORY_MIN &&
     goalValid &&
@@ -119,13 +121,14 @@ export function SubmitForm({ locale }: { locale: Locale }) {
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (!ready || !idDoc || !proofDoc || goalMinor === null) return;
+    if (!ready || !idDoc || !proofDoc || goalMinor === null || !contactE164) return;
     setSending(true);
     setProblem(null);
     const text = (value: string) => ({ [locale]: value.trim() });
     const result = await sendCase(locale, {
       category,
-      submitterRelation: relation,
+      submitterRelation: 'association',
+      association: { name: orgName.trim(), registrationNumber: orgNumber.trim(), contactName: contactName.trim(), contactPhone: contactE164 },
       title: text(title),
       story: text(story),
       region,
@@ -182,24 +185,73 @@ export function SubmitForm({ locale }: { locale: Locale }) {
     <form onSubmit={submit} className="flex flex-col gap-6" noValidate aria-describedby={problem ? `${ids}-problem` : undefined}>
       {/* ------------------------------------------------------------ 1 · who */}
       <Step number={1} total={4} title={t('submit.steps.who')} locale={locale}>
-        <div role="radiogroup" aria-label={t('submit.steps.who')} className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {RELATIONS.map((option) => (
-            <label key={option.value} className="cursor-pointer">
-              <input
-                type="radio"
-                name="relation"
-                value={option.value}
-                checked={relation === option.value}
-                onChange={() => setRelation(option.value)}
-                className="peer sr-only"
-              />
-              <span className="flex h-full items-center gap-3 rounded-control border border-border bg-card p-4 font-semibold transition-colors peer-checked:border-primary peer-checked:bg-primary-soft/60 peer-checked:text-primary-soft-foreground peer-focus-visible:ring-[3px] peer-focus-visible:ring-ring/50 sm:flex-col sm:text-center">
-                <Icon name={option.icon} size={24} />
-                {t(`submit.relation.${option.value}`)}
-              </span>
-            </label>
-          ))}
+        <div role="radiogroup" aria-label={t('submit.steps.who')} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <PathCard icon="landmark" title={t('submit.path.association.title')} body={t('submit.path.association.body')} value="association" checked />
+          <PathCard
+            icon="users"
+            title={t('submit.path.individual.title')}
+            body={t('submit.path.individual.body')}
+            value="individual"
+            badge={t('submit.path.individual.badge')}
+            disabled
+          />
         </div>
+        <Field label={t('submit.association.name')} htmlFor={`${ids}-org`}>
+          <input
+            id={`${ids}-org`}
+            maxLength={120}
+            value={orgName}
+            placeholder={t('submit.association.namePlaceholder')}
+            onChange={(event) => setOrgName(event.target.value)}
+            aria-invalid={flagged('association')}
+            autoComplete="organization"
+            dir="auto"
+            className={cn(control, 'h-11')}
+          />
+        </Field>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label={t('submit.association.registrationNumber')} htmlFor={`${ids}-org-number`} hint={t('submit.association.registrationHint')}>
+            <input
+              id={`${ids}-org-number`}
+              maxLength={40}
+              value={orgNumber}
+              onChange={(event) => setOrgNumber(event.target.value)}
+              aria-invalid={flagged('association')}
+              dir="ltr"
+              className={cn(control, 'h-11 text-start')}
+            />
+          </Field>
+          <Field label={t('submit.association.contactName')} htmlFor={`${ids}-contact`}>
+            <input
+              id={`${ids}-contact`}
+              maxLength={80}
+              value={contactName}
+              onChange={(event) => setContactName(event.target.value)}
+              aria-invalid={flagged('association')}
+              autoComplete="name"
+              dir="auto"
+              className={cn(control, 'h-11')}
+            />
+          </Field>
+        </div>
+        <Field
+          label={t('submit.association.contactPhone')}
+          htmlFor={`${ids}-contact-phone`}
+          hint={t('submit.association.contactHint')}
+          invalid={contactPhone !== '' && contactE164 === null}
+        >
+          <input
+            id={`${ids}-contact-phone`}
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            value={contactPhone}
+            onChange={(event) => setContactPhone(event.target.value)}
+            aria-invalid={(contactPhone !== '' && contactE164 === null) || flagged('association')}
+            dir="ltr"
+            className={cn(control, 'h-11 text-start')}
+          />
+        </Field>
       </Step>
 
       {/* ------------------------------------------------------------ 2 · the case */}
@@ -385,7 +437,7 @@ export function SubmitForm({ locale }: { locale: Locale }) {
       <Step number={4} total={4} title={t('submit.steps.review')} locale={locale}>
         <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
           {[
-            [t('submit.steps.who'), t(`submit.relation.${relation}`)],
+            [t('submit.steps.who'), orgName.trim() || t('submit.relation.association')],
             [t('submit.fields.category'), t(`categories.${category}`)],
             [t('submit.fields.title'), title.trim() || '—'],
             [t('submit.fields.goal'), goalValid && goalMinor !== null ? f.money(goalMinor, currency) : '—'],
@@ -443,6 +495,52 @@ function Step({ number, total, title, locale, children }: { number: number; tota
       </h2>
       {children}
     </section>
+  );
+}
+
+/** One way to submit: a partner association (the only open one) or an individual (paused, greyed out). */
+function PathCard({
+  icon,
+  title,
+  body,
+  value,
+  checked,
+  disabled,
+  badge,
+}: {
+  icon: IconName;
+  title: string;
+  body: string;
+  value: string;
+  checked?: boolean;
+  disabled?: boolean;
+  badge?: string;
+}) {
+  return (
+    <label className={cn('relative', disabled ? 'cursor-not-allowed' : 'cursor-pointer')}>
+      <input type="radio" name="path" value={value} checked={Boolean(checked)} disabled={disabled} readOnly className="peer sr-only" />
+      <span
+        className={cn(
+          'flex h-full flex-col gap-2 rounded-control border p-4 transition-colors peer-focus-visible:ring-[3px] peer-focus-visible:ring-ring/50',
+          disabled
+            ? 'border-dashed border-border bg-muted/60 text-muted-foreground opacity-70 grayscale'
+            : 'border-border bg-card peer-checked:border-primary peer-checked:bg-primary-soft/60 peer-checked:text-primary-soft-foreground',
+        )}
+      >
+        <span className="flex items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-2.5 font-bold">
+            <Icon name={icon} size={22} />
+            {title}
+          </span>
+          {badge ? (
+            <span className="shrink-0 whitespace-nowrap rounded-chip bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">{badge}</span>
+          ) : checked ? (
+            <Icon name="check" size={18} strokeWidth={2.4} />
+          ) : null}
+        </span>
+        <span className="text-sm leading-relaxed opacity-90">{body}</span>
+      </span>
+    </label>
   );
 }
 

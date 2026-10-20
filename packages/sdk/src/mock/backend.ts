@@ -642,7 +642,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       disbursements,
       updates: (seed.updates ?? []).map((update, index) => ({ id: `${id}_u${index + 1}`, at: iso(now - update.daysAgo * DAY), body: update.body })),
       recentDonations: [],
-      submittedBy: seed.submittedBy,
+      submittedBy: { ...seed.submittedBy, association: null },
       auditor,
       history,
       updatedAt: iso(Math.max(...history.map((entry) => Date.parse(entry.at)))),
@@ -1538,7 +1538,11 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       disbursements: [],
       updates: [],
       recentDonations: [],
-      submittedBy: { name: CURRENT_DONOR.name.ar, relation: request.submitterRelation },
+      submittedBy: {
+        name: request.association?.name ?? CURRENT_DONOR.name.ar,
+        relation: request.submitterRelation,
+        association: request.submitterRelation === 'association' ? (request.association ?? null) : null,
+      },
       auditor: null,
       history: [
         { from: null, to: 'draft', at: iso(at), actorName: CURRENT_DONOR.name.ar, reason: null },

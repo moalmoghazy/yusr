@@ -69,6 +69,17 @@ describe('submission portal', () => {
     assert.equal(again.possibleDuplicate, true);
   });
 
+  it('records the partner association that submitted a case and shows it to staff', async () => {
+    const { cases } = await setupCases();
+    const volunteer = actorOf(USERS.volunteer, false);
+    const association = { name: 'جمعية الخير لتنمية المجتمع', registrationNumber: '1234/2019', contactName: 'سعاد محمود', contactPhone: '+201001234567' };
+    const created = await cases.submit(submission(volunteer.id, { submitterRelation: 'association', association }), { actor: volunteer });
+    const staff = await cases.adminCase(created.id, { actor: actorOf(USERS.moderator) });
+    assert.equal(staff.submittedBy.relation, 'association');
+    assert.equal(staff.submittedBy.name, association.name);
+    assert.deepEqual(staff.submittedBy.association, association);
+  });
+
   it('refuses documents uploaded by someone else and anonymous submissions', async () => {
     const { cases } = await setupCases();
     const volunteer = actorOf(USERS.volunteer, false);

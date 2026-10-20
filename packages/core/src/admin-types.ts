@@ -11,8 +11,26 @@ export interface StatusChange {
   reason: string | null;
 }
 
+/**
+ * Who submits a case. Cases now come from partner associations (جمعيات أهلية registered with the
+ * Ministry of Social Solidarity); submissions by individuals (self / family / volunteer) are paused
+ * on the website but still understood everywhere.
+ */
+export const SUBMITTER_RELATIONS = ['association', 'self', 'family', 'volunteer'] as const;
+export type SubmitterRelation = (typeof SUBMITTER_RELATIONS)[number];
+
+/** The partner association behind a case (when submitterRelation is `association`). */
+export interface PartnerAssociation {
+  name: string;
+  /** رقم الإشهار: its registration number with the Ministry of Social Solidarity. */
+  registrationNumber: string;
+  contactName: string;
+  /** E.164, e.g. +201001234567. */
+  contactPhone: string;
+}
+
 export interface AdminCase extends CaseDetail {
-  submittedBy: { name: string; relation: 'self' | 'family' | 'volunteer' };
+  submittedBy: { name: string; relation: SubmitterRelation; association: PartnerAssociation | null };
   auditor: { id: string; name: string } | null;
   history: StatusChange[];
   updatedAt: string;
@@ -214,7 +232,9 @@ export interface SubmittedText {
  */
 export interface SubmitCaseRequest {
   category: CaseCategory;
-  submitterRelation: 'self' | 'family' | 'volunteer';
+  submitterRelation: SubmitterRelation;
+  /** Required when submitterRelation is `association`. */
+  association?: PartnerAssociation | null;
   title: SubmittedText;
   story: SubmittedText;
   region: string;

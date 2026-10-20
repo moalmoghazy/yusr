@@ -203,6 +203,7 @@ export async function seedDemo(tx: Tx, options: { now: Date; cipher: FieldCipher
       beneficiaryId,
       submittedBy,
       submitterRelation: seed.submittedBy.relation,
+      association: null,
       title: seed.title,
       summary: seed.summary,
       shareText: seed.shareText ?? null,

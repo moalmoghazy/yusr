@@ -3,7 +3,7 @@
  * so a rule is written once and enforced identically on both sides.
  */
 import { z } from 'zod';
-import { CHECKLIST_ITEMS } from './admin-types';
+import { CHECKLIST_ITEMS, SUBMITTER_RELATIONS } from './admin-types';
 import { DEDICATION_MAX_LENGTH } from './donation';
 import {
   CASE_CATEGORIES,
@@ -84,42 +84,55 @@ const localized = (max: number) => z.object({ ar: z.string().trim().min(1).max(m
 
 const regionSchema = z.string().regex(/^[A-Z]{2}-[A-Z0-9]{1,3}$/);
 
-export const submitCaseSchema = z.object({
-  category: z.enum(CASE_CATEGORIES),
-  submitterRelation: z.enum(['self', 'family', 'volunteer']),
-  title: submittedText(8, 120),
-  story: submittedText(80, 6000),
-  region: regionSchema,
-  city: z.string().trim().max(80).optional(),
-  currency: currencySchema.default('EGP'),
-  goalMinor: z.number().int().min(1_000_00).max(10_000_000_00),
-  isUrgent: z.boolean().default(false),
-  deadline: z.iso.datetime().nullish(),
-  beneficiary: z
-    .object({
-      pseudonym: submittedText(2, 60).nullish(),
-      // Egyptian national IDs have 14 digits, Saudi IDs and iqamas 10.
-      nationalId: z
-        .string()
-        .trim()
-        .regex(/^(\d{14}|\d{10})$/, 'National ID is 14 digits (Egypt) or 10 digits (Saudi Arabia)')
-        .nullish(),
-      phone: phoneSchema.nullish(),
-      householdSize: z.number().int().min(1).max(30).nullish(),
-    })
-    .default({}),
-  documents: z
-    .array(
-      z.object({
-        kind: z.enum(DOCUMENT_KINDS),
-        storageKey: z.string().min(8).max(300),
-        sha256: z.string().regex(/^[a-f0-9]{64}$/),
-      }),
-    )
-    .min(1)
-    .max(20),
-  consent: z.literal(true),
-});
+export const submitCaseSchema = z
+  .object({
+    category: z.enum(CASE_CATEGORIES),
+    submitterRelation: z.enum(SUBMITTER_RELATIONS),
+    association: z
+      .object({
+        name: z.string().trim().min(3).max(120),
+        registrationNumber: z.string().trim().min(1).max(40),
+        contactName: z.string().trim().min(2).max(80),
+        contactPhone: phoneSchema,
+      })
+      .nullish(),
+    title: submittedText(8, 120),
+    story: submittedText(80, 6000),
+    region: regionSchema,
+    city: z.string().trim().max(80).optional(),
+    currency: currencySchema.default('EGP'),
+    goalMinor: z.number().int().min(1_000_00).max(10_000_000_00),
+    isUrgent: z.boolean().default(false),
+    deadline: z.iso.datetime().nullish(),
+    beneficiary: z
+      .object({
+        pseudonym: submittedText(2, 60).nullish(),
+        // Egyptian national IDs have 14 digits, Saudi IDs and iqamas 10.
+        nationalId: z
+          .string()
+          .trim()
+          .regex(/^(\d{14}|\d{10})$/, 'National ID is 14 digits (Egypt) or 10 digits (Saudi Arabia)')
+          .nullish(),
+        phone: phoneSchema.nullish(),
+        householdSize: z.number().int().min(1).max(30).nullish(),
+      })
+      .default({}),
+    documents: z
+      .array(
+        z.object({
+          kind: z.enum(DOCUMENT_KINDS),
+          storageKey: z.string().min(8).max(300),
+          sha256: z.string().regex(/^[a-f0-9]{64}$/),
+        }),
+      )
+      .min(1)
+      .max(20),
+    consent: z.literal(true),
+  })
+  .refine((input) => input.submitterRelation !== 'association' || Boolean(input.association), {
+    message: 'A partner association’s submission needs its details',
+    path: ['association'],
+  });
 export type SubmitCaseInput = z.infer<typeof submitCaseSchema>;
 
 /** Moderator edits before or after publishing (wording, flags, deadline). */

@@ -16,6 +16,8 @@ import {
   ROLES,
   type CheckoutAction,
   type Localized,
+  type PartnerAssociation,
+  type SubmitterRelation,
 } from '@yusr/core';
 import { sql } from 'drizzle-orm';
 import {
@@ -164,7 +166,9 @@ export const cases = pgTable(
     submittedBy: uuid('submitted_by')
       .notNull()
       .references(() => users.id),
-    submitterRelation: text('submitter_relation').$type<'self' | 'family' | 'volunteer'>().notNull(),
+    submitterRelation: text('submitter_relation').$type<SubmitterRelation>().notNull(),
+    /** The partner association that submitted the case (0002_partner_association.sql); null for individuals. */
+    association: jsonb('association').$type<PartnerAssociation>(),
     title: jsonb('title').$type<Localized>().notNull(),
     summary: jsonb('summary').$type<Localized>().notNull(),
     /** «نص المشاركة»: the case's own line for social sharing (0001_case_share_text.sql); null = composed. */

@@ -332,7 +332,7 @@ export const en: Messages = {
     howTitle: 'From request to proof of payment',
     howBody: 'Four stages every case passes before a single pound reaches it.',
     howSteps: {
-      submit: { title: 'Case submitted', body: 'The beneficiary or a volunteer submits official documents.' },
+      submit: { title: 'Case submitted', body: 'A partner association submits the case with official documents.' },
       verify: { title: 'Field visit', body: 'A certified auditor visits and confirms the need and the amount.' },
       publish: { title: 'Reviewed & published', body: 'We redact personal data and publish the story with a cost breakdown.' },
       disburse: { title: 'Paid directly, with proof', body: 'We pay the institution directly and send you the receipt.' },
@@ -348,8 +348,8 @@ export const en: Messages = {
     },
     paymentsTitle: 'Pay the way that suits you',
     paymentsBody: 'Cards, wallets, Fawry, InstaPay, mada and Apple Pay — in EGP, SAR and USD.',
-    ctaTitle: 'Know a family that needs support?',
-    ctaBody: 'Submit their case on Yusr and our verification team will call you within 48 hours.',
+    ctaTitle: 'An association serving families in need?',
+    ctaBody: 'Submit your cases on Yusr as a partner association, and our team will contact you within 48 hours.',
     ctaButton: 'Submit a case',
   },
   donate: {
@@ -504,9 +504,10 @@ export const en: Messages = {
   },
   submit: {
     title: 'Submit a case',
-    subtitle: 'We review every request within 48 hours, then a field auditor calls to schedule a visit.',
+    subtitle:
+      'Yusr currently accepts cases from partner associations registered with the Ministry of Social Solidarity. We review every request within 48 hours and contact the association’s representative.',
     steps: {
-      who: 'About you',
+      who: 'Who is submitting',
       details: 'Case details',
       documents: 'Documents',
       review: 'Review & send',
@@ -515,6 +516,27 @@ export const en: Messages = {
       self: 'For myself',
       family: 'For a family member',
       volunteer: 'A volunteer on behalf of a family',
+      association: 'A partner association',
+    },
+    path: {
+      association: {
+        title: 'Partner association',
+        body: 'For associations registered with the Ministry of Social Solidarity: the association researches the case in the field, submits it, and receives the donations for it.',
+      },
+      individual: {
+        title: 'Individual or volunteer',
+        body: 'Submissions from individuals are paused for now. If you know a family in need, contact an association near you.',
+        badge: 'Paused for now',
+      },
+    },
+    association: {
+      name: 'Association name',
+      namePlaceholder: 'e.g. Al-Khair Community Development Association',
+      registrationNumber: 'Registration number',
+      registrationHint: 'The association’s registration number with the Ministry of Social Solidarity.',
+      contactName: 'Person in charge of the case',
+      contactPhone: 'Their mobile number',
+      contactHint: 'We contact them about this case only; donors never see it.',
     },
     fields: {
       category: 'Type of need',
@@ -538,10 +560,10 @@ export const en: Messages = {
     docsHint: 'Documents are uploaded encrypted and nothing is published until personal data is redacted.',
     docsRequired: 'Required: national ID + proof of cost (medical report, promissory note, price quote…).',
     upload: 'Upload a file',
-    consent: 'I confirm the details are accurate and agree to a field verification visit',
+    consent: 'We confirm the details are accurate, that the association has researched the case in the field, and agree to Yusr’s review',
     send: 'Send request',
     submitted: 'We received your request — reference {reference}',
-    nextSteps: 'Next: our verification coordinator will call you to schedule the visit.',
+    nextSteps: 'Next: the Yusr team contacts the association’s representative to review the case before publishing.',
     stepOf: 'Step {step} of {total}',
     docId: 'National ID',
     docProof: 'Proof of cost',

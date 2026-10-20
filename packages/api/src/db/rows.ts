@@ -15,8 +15,10 @@ import type {
   Localized,
   PayeeType,
   PaymentMethod,
+  PartnerAssociation,
   PaymentProvider,
   Role,
+  SubmitterRelation,
 } from '@yusr/core';
 
 export type Id = string;
@@ -78,7 +80,9 @@ export interface CaseRow {
   status: CaseStatus;
   beneficiaryId: Id;
   submittedBy: Id;
-  submitterRelation: 'self' | 'family' | 'volunteer';
+  submitterRelation: SubmitterRelation;
+  /** The partner association that submitted the case (0002_partner_association.sql); null for individuals. */
+  association: PartnerAssociation | null;
   title: Localized;
   summary: Localized;
   /** «نص المشاركة»: the case's own line for social sharing; null = composed from title and category. */

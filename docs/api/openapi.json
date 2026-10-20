@@ -456,9 +456,47 @@
                   "submitterRelation": {
                     "type": "string",
                     "enum": [
+                      "association",
                       "self",
                       "family",
                       "volunteer"
+                    ]
+                  },
+                  "association": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "minLength": 3,
+                            "maxLength": 120
+                          },
+                          "registrationNumber": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 40
+                          },
+                          "contactName": {
+                            "type": "string",
+                            "minLength": 2,
+                            "maxLength": 80
+                          },
+                          "contactPhone": {
+                            "type": "string",
+                            "pattern": "^\\+[1-9]\\d{7,14}$"
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "registrationNumber",
+                          "contactName",
+                          "contactPhone"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
                     ]
                   },
                   "title": {

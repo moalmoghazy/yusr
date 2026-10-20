@@ -118,7 +118,7 @@ export class CasesService {
     }
     return {
       ...detail,
-      submittedBy: { name: submitter?.displayName ?? '—', relation: item.submitterRelation },
+      submittedBy: { name: item.association?.name ?? submitter?.displayName ?? '—', relation: item.submitterRelation, association: item.association },
       auditor: auditor ? { id: auditor.id, name: auditor.displayName } : null,
       history: transitions.map((change) => ({
         from: change.fromStatus,
@@ -254,6 +254,7 @@ export class CasesService {
         beneficiaryId,
         submittedBy: actor.id,
         submitterRelation: input.submitterRelation,
+        association: input.submitterRelation === 'association' ? (input.association ?? null) : null,
         title,
         summary: { ar: story.ar.slice(0, 180), en: story.en.slice(0, 180) },
         shareText: null,

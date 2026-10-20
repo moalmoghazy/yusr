@@ -43,6 +43,13 @@ describe('request schemas', () => {
     assert.ok(!submitCaseSchema.safeParse({ ...submission, documents: [] }).success);
   });
 
+  it('takes a partner association’s details with its submission, and requires them', () => {
+    const association = { name: 'جمعية الخير لتنمية المجتمع', registrationNumber: '1234/2019', contactName: 'سعاد محمود', contactPhone: '+201001234567' };
+    assert.ok(submitCaseSchema.safeParse({ ...submission, submitterRelation: 'association', association }).success);
+    assert.ok(!submitCaseSchema.safeParse({ ...submission, submitterRelation: 'association' }).success, 'the association’s details are required');
+    assert.ok(!submitCaseSchema.safeParse({ ...submission, submitterRelation: 'association', association: { ...association, contactPhone: '0100' } }).success);
+  });
+
   it('applies donation defaults and rejects unknown methods', () => {
     const parsed = createDonationSchema.parse({ caseId: UUID, amountMinor: 100_00, currency: 'EGP', method: 'card' });
     assert.equal(parsed.type, 'sadaqah');
