@@ -867,6 +867,14 @@ export const ar = {
     terms: 'الشروط والأحكام',
     privacy: 'سياسة الخصوصية',
     rights: '© {year} يُسر. جميع الحقوق محفوظة.',
+    getApp: 'حمّل تطبيق يُسر',
+    stores: {
+      downloadOn: 'حمّله من',
+      soonOn: 'قريبًا على',
+      appStore: 'App Store',
+      googlePlay: 'Google Play',
+      appGallery: 'AppGallery',
+    },
   },
   mobile: {
     tabs: {

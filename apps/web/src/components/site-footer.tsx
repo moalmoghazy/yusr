@@ -1,5 +1,6 @@
 import type { Locale } from '@yusr/core';
-import { Logo, textFor } from '@yusr/ui';
+import { brand } from '@yusr/theme';
+import { Logo, StoreBadge, STORE_GLYPHS, textFor, type StoreName } from '@yusr/ui';
 import Link from 'next/link';
 import { href } from '@/lib/i18n';
 
@@ -35,6 +36,23 @@ export function SiteFooter({ locale }: { locale: Locale }) {
           <span className="text-muted-foreground">{t('footer.faq')}</span>
           <span className="text-muted-foreground">{t('footer.contact')}</span>
           <span className="text-muted-foreground">{t('footer.privacy')}</span>
+        </div>
+      </div>
+      <div className="border-t border-border">
+        <div className="container-page flex flex-col gap-4 py-6 md:flex-row md:items-center md:justify-between">
+          <h2 className="font-bold text-foreground">{t('footer.getApp')}</h2>
+          <ul className="flex flex-wrap gap-3">
+            {(Object.keys(STORE_GLYPHS) as StoreName[]).map((store) => (
+              <li key={store}>
+                <StoreBadge
+                  store={store}
+                  name={t(`footer.stores.${store}`)}
+                  caption={t(brand.apps[store] ? 'footer.stores.downloadOn' : 'footer.stores.soonOn')}
+                  href={brand.apps[store]}
+                />
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
       <div className="border-t border-border">

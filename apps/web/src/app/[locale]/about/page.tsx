@@ -94,7 +94,7 @@ export default async function AboutPage({ params }: { params: LocaleParams }) {
         </div>
         {/* Bleeds to the card's edge and fades out towards the text: to the side on wide screens, upwards on phones. */}
         <div className="relative -mx-5 h-80 [mask-image:linear-gradient(to_bottom,transparent,black_45%)] md:-mx-10 lg:absolute lg:inset-y-0 lg:end-0 lg:mx-0 lg:h-auto lg:w-1/2 lg:[mask-image:linear-gradient(to_left,black_40%,transparent_95%)] lg:rtl:[mask-image:linear-gradient(to_right,black_40%,transparent_95%)]">
-          <StarCloseup label={t('identity.starLabel')} />
+          <StarCloseup label={t('identity.starLabel')} replayLabel={t('identity.replay')} />
         </div>
       </section>
     </div>

@@ -130,6 +130,8 @@ export interface BrandConfig {
   wordmark: 'typeset' | 'lettered';
   /** Placeholders — set real values through environment config before launch. */
   contact: { email: string; phone: string; website: string };
+  /** The app's pages in each store; null until it is published there (the badge then says «soon»). */
+  apps: { appStore: string | null; googlePlay: string | null; appGallery: string | null };
   legal: { entity: { ar: string; en: string }; registration: string };
 }
 
@@ -140,6 +142,7 @@ export const brand: BrandConfig = {
   logo: LOGO_VARIANTS.dotsBelow,
   wordmark: 'lettered',
   contact: { email: 'care@yusr.example', phone: '+20 100 000 0000', website: 'https://yusr.example' },
+  apps: { appStore: null, googlePlay: null, appGallery: null },
   legal: {
     entity: { ar: 'مؤسسة يُسر للتنمية المجتمعية', en: 'Yusr Community Development Foundation' },
     registration: 'Registration no. — pending',

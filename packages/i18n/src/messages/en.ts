@@ -801,6 +801,14 @@ export const en: Messages = {
     terms: 'Terms',
     privacy: 'Privacy',
     rights: '© {year} Yusr. All rights reserved.',
+    getApp: 'Get the Yusr app',
+    stores: {
+      downloadOn: 'Download on',
+      soonOn: 'Coming soon to',
+      appStore: 'App Store',
+      googlePlay: 'Google Play',
+      appGallery: 'AppGallery',
+    },
   },
   mobile: {
     tabs: {
