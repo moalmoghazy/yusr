@@ -67,7 +67,7 @@ import {
 } from '@yusr/core';
 import type { EditCaseInput } from '@yusr/core/schemas';
 import type { AdminClient, LedgerQuery, YusrClient } from '../client';
-import { SEED_CASES, type SeedCase } from './cases';
+import { demoPartnerFor, SEED_CASES, type SeedCase } from './cases';
 import { CURRENT_DONOR, DONORS, STAFF, VOLUNTEERS, type SeedDonor } from './people';
 import { createRandom, type Random } from './random';
 
@@ -80,6 +80,8 @@ const BASELINE = { raisedMinor: 18_240_000_00, casesFunded: 1_274, donors: 46_18
 
 const SYSTEM_NAME: Localized = { ar: 'المنصة', en: 'Platform' };
 const CONTENT_TEAM: Localized = { ar: 'فريق المحتوى', en: 'Content team' };
+/** The partner association: it verifies the case in the field and pays the provider. */
+const PARTNER_LABEL: Localized = { ar: 'الجمعية الشريكة', en: 'Partner association' };
 
 const DOCUMENT_TITLES: Record<DocumentKind, Localized> = {
   national_id: { ar: 'بطاقة الرقم القومي', en: 'National ID' },
@@ -545,9 +547,10 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
   // ---------------------------------------------------------------- seeding
 
   const buildTimeline = (seed: SeedCase, created: number, published: number | null): TimelineEvent[] => {
-    const auditor = seed.auditorId ? staffName(seed.auditorId) : SYSTEM_NAME;
-    const auditorActor: Localized = { ar: `المدقق ${auditor.ar}`, en: `Auditor ${auditor.en}` };
-    const events: TimelineEvent[] = [{ kind: 'submitted', at: iso(created), actor: { ar: seed.submittedBy.name, en: seed.submittedBy.name } }];
+    // The partner association submits the case and visits the family; Yusr's team reviews it.
+    const partner = demoPartnerFor(seed.slug).name;
+    const auditorActor: Localized = { ar: partner, en: partner };
+    const events: TimelineEvent[] = [{ kind: 'submitted', at: iso(created), actor: { ar: partner, en: partner } }];
     if (seed.status === 'draft') return events;
     events.push({ kind: 'review_started', at: iso(created + 10 * HOUR), actor: CONTENT_TEAM });
     if (seed.status === 'under_review' || seed.status === 'rejected') {
@@ -613,6 +616,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       title: seed.title,
       summary: seed.summary,
       shareText: seed.shareText ?? null,
+      partner: { name: demoPartnerFor(seed.slug).name, registrationNumber: demoPartnerFor(seed.slug).registrationNumber },
       region: seed.region,
       currency: seed.currency,
       goalMinor: toMinor(seed.goal, seed.currency),
@@ -635,14 +639,14 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
         title: DOCUMENT_TITLES[document.kind],
         pages: document.pages,
         redacted: true,
-        verifiedBy: document.kind === 'medical_report' ? { ar: 'المراجع الطبي', en: 'Medical reviewer' } : { ar: 'المدقق الميداني', en: 'Field auditor' },
+        verifiedBy: document.kind === 'medical_report' ? { ar: 'المراجع الطبي', en: 'Medical reviewer' } : PARTNER_LABEL,
         issuedAt: iso(created - (index + 2) * DAY),
       })),
       timeline,
       disbursements,
       updates: (seed.updates ?? []).map((update, index) => ({ id: `${id}_u${index + 1}`, at: iso(now - update.daysAgo * DAY), body: update.body })),
       recentDonations: [],
-      submittedBy: { ...seed.submittedBy, association: null },
+      submittedBy: { name: demoPartnerFor(seed.slug).name, relation: 'association', association: demoPartnerFor(seed.slug) },
       auditor,
       history,
       updatedAt: iso(Math.max(...history.map((entry) => Date.parse(entry.at)))),
@@ -891,9 +895,9 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
         }
       }
       const timeline = [...item.timeline];
-      if (seed.payout === 'paid') timeline.push({ kind: 'disbursed', at: iso(fundedAt + 2 * DAY), actor: { ar: 'الفريق المالي', en: 'Finance team' } });
+      if (seed.payout === 'paid') timeline.push({ kind: 'disbursed', at: iso(fundedAt + 2 * DAY), actor: PARTNER_LABEL });
       if (item.status === 'closed' && item.history.some((entry) => entry.to === 'closed')) {
-        timeline.push({ kind: 'closed', at: item.history.find((entry) => entry.to === 'closed')!.at, actor: { ar: 'الفريق المالي', en: 'Finance team' } });
+        timeline.push({ kind: 'closed', at: item.history.find((entry) => entry.to === 'closed')!.at, actor: PARTNER_LABEL });
       }
       putCase({ ...item, disbursements: lines, timeline });
       if (seed.payout === 'paid' && donatedByMe(item.id)) {
@@ -1351,7 +1355,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
         putCase({
           ...item,
           disbursements: item.disbursements.map((line) => (line.id === payout.lineId ? { ...line, status: 'paid', paidAt: iso(at) } : line)),
-          timeline: [...item.timeline, { kind: 'disbursed', at: iso(at), actor: { ar: 'الفريق المالي', en: 'Finance team' } }],
+          timeline: [...item.timeline, { kind: 'disbursed', at: iso(at), actor: PARTNER_LABEL }],
         });
         if (donatedByMe(item.id)) {
           notifyMe({
@@ -1506,6 +1510,10 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       title: text,
       summary: { ar: storyText.ar.slice(0, 140), en: storyText.en.slice(0, 140) },
       shareText: null,
+      partner:
+        request.submitterRelation === 'association' && request.association
+          ? { name: request.association.name, registrationNumber: request.association.registrationNumber }
+          : null,
       region: request.region,
       currency: request.currency,
       goalMinor: request.goalMinor,
@@ -1532,7 +1540,13 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
         issuedAt: iso(at),
       })),
       timeline: [
-        { kind: 'submitted', at: iso(at), actor: { ar: CURRENT_DONOR.name.ar, en: CURRENT_DONOR.name.en } },
+        {
+          kind: 'submitted',
+          at: iso(at),
+          actor: request.association
+            ? { ar: request.association.name, en: request.association.name }
+            : { ar: CURRENT_DONOR.name.ar, en: CURRENT_DONOR.name.en },
+        },
         { kind: 'review_started', at: iso(at + 1_000), actor: CONTENT_TEAM },
       ],
       disbursements: [],

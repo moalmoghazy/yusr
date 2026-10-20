@@ -142,7 +142,9 @@ export class CasesService {
       db.read.donations.recentForCase(item.id, 12),
       item.auditorId ? db.read.users.byId(item.auditorId) : Promise.resolve(null),
     ]);
-    const verifier: Localized = auditor ? { ar: `المدقق الميداني ${auditor.displayName}`, en: `Field auditor ${auditor.displayName}` } : SYSTEM;
+    // A partner association's case is verified in the field and paid out by the association itself.
+    const partner: Localized | null = item.association ? { ar: item.association.name, en: item.association.name } : null;
+    const verifier: Localized = partner ?? (auditor ? { ar: `المدقق الميداني ${auditor.displayName}`, en: `Field auditor ${auditor.displayName}` } : SYSTEM);
 
     // Only redacted copies are ever public; originals stay in the private bucket.
     const publicDocuments: CaseDocumentPublic[] = documents
@@ -157,7 +159,7 @@ export class CasesService {
         issuedAt: document.createdAt.toISOString(),
       }));
 
-    const timeline: TimelineEvent[] = [{ kind: 'submitted', at: item.createdAt.toISOString(), actor: SYSTEM }];
+    const timeline: TimelineEvent[] = [{ kind: 'submitted', at: item.createdAt.toISOString(), actor: partner ?? SYSTEM }];
     for (const change of transitions) {
       const at = change.createdAt.toISOString();
       if (change.toStatus === 'field_verified')
@@ -167,7 +169,7 @@ export class CasesService {
       if (change.toStatus === 'closed') timeline.push({ kind: 'closed', at, actor: SYSTEM });
     }
     for (const payout of payouts.filter((row) => row.status === 'paid' && row.paidAt)) {
-      timeline.push({ kind: 'disbursed', at: payout.paidAt!.toISOString(), actor: SYSTEM });
+      timeline.push({ kind: 'disbursed', at: payout.paidAt!.toISOString(), actor: partner ?? SYSTEM });
     }
     timeline.sort((a, b) => a.at.localeCompare(b.at));
 

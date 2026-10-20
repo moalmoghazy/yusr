@@ -78,6 +78,9 @@ describe('submission portal', () => {
     assert.equal(staff.submittedBy.relation, 'association');
     assert.equal(staff.submittedBy.name, association.name);
     assert.deepEqual(staff.submittedBy.association, association);
+    assert.deepEqual(staff.partner, { name: association.name, registrationNumber: association.registrationNumber }, 'the public view names the partner');
+    assert.ok(!JSON.stringify(staff.partner).includes(association.contactPhone), 'never its contact');
+    assert.equal(staff.timeline[0]?.actor.ar, association.name, 'the association submitted it');
   });
 
   it('refuses documents uploaded by someone else and anonymous submissions', async () => {

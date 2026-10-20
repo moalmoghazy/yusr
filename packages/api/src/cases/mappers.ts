@@ -27,6 +27,7 @@ export function toCaseSummary(row: CaseRow): CaseSummary {
     fundedAt: iso(row.fundedAt),
     priority: row.priority,
     coverSeed: row.coverSeed,
+    partner: row.association ? { name: row.association.name, registrationNumber: row.association.registrationNumber } : null,
     createdAt: row.createdAt.toISOString(),
   };
 }

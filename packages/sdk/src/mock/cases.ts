@@ -1,4 +1,4 @@
-import type { CaseCategory, CaseStatus, Currency, DocumentKind, Localized, PayeeType } from '@yusr/core';
+import type { CaseCategory, CaseStatus, Currency, DocumentKind, Localized, PartnerAssociation, PayeeType } from '@yusr/core';
 
 /**
  * Demo cases. Content is fictional and written the way real Yusr cases should be:
@@ -45,6 +45,25 @@ export interface SeedCase {
   payout?: 'approved' | 'paid';
 }
 
+/**
+ * Partner associations for the demo. Fictional (marked «تجريبية»), so no demo case is ever
+ * attributed to a real association; the contact details are placeholders.
+ */
+export const DEMO_PARTNERS: readonly PartnerAssociation[] = [
+  { name: 'جمعية الرحمة لتنمية المجتمع (تجريبية)', registrationNumber: '0001/2026', contactName: 'منسق الحالات', contactPhone: '+201000000001' },
+  { name: 'جمعية سنابل الخير (تجريبية)', registrationNumber: '0002/2026', contactName: 'منسق الحالات', contactPhone: '+201000000002' },
+  { name: 'جمعية يد العون الخيرية (تجريبية)', registrationNumber: '0003/2026', contactName: 'منسق الحالات', contactPhone: '+201000000003' },
+];
+
+/** The demo partner behind a seed case (stable per case). */
+export function demoPartnerFor(slug: string): PartnerAssociation {
+  const index = Math.max(
+    0,
+    SEED_CASES.findIndex((seed) => seed.slug === slug),
+  );
+  return DEMO_PARTNERS[index % DEMO_PARTNERS.length]!;
+}
+
 const P = (ar: string[], en: string[]): Localized => ({ ar: ar.join('\n\n'), en: en.join('\n\n') });
 
 export const SEED_CASES: readonly SeedCase[] = [
@@ -73,12 +92,12 @@ export const SEED_CASES: readonly SeedCase[] = [
     story: P(
       [
         'وُلدت «ملك» بثقب في الحاجز بين البطينين، وتدهورت حالتها خلال الأشهر الأخيرة حتى صار صعود السلم يرهقها. قرر الفريق الطبي في مستشفى جامعي حكومي بالقاهرة إجراء جراحة قلب مفتوح قبل نهاية الشهر.',
-        'يعمل والدها باليومية في ورشة نجارة، ولا يغطي التأمين الصحي تكلفة الرقعة والمستلزمات المستوردة. زار مدققنا الميداني الأسرة في شبرا وتأكد من التقارير الطبية وعرض السعر الرسمي من المستشفى.',
+        'يعمل والدها باليومية في ورشة نجارة، ولا يغطي التأمين الصحي تكلفة الرقعة والمستلزمات المستوردة. زارت الجمعية الشريكة الأسرة في شبرا وتأكدت من التقارير الطبية وعرض السعر الرسمي من المستشفى.',
         'يُصرف المبلغ مباشرة لحساب المستشفى، وسنرفع إيصال السداد وتقرير ما بعد العملية هنا.',
       ],
       [
         'Malak was born with a hole in the wall between her ventricles, and over recent months even climbing stairs has exhausted her. The medical team at a public university hospital in Cairo scheduled open-heart surgery before the end of the month.',
-        'Her father is a day labourer at a carpentry workshop, and health insurance does not cover the imported patch and supplies. Our field auditor visited the family in Shubra and checked the medical reports and the hospital’s official quote.',
+        'Her father is a day labourer at a carpentry workshop, and health insurance does not cover the imported patch and supplies. The partner association visited the family in Shubra and checked the medical reports and the hospital’s official quote.',
         'The money is paid straight to the hospital’s account; we will upload the payment receipt and the post-operative report here.',
       ],
     ),
@@ -146,12 +165,12 @@ export const SEED_CASES: readonly SeedCase[] = [
     story: P(
       [
         'كان «أبو يوسف» يعمل سائقًا حتى أصيب بانزلاق غضروفي منعه من العمل منذ أكثر من عام. تعيش الأسرة المكونة من خمسة أفراد في شقة صغيرة بشبين القناطر، وتراكمت عليهم ١٤ شهرًا من الإيجار.',
-        'حصل المالك على حكم بالإخلاء، ووافق على التصالح إذا سُدد المبلغ كاملًا قبل موعد التنفيذ. تحقق مدققنا من الحكم وعقد الإيجار وقابل المالك شخصيًا.',
+        'حصل المالك على حكم بالإخلاء، ووافق على التصالح إذا سُدد المبلغ كاملًا قبل موعد التنفيذ. تحققت الجمعية الشريكة من الحكم وعقد الإيجار وقابلت المالك شخصيًا.',
         'يُسدَّد المبلغ للمالك مباشرة بموجب محضر تصالح موثّق، ونرفع صورة المحضر هنا بعد التوقيع.',
       ],
       [
         'Abu Youssef worked as a driver until a slipped disc stopped him working more than a year ago. The family of five lives in a small flat in Shebin El Qanater, and 14 months of rent have built up.',
-        'The landlord obtained an eviction ruling and agreed to settle if the full amount is paid before the enforcement date. Our auditor checked the ruling and the lease and met the landlord in person.',
+        'The landlord obtained an eviction ruling and agreed to settle if the full amount is paid before the enforcement date. The partner association checked the ruling and the lease and met the landlord in person.',
         'The amount is paid to the landlord directly under a notarised settlement; we will upload the settlement record once it is signed.',
       ],
     ),
@@ -198,20 +217,20 @@ export const SEED_CASES: readonly SeedCase[] = [
     story: P(
       [
         'اشترت «أم منة» أجهزة منزلية بالتقسيط لتجهيز ابنتها الكبرى، ووقّعت إيصالات أمانة بقيمة المديونية كما هو شائع في القرى. بعد أشهر مرض زوجها وتوقف عن العمل، فتعثّر السداد.',
-        'أقام التاجر دعوى وصدر حكم بحبسها، وهي الآن العائل الوحيد لأربعة أطفال. راجع مدققنا الحكم وأصول الإيصالات وتواصل مع التاجر الذي وافق على التنازل عند السداد.',
-        'يُسدَّد المبلغ للدائن عبر محامي المؤسسة مقابل تنازل رسمي وإيصال مخالصة يُرفع هنا.',
+        'أقام التاجر دعوى وصدر حكم بحبسها، وهي الآن العائل الوحيد لأربعة أطفال. راجعت الجمعية الشريكة الحكم وأصول الإيصالات وتواصلت مع التاجر الذي وافق على التنازل عند السداد.',
+        'يُسدَّد المبلغ للدائن عبر محامي الجمعية الشريكة مقابل تنازل رسمي وإيصال مخالصة يُرفع هنا.',
       ],
       [
         'Um Menna bought household appliances in instalments to furnish her eldest daughter’s home, signing promissory notes for the debt as is common in villages. Months later her husband fell ill and stopped working, and the payments stopped.',
-        'The trader sued and she was sentenced to prison — while she is now the only provider for four children. Our auditor reviewed the ruling and the original notes and spoke to the trader, who agreed to withdraw on payment.',
-        'The creditor is paid through the foundation’s lawyer in exchange for a formal waiver and a settlement receipt, which we upload here.',
+        'The trader sued and she was sentenced to prison — while she is now the only provider for four children. The partner association reviewed the ruling and the original notes and spoke to the trader, who agreed to withdraw on payment.',
+        'The creditor is paid through the partner association’s lawyer in exchange for a formal waiver and a settlement receipt, which we upload here.',
       ],
     ),
     beneficiary: { ar: 'أم منة (اسم مستعار)، ٤١ عامًا', en: 'Um Menna (pseudonym), 41' },
     plan: [
       {
         payeeType: 'creditor',
-        payee: { ar: 'الدائن — عبر محامي المؤسسة', en: 'Creditor — via the foundation’s lawyer' },
+        payee: { ar: 'الدائن — عبر محامي الجمعية الشريكة', en: 'Creditor — via the foundation’s lawyer' },
         purpose: { ar: 'سداد الإيصالات مقابل تنازل رسمي', en: 'Pay the notes in exchange for a formal waiver' },
         amount: 44_500,
       },
@@ -256,12 +275,12 @@ export const SEED_CASES: readonly SeedCase[] = [
     story: P(
       [
         'امتد حريق في مساء عاصف إلى ٢٠ منزلًا متجاورًا بأسقف من الخشب وجريد النخل. لم يسفر عن وفيات، لكنه أتى على الأثاث والملابس والأجهزة.',
-        'أجرى فريقنا الميداني حصرًا منزلًا منزلًا بالتنسيق مع الوحدة المحلية، وحدد احتياج كل أسرة من أسرّة وبطاطين وأدوات مطبخ، إضافة إلى إعادة بناء الأسقف بالخرسانة الخفيفة.',
+        'أجرت الجمعية الشريكة حصرًا منزلًا منزلًا بالتنسيق مع الوحدة المحلية، وحدد احتياج كل أسرة من أسرّة وبطاطين وأدوات مطبخ، إضافة إلى إعادة بناء الأسقف بالخرسانة الخفيفة.',
         'يُصرف المبلغ لموردين محليين بعقود وفواتير، ونرفع صور التسليم لكل أسرة مع حجب الوجوه.',
       ],
       [
         'On a windy evening a fire spread across 20 adjoining homes roofed with timber and palm fronds. No one died, but furniture, clothes and appliances were lost.',
-        'Our field team surveyed every home with the local council and listed each family’s needs — beds, blankets and kitchen essentials — plus rebuilding the roofs in light concrete.',
+        'The partner association surveyed every home with the local council and listed each family’s needs — beds, blankets and kitchen essentials — plus rebuilding the roofs in light concrete.',
         'Funds go to local suppliers under contracts and invoices, and we upload delivery photos for every family with faces blurred.',
       ],
     ),
@@ -321,11 +340,11 @@ export const SEED_CASES: readonly SeedCase[] = [
     story: P(
       [
         'يعاني «عم سعيد» من فشل كلوي مزمن منذ أربع سنوات، وكان يغسل في وحدة القرية مجانًا حتى أُغلقت للصيانة ستة أشهر. أقرب مركز بديل خاص، وتتجاوز تكلفة الجلسة الواحدة ألف جنيه.',
-        'تحققنا من التقارير الطبية ومن عرض المركز، ويُسدَّد المبلغ للمركز مقدمًا على دفعات شهرية مقابل كشف حضور الجلسات.',
+        'تحققت الجمعية الشريكة من التقارير الطبية ومن عرض المركز وراجعها فريق يُسر، ويُسدَّد المبلغ للمركز مقدمًا على دفعات شهرية مقابل كشف حضور الجلسات.',
       ],
       [
         'Uncle Saeed has had chronic kidney failure for four years and received free dialysis at his village unit until it closed for six months of repairs. The nearest alternative is private, at over a thousand pounds a session.',
-        'We verified the medical reports and the centre’s quote. The centre is paid monthly in advance against a record of attended sessions.',
+        'The partner association verified the medical reports and the centre’s quote, and the Yusr team reviewed them. The centre is paid monthly in advance against a record of attended sessions.',
       ],
     ),
     beneficiary: { ar: 'عم سعيد (اسم مستعار)، ٥٨ عامًا', en: 'Uncle Saeed (pseudonym), 58' },
@@ -591,11 +610,11 @@ export const SEED_CASES: readonly SeedCase[] = [
     story: P(
       [
         'حدد متطوعونا ٣٠٠ أسرة هي الأشد احتياجًا في قرى الظهير الصحراوي بعد حصر ميداني. تحصل كل أسرة على بطانيتين ثقيلتين وطقم ملابس شتوية للأطفال.',
-        'نشتري من مصنع محلي بسعر الجملة ونوزع بكشوف توقيع، ونرفع كشف التوزيع هنا.',
+        'تشتري الجمعية الشريكة من مصنع محلي بسعر الجملة وتوزع بكشوف توقيع، ونرفع كشف التوزيع هنا.',
       ],
       [
         'Our volunteers identified the 300 neediest families in desert-edge villages after a field survey. Each family receives two heavy blankets and a winter clothing set for the children.',
-        'We buy wholesale from a local factory and distribute against signed lists, which we upload here.',
+        'The partner association buys wholesale from a local factory and distributes against signed lists, which we upload here.',
       ],
     ),
     beneficiary: { ar: '٣٠٠ أسرة', en: '300 families' },
@@ -691,11 +710,11 @@ export const SEED_CASES: readonly SeedCase[] = [
     story: P(
       [
         'يزرع «عم رجب» فدانًا مستأجرًا، واقترض من تاجر مستلزمات زراعية بإيصالات أمانة. أتلفت آفة «التوتا» المحصول قبل الحصاد، وأصبح مهددًا بالحبس.',
-        'تحققنا من المديونية مع التاجر ومن تقرير الجمعية الزراعية عن التلف، ويُسدَّد المبلغ للتاجر مقابل مخالصة موقّعة.',
+        'تحققت الجمعية الشريكة من المديونية مع التاجر ومن تقرير الجمعية الزراعية عن التلف، ويُسدَّد المبلغ للتاجر مقابل مخالصة موقّعة.',
       ],
       [
         'Uncle Ragab farms a rented acre and borrowed from an agricultural supplier on promissory notes. The tomato leaf miner destroyed the crop before harvest, and he now faces prison.',
-        'We verified the debt with the supplier and the co-operative’s damage report. The supplier is paid against a signed settlement.',
+        'The partner association verified the debt with the supplier and the co-operative’s damage report. The supplier is paid against a signed settlement.',
       ],
     ),
     beneficiary: { ar: 'عم رجب (اسم مستعار)، ٥٢ عامًا', en: 'Uncle Ragab (pseudonym), 52' },
@@ -1023,8 +1042,8 @@ export const SEED_CASES: readonly SeedCase[] = [
       en: 'Hajja Zeinab has lost most of the sight in one eye; surgery can restore it.',
     },
     story: P(
-      ['«الحاجة زينب» (٧١ عامًا) تعيش وحدها، وتحتاج لعملية مياه بيضاء مع عدسة. أكمل المدقق الزيارة ووافق على المبلغ.'],
-      ['Hajja Zeinab, 71, lives alone and needs cataract surgery with a lens implant. The auditor completed the visit and approved the amount.'],
+      ['«الحاجة زينب» (٧١ عامًا) تعيش وحدها، وتحتاج لعملية مياه بيضاء مع عدسة. أكملت الجمعية الشريكة الزيارة ووافقت على المبلغ.'],
+      ['Hajja Zeinab, 71, lives alone and needs cataract surgery with a lens implant. The partner association completed the visit and approved the amount.'],
     ),
     beneficiary: { ar: 'الحاجة زينب (اسم مستعار)، ٧١ عامًا', en: 'Hajja Zeinab (pseudonym), 71' },
     plan: [

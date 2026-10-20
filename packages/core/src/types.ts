@@ -67,6 +67,12 @@ export type PayeeType = (typeof PAYEE_TYPES)[number];
 
 export type CaseSort = 'urgent' | 'closest' | 'newest' | 'least_funded';
 
+export interface CasePartner {
+  name: string;
+  /** رقم الإشهار with the Ministry of Social Solidarity. */
+  registrationNumber: string;
+}
+
 export interface CaseSummary {
   id: string;
   slug: string;
@@ -98,6 +104,12 @@ export interface CaseSummary {
   priority: number;
   /** Deterministic seed for the illustrated cover (no beneficiary photos by design). */
   coverSeed: number;
+  /**
+   * The partner association (جمعية أهلية registered with the Ministry of Social Solidarity) that owns
+   * the case: it verified it in the field, receives the donations and pays the provider. Public: its
+   * name and registration number only.
+   */
+  partner?: CasePartner | null;
   createdAt: string;
 }
 

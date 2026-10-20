@@ -21,7 +21,7 @@ import {
   type PaymentMethod,
   type Role,
 } from '@yusr/core';
-import { DONORS, SEED_CASES, STAFF, VOLUNTEERS, type SeedCase } from '@yusr/sdk/mock';
+import { demoPartnerFor, DONORS, SEED_CASES, STAFF, VOLUNTEERS, type SeedCase } from '@yusr/sdk/mock';
 import type { FieldCipher } from '../common/cipher';
 import type { Tx } from './ports';
 import type { CaseRow, DonationRow, UserRow } from './rows';
@@ -202,8 +202,8 @@ export async function seedDemo(tx: Tx, options: { now: Date; cipher: FieldCipher
       status: seed.status,
       beneficiaryId,
       submittedBy,
-      submitterRelation: seed.submittedBy.relation,
-      association: null,
+      submitterRelation: 'association',
+      association: demoPartnerFor(seed.slug),
       title: seed.title,
       summary: seed.summary,
       shareText: seed.shareText ?? null,

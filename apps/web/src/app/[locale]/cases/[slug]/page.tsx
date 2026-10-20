@@ -87,6 +87,19 @@ export default async function CasePage({ params, searchParams }: { params: Param
             </Meta>
             <Meta label={t('case.beneficiary')}>{l(item.beneficiary)}</Meta>
           </dl>
+          {item.partner && (
+            <div className="flex items-start gap-3 rounded-card border border-border bg-card p-4">
+              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
+                <Icon name="landmark" size={20} />
+              </span>
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <span className="text-xs font-semibold text-muted-foreground">{t('case.partner')}</span>
+                <span className="font-bold">{item.partner.name}</span>
+                <span className="text-xs text-muted-foreground">{t('case.partnerRegistration', { number: item.partner.registrationNumber })}</span>
+                <span className="mt-1 text-sm text-muted-foreground">{t('case.partnerRole')}</span>
+              </div>
+            </div>
+          )}
         </header>
 
         {!open && (

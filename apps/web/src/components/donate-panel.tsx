@@ -215,7 +215,7 @@ export function DonatePanel({ locale, caseId, currency, zakatEligible, initialAm
       </div>
 
       {/* ---------------------------------------------------------- receipt contact */}
-      <fieldset className="flex flex-col gap-2.5 rounded-control border border-border p-4">
+      <fieldset className="flex min-w-0 flex-col gap-2.5 rounded-control border border-border p-4">
         <legend className="px-1 text-sm font-bold">{t('donate.guestTitle')}</legend>
         <p className="text-xs text-muted-foreground">{t('donate.guestHint')}</p>
         {(
