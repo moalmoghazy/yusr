@@ -64,6 +64,34 @@
   background-position: center top;
 }
 
+/* The home hero's pattern drifts slowly from left to right and fades out as it reaches the right
+   edge (and towards the bottom). The layer is one tile wider than the hero and moves by one tile,
+   so the loop is seamless; with reduced motion it stays still. */
+.hero-pattern {
+  mask-image: linear-gradient(to bottom, #000 30%, transparent 95%), linear-gradient(to right, #000 35%, transparent 98%);
+  mask-composite: intersect;
+}
+
+.hero-pattern-drift {
+  position: absolute;
+  inset-block: 0;
+  left: calc(-1 * var(--y-pattern-size));
+  right: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-pattern-drift {
+    animation: hero-drift 14s linear infinite;
+    will-change: transform;
+  }
+}
+
+@keyframes hero-drift {
+  to {
+    transform: translateX(var(--y-pattern-size));
+  }
+}
+
 /* ------------------------------------------------------------------ The animated mark (/identity) */
 /* The bowl is written, the dots of ي appear, the golden ḍamma falls into place; see animated-mark.tsx. */
 .ym-stage {

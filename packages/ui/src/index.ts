@@ -10,6 +10,7 @@ export { cn } from './cn';
 export { textFor, type Text } from './text';
 export { ICON_NODES, DIRECTIONAL_ICONS, type IconName, type IconNode } from './icons';
 export { Icon, type IconProps } from './icon';
+export { PLATFORM_GLYPHS, PlatformIcon, type PlatformIconProps, type PlatformName } from './platform-icon';
 export { Button, buttonClasses, type ButtonProps, type ButtonSize, type ButtonStyle, type ButtonVariant } from './button';
 export { Badge, type BadgeTone } from './badge';
 export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';

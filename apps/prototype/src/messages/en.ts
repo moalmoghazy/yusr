@@ -170,7 +170,7 @@ export const protoEn: Widen<typeof protoAr> = {
       eyebrow: 'Visual identity',
       title: 'The golden ḍamma',
       story:
-        'The ḍamma is the small mark that turns يسر into يُسر, “ease”. We drew it as it is written — a round head with a short tail — tilted at 45°, in gold, resting above the curve of the letter yā’, with the letter’s two dots side by side beneath the curve, in its own colour. The curve is also a pair of open hands: a small gift, held carefully, that changes the meaning of someone’s day.',
+        'The ḍamma is the small mark that turns يسر into يُسر, “ease”. We drew it as a golden drop resting above the curve of the letter yā’, with the letter’s two dots side by side beneath the curve, in its own colour. The curve is also a pair of open hands: a small gift, held carefully, that changes the meaning of someone’s day.',
       anatomy: {
         bowl: 'The yā’ bowl / open hands',
         dots: 'The two dots of yā’, side by side under the curve',

@@ -493,7 +493,7 @@ export const en: Messages = {
     patternName: 'The garden of giving',
     replay: 'Replay',
     logoStory:
-      'The ḍamma is the small mark that turns يسر into يُسر, “ease”. We drew it as it is written — a round head with a short tail — tilted at 45°, in gold, resting above the curve of the letter yā’, with the letter’s two dots side by side beneath the curve, in its own colour. The curve is also a pair of open hands: a small gift, held carefully, that changes the meaning of someone’s day.',
+      'The ḍamma is the small mark that turns يسر into يُسر, “ease”. We drew it as a golden drop resting above the curve of the letter yā’, with the letter’s two dots side by side beneath the curve, in its own colour. The curve is also a pair of open hands: a small gift, held carefully, that changes the meaning of someone’s day.',
     patternStory:
       'A pattern from the star-and-strapwork tilework of al-Andalus: an eight-pointed star, linked to its neighbours by interlaced bands that draw octagonal cells between them. In the heart of each star, a rosette of seven golden drops — the ḍamma of the logo, repeated seven times like the seven ears: one gift that multiplies. Where four tiles meet, a small lozenge holds a seed.',
     starLabel: 'One star of the garden of giving, enlarged: seven golden drops at its heart, like the seven ears',

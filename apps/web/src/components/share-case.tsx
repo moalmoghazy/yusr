@@ -1,7 +1,7 @@
 'use client';
 
 import { shareUrl, SHARE_PLATFORMS, type Locale, type SharePlatform } from '@yusr/core';
-import { buttonClasses, cn, Icon, textFor } from '@yusr/ui';
+import { buttonClasses, cn, Icon, PlatformIcon, textFor } from '@yusr/ui';
 import { useEffect, useState } from 'react';
 
 /**
@@ -60,7 +60,7 @@ export function ShareCase({
     window.open('https://www.instagram.com/', '_blank', 'noopener,noreferrer');
   };
 
-  const button = 'h-11 justify-start gap-2.5 px-3.5 text-sm';
+  const button = 'group h-11 justify-start gap-2.5 px-3.5 text-sm';
   return (
     <section aria-labelledby="share-title" className={cn('flex flex-col gap-3 rounded-card border border-border bg-card p-5', className)}>
       <div className="flex flex-col gap-1">
@@ -76,9 +76,7 @@ export function ShareCase({
           const address = shareUrl(platform, url, message);
           const label = (
             <>
-              <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-full bg-primary-soft text-xs font-bold text-primary-soft-foreground">
-                {name.slice(0, 1)}
-              </span>
+              <PlatformIcon platform={platform} />
               <span className="truncate">{name}</span>
             </>
           );

@@ -8,9 +8,8 @@ by the website, the control hub, the mobile app, receipts and the prototype.
 
 ## The mark — «الضمّة الذهبية» (the golden ḍamma)
 
-The ḍamma is the small mark that turns يسر into **يُسر** — "ease". The logo holds it as it is written —
-**a round head with a short tail**, in gold, tilted 45° so the tail points down to the left — above
-an open curve: the bowl of the letter **ي**, with its **two dots beneath it, solid, close
+The ḍamma is the small mark that turns يسر into **يُسر** — "ease". The logo holds it as **a golden drop**
+above an open curve: the bowl of the letter **ي**, with its **two dots beneath it, solid, close
 together and in the same colour as the curve**. Read another way, the curve is a pair of cupped
 hands. A small gift, held carefully, that changes the meaning of someone's day.
 
@@ -26,8 +25,8 @@ hands. A small gift, held carefully, that changes the meaning of someone's day.
   draw from it, so there is one logo, not copies.
 - **Small sizes**: below 20 px the two dots join into one short stroke (as ي is written by hand
   in Ruqʿa), so the mark stays legible in a tab or a notification.
-- The ḍamma is drawn by `dammaPath()` (head radius, tail twice as long, tail 0.7 of the radius
-  thick, level with the head's bottom), turned by `angle`; the mark uses -45°.
+- The mark's drop is `DROP_PATH` in `brand.ts`, its point turned up to the left. The written ḍamma
+  (`dammaPath()`, a round head with a level tail) is used only above the lettered name.
 - **Animated**: the website's «من نحن» page (`/about`) draws the mark live and replays on click;
   the ḍamma moves towards the pointer wherever it is on the page.
 - **Clear space**: at least the height of the ḍamma on every side. **Minimum size**: 16 px (mark),

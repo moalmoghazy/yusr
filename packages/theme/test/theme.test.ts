@@ -220,11 +220,12 @@ describe('the ḍamma', () => {
     assert.notEqual(dammaPath(0, 0, 10, { angle: -45 }), level);
   });
 
-  it('crowns the mark turned 45°, its head over the bowl’s mouth', () => {
+  it('crowns the mark as the golden drop, floating over the bowl’s mouth', () => {
     const { drop, bowl } = brand.logo.guides;
-    assert.ok(drop.cy + drop.r < bowl.cy, 'the head floats above the bowl’s ends');
+    assert.ok(drop.cy + drop.r < bowl.cy, 'the drop floats above the bowl’s ends');
     assert.ok(Math.abs(drop.cx - bowl.cx) < drop.r, 'over the middle of the bowl');
-    assert.ok(brand.logo.drop.d.startsWith(`M${Math.round((drop.cx + drop.r * Math.SQRT1_2) * 100) / 100} `), 'the head turned by 45°');
+    assert.equal((brand.logo.drop.d.match(/M/g) ?? []).length, 1, 'one drop, not a head and a tail');
+    assert.match(brand.logo.drop.transform, /rotate\(-145 /, 'its point turned up to the left');
   });
 });
 
