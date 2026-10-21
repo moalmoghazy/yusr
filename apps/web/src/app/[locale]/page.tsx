@@ -22,7 +22,7 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
         <div aria-hidden className="hero-pattern pointer-events-none absolute inset-0 overflow-hidden">
           <div className="hero-pattern-drift bg-brand-pattern" />
         </div>
-        <div className="container-page relative grid grid-cols-1 items-center gap-12 py-12 md:py-16 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
+        <div className="container-page relative grid grid-cols-1 items-center gap-12 lg:items-start py-12 md:py-16 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
           <div className="flex flex-col gap-5">
             <SupervisionBadge locale={locale} />
             <p
