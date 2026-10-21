@@ -141,6 +141,18 @@ describe('CaseCard', () => {
     const patterns = [...html.matchAll(/<pattern id="([^"]+)"/g)].map((match) => match[1]);
     assert.equal(new Set(patterns).size, 2, 'each cover has its own lattice pattern');
   });
+
+  it('puts every cover motif in the same place, without the golden dot, over a drifting lattice', () => {
+    const motif = (coverSeed: number) => {
+      const html = renderToStaticMarkup(<CaseCard item={{ ...fixture(), coverSeed }} locale="ar" href={HREF} now={NOW} />);
+      assert.ok(!html.includes('fill-highlight'), 'no golden dot on the cover');
+      assert.ok(html.includes('class="case-cover-drift"'));
+      return html.match(/transform="(translate\([^"]+scale\([^"]+)"/)?.[1];
+    };
+    assert.ok(motif(1));
+    assert.equal(motif(1), motif(2));
+    assert.equal(motif(2), motif(7));
+  });
 });
 
 describe('DonationProgress', () => {

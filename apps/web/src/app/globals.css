@@ -92,6 +92,19 @@
   }
 }
 
+/* Case covers: the same drift inside each card's lattice (see case-cover.tsx; the mask fades it out). */
+@media (prefers-reduced-motion: no-preference) {
+  .case-cover-drift {
+    animation: case-cover-drift 10s linear infinite;
+  }
+}
+
+@keyframes case-cover-drift {
+  to {
+    transform: translateX(var(--cover-tile));
+  }
+}
+
 /* ------------------------------------------------------------------ The animated mark (/identity) */
 /* The bowl is written, the dots of ي appear, the golden ḍamma falls into place; see animated-mark.tsx. */
 .ym-stage {
