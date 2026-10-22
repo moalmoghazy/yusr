@@ -15,6 +15,7 @@ function makeCase(overrides: Partial<CaseSummary>): CaseSummary {
     region: 'EG-C',
     currency: 'EGP',
     goalMinor: 100_00,
+    platformFeeMinor: 0,
     raisedMinor: 50_00,
     donorsCount: 10,
     isUrgent: false,

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { assertBalanced, type Posting } from '@yusr/core';
-import { SEED_CASES } from '@yusr/sdk/mock';
+import { SEED_CASES, seedAmounts } from '@yusr/sdk/mock';
 import { AdminQueries } from '../src/admin/admin.queries';
 import { CasesService } from '../src/cases/cases.service';
 import { FieldCipher } from '../src/common/cipher';
@@ -58,14 +58,15 @@ describe('demo seed', () => {
     for (const seed of SEED_CASES) {
       const item = await db.read.cases.bySlug(seed.slug);
       assert.ok(item, seed.slug);
-      assert.equal(item.raisedMinor, seed.raised * 100, `${seed.slug} raised`);
+      assert.equal(item.raisedMinor, seedAmounts(seed).raisedMinor, `${seed.slug} raised`);
+      assert.equal(item.goalMinor, seedAmounts(seed).goalMinor, `${seed.slug} goal = need + Yusr’s 10%`);
       const funds = await db.read.ledger.caseFund(item.id);
       const raised = funds.reduce((sum, fund) => sum + fund.raisedMinor, 0);
       assert.equal(raised, item.raisedMinor, `${seed.slug} ledger`);
       if (seed.payout === 'paid') {
         const planned = seed.plan.reduce((sum, line) => sum + line.amount * 100, 0);
         assert.equal(funds[0]?.disbursedMinor, planned, `${seed.slug} disbursed`);
-        assert.equal(funds[0]?.heldMinor, item.raisedMinor - planned);
+        assert.equal(funds[0]?.heldMinor, item.raisedMinor - planned - item.platformFeeMinor, `${seed.slug} keeps nothing back but Yusr’s fee`);
       }
     }
   });

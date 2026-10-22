@@ -67,7 +67,7 @@ export const paymentProvider = pgEnum('payment_provider', PAYMENT_PROVIDERS);
 export const payoutStatus = pgEnum('payout_status', ['requested', 'approved', 'paid', 'rejected']);
 export const refundStatus = pgEnum('refund_status', ['requested', 'approved', 'processed', 'rejected']);
 export const accountType = pgEnum('account_type', ['asset', 'liability', 'equity', 'revenue', 'expense']);
-export const entryKind = pgEnum('entry_kind', ['donation', 'refund', 'payout', 'settlement', 'adjustment']);
+export const entryKind = pgEnum('entry_kind', ['donation', 'refund', 'payout', 'settlement', 'adjustment', 'platform_fee']);
 export const outboxStatus = pgEnum('outbox_status', ['pending', 'processing', 'sent', 'failed']);
 
 // ------------------------------------------------------------------ identity
@@ -177,6 +177,8 @@ export const cases = pgTable(
     region: text('region').notNull(),
     currency: currency('currency').notNull().default('EGP'),
     goalMinor: money('goal_minor').notNull(),
+    /** Yusr's 10% inside the goal (0003_platform_fee.sql); the plan adds up to goal − fee. */
+    platformFeeMinor: money('platform_fee_minor').notNull().default(0),
     raisedMinor: money('raised_minor').notNull().default(0),
     donorsCount: integer('donors_count').notNull().default(0),
     isUrgent: boolean('is_urgent').notNull().default(false),

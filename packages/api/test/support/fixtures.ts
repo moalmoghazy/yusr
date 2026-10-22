@@ -64,6 +64,7 @@ export function caseRow(overrides: Partial<CaseRow> & { id: string }): CaseRow {
     region: 'EG-C',
     currency: 'EGP',
     goalMinor: 50_000_00,
+    platformFeeMinor: 0,
     raisedMinor: 0,
     donorsCount: 0,
     isUrgent: false,

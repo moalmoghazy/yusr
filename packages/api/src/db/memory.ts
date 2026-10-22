@@ -108,6 +108,7 @@ const PLATFORM_ACCOUNTS: ReadonlyArray<[string, Currency | null]> = [
   ['asset:clearing:stripe', 'USD'],
   ['expense:gateway_fees', null],
   ['revenue:fee_recovery', null],
+  ['revenue:platform_fees', null],
   ['equity:fx:EGP', 'EGP'],
   ['equity:fx:SAR', 'SAR'],
   ['equity:fx:USD', 'USD'],

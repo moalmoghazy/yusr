@@ -10,6 +10,8 @@
 import {
   DomainError,
   assertTransition,
+  caseAmountsFor,
+  caseNeedMinor,
   isPubliclyVisible,
   permissionsFor,
   type AdminCase,
@@ -263,7 +265,9 @@ export class CasesService {
         story,
         region: input.region,
         currency: input.currency,
-        goalMinor: input.goalMinor,
+        // The partner writes what the case needs; donors are asked for that plus Yusr's 10%.
+        goalMinor: caseAmountsFor(input.goalMinor).goalMinor,
+        platformFeeMinor: caseAmountsFor(input.goalMinor).platformFeeMinor,
         raisedMinor: 0,
         donorsCount: 0,
         isUrgent: input.isUrgent,
@@ -337,13 +341,14 @@ export class CasesService {
     });
   }
 
-  /** A case can go live only with a disbursement plan that adds up to its goal and redacted public documents. */
+  /** A case can go live only with a disbursement plan that adds up to its need (goal less Yusr's fee) and redacted public documents. */
   private async assertPublishable(tx: Tx, item: CaseRow): Promise<void> {
     const lines = await tx.cases.lines(item.id);
     const planned = lines.reduce((sum, line) => sum + line.amountMinor, 0);
-    if (planned !== item.goalMinor) {
-      throw new DomainError('VALIDATION_FAILED', 'The disbursement plan must add up to the goal before publishing', {
+    if (planned !== caseNeedMinor(item)) {
+      throw new DomainError('VALIDATION_FAILED', 'The disbursement plan must add up to the case need before publishing', {
         plannedMinor: planned,
+        needMinor: caseNeedMinor(item),
         goalMinor: item.goalMinor,
       });
     }

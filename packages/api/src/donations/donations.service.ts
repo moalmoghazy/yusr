@@ -21,6 +21,7 @@ import {
   assertDonationAllowed,
   remainingInCurrency,
   buildDonationPostings,
+  buildPlatformFeePostings,
   computeDonationBreakdown,
   formatReceiptNumber,
   hasPermission,
@@ -492,6 +493,16 @@ export class DonationsService {
       after: { status: 'funded', raisedMinor },
     });
     await tx.outbox.enqueue({ type: 'case.funded', aggregateId: caseId, payload: { caseId, raisedMinor, goalMinor } });
+    // Yusr's 10% leaves the case fund once the case is funded; the rest is paid to the payees.
+    const item = await tx.cases.byId(caseId);
+    if (item && item.platformFeeMinor > 0) {
+      await tx.ledger.post({
+        kind: 'platform_fee',
+        memo: item.reference,
+        postedBy: null,
+        lines: buildPlatformFeePostings(caseId, item.platformFeeMinor, item.currency),
+      });
+    }
   }
 
   /** When the case absorbs fees and the donor did not cover them, the credit follows the fee actually charged. */

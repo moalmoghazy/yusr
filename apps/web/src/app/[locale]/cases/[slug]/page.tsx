@@ -1,4 +1,4 @@
-import type { CaseDetail, DisbursementStatus, Locale } from '@yusr/core';
+import { PLATFORM_FEE_BPS, type CaseDetail, type DisbursementStatus, type Locale } from '@yusr/core';
 import {
   Badge,
   buttonClasses,
@@ -135,9 +135,21 @@ export default async function CasePage({ params, searchParams }: { params: Param
                 </div>
               </li>
             ))}
+            {item.platformFeeMinor > 0 && (
+              <li className="flex flex-wrap items-center gap-3 p-4">
+                <span className="grid size-10 place-items-center rounded-full bg-muted text-muted-foreground">
+                  <Icon name="receipt" size={18} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold">{t('case.platformFee', { percent: f.percent(PLATFORM_FEE_BPS / 100) })}</p>
+                  <p className="text-sm text-muted-foreground">{t('case.platformFeeNote')}</p>
+                </div>
+                <span className="font-bold tabular-nums">{f.money(item.platformFeeMinor, item.currency, { fractionDigits: 0 })}</span>
+              </li>
+            )}
             <li className="flex items-center justify-between bg-muted/60 p-4 text-sm font-bold">
               <span>{t('case.goal')}</span>
-              <span className="tabular-nums">{f.money(plannedMinor, item.currency, { fractionDigits: 0 })}</span>
+              <span className="tabular-nums">{f.money(plannedMinor + item.platformFeeMinor, item.currency, { fractionDigits: 0 })}</span>
             </li>
           </ul>
         </Section>

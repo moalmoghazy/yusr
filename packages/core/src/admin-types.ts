@@ -53,7 +53,7 @@ export interface VerificationTask {
   notes: string | null;
 }
 
-export type LedgerKind = 'donation' | 'refund' | 'payout' | 'settlement';
+export type LedgerKind = 'donation' | 'refund' | 'payout' | 'settlement' | 'platform_fee';
 
 export interface LedgerLine {
   id: string;

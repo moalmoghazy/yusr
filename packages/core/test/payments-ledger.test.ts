@@ -10,13 +10,17 @@ import {
   balanceOf,
   buildDonationPostings,
   buildPayoutPostings,
+  buildPlatformFeePostings,
   buildRefundPostings,
   buildSettlementPostings,
+  caseAmountsFor,
+  caseNeedMinor,
   computeDonationBreakdown,
   convertMinor,
   feeFor,
   grossUpForFee,
   methodsForCurrency,
+  platformFeeFor,
   remainingInCurrency,
   resolveProvider,
   type DonationSettlement,
@@ -240,5 +244,25 @@ describe('ledger', () => {
     assert.equal(balanceOf(ACCOUNTS.caseFund('case-1'), all), 44_25);
     assert.equal(balanceOf(ACCOUNTS.bank, all), 44_25);
     assert.equal(balanceOf(ACCOUNTS.clearing('paymob'), all), 0);
+  });
+});
+
+describe('Yusr platform fee', () => {
+  it('adds 10% on top of what the partner needs', () => {
+    assert.deepEqual(caseAmountsFor(10_000_00), { needMinor: 10_000_00, platformFeeMinor: 1_000_00, goalMinor: 11_000_00 });
+    assert.equal(platformFeeFor(12_345), 1_235, 'rounded to the nearest minor unit');
+    assert.equal(caseNeedMinor({ goalMinor: 11_000_00, platformFeeMinor: 1_000_00 }), 10_000_00);
+  });
+
+  it('moves the fee from the case fund to revenue in a balanced entry', () => {
+    const postings = buildPlatformFeePostings('c1', 1_000_00, 'EGP');
+    assert.deepEqual(
+      postings.map((posting) => [posting.account, posting.direction, posting.amountMinor]),
+      [
+        [ACCOUNTS.caseFund('c1'), 'debit', 1_000_00],
+        [ACCOUNTS.platformFees, 'credit', 1_000_00],
+      ],
+    );
+    assert.throws(() => buildPlatformFeePostings('c1', 0, 'EGP'));
   });
 });

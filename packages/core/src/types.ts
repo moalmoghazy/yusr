@@ -90,7 +90,10 @@ export interface CaseSummary {
   /** ISO 3166-2 subdivision code, e.g. EG-C (Cairo) or SA-01 (Riyadh). */
   region: string;
   currency: Currency;
+  /** What donors are asked for: the partner's need plus Yusr's fee (`platformFeeMinor`). */
   goalMinor: number;
+  /** Yusr's share of the goal (10% on top of the need); the rest goes to the payees. */
+  platformFeeMinor: number;
   raisedMinor: number;
   donorsCount: number;
   isUrgent: boolean;

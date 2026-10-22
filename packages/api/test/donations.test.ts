@@ -190,8 +190,9 @@ describe('payment webhooks', () => {
     assertBalanced(db.journalLines());
   });
 
-  it('marks the case funded exactly once when a gift reaches the goal', async () => {
+  it('marks the case funded exactly once when a gift reaches the goal, and books Yusr’s fee then', async () => {
     const { donations, db } = await setup();
+    await db.transaction((tx) => tx.cases.update(CASE_ID, { platformFeeMinor: 4_545_00 }));
     const big = await donations.create(
       request({ amountMinor: 49_000_00, coverFees: true, donor: { name: 'Big Donor', email: 'big@example.com', phone: null } }),
       {
@@ -218,6 +219,14 @@ describe('payment webhooks', () => {
       transitions.map((row) => [row.fromStatus, row.toStatus, row.actorId]),
       [['published', 'funded', null]],
     );
+    const fee = db.journalLines().filter((line) => line.account === 'revenue:platform_fees');
+    assert.deepEqual(
+      fee.map((line) => [line.direction, line.amountMinor]),
+      [['credit', 4_545_00]],
+    );
+    assertBalanced(db.journalLines());
+    const [fund] = await db.read.ledger.caseFund(CASE_ID);
+    assert.equal(fund?.heldMinor, item!.raisedMinor - 4_545_00, 'the rest stays for the payees');
   });
 
   it('marks failures and lets a late success after expiry still be credited', async () => {

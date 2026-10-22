@@ -145,6 +145,7 @@ export const protoAr = {
         refund: 'استرداد',
         payout: 'صرف',
         settlement: 'تسوية بوابة',
+        platform_fee: 'رسوم يُسر',
       },
       auditActions: {
         case_under_review: 'أرسل الحالة للمراجعة',

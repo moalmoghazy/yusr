@@ -17,6 +17,7 @@ export function toCaseSummary(row: CaseRow): CaseSummary {
     region: row.region,
     currency: row.currency,
     goalMinor: row.goalMinor,
+    platformFeeMinor: row.platformFeeMinor,
     raisedMinor: row.raisedMinor,
     donorsCount: row.donorsCount,
     isUrgent: row.isUrgent,

@@ -40,7 +40,7 @@ export function FinanceSection({ initialTab }: { initialTab?: string }) {
   );
 }
 
-const KIND_TONE: Record<LedgerKind, Tone> = { donation: 'primary', refund: 'urgent', payout: 'gold', settlement: 'info' };
+const KIND_TONE: Record<LedgerKind, Tone> = { donation: 'primary', refund: 'urgent', payout: 'gold', settlement: 'info', platform_fee: 'info' };
 
 function LedgerTab() {
   const { t, f } = useT();

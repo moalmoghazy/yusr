@@ -5,7 +5,7 @@
  * reaches field_verified. Tasks are mirrored to the volunteers' Baserow board
  * through the outbox.
  */
-import { DomainError, hasPermission } from '@yusr/core';
+import { DomainError, caseAmountsFor, hasPermission } from '@yusr/core';
 import { primaryRole, requirePermission, type CallContext } from '../common/actor';
 import type { Clock } from '../common/clock';
 import type { IdGenerator } from '../common/ids';
@@ -102,7 +102,7 @@ export class VerificationService {
     return { ...task, ...next };
   }
 
-  /** Signs off the visit: sets the verified goal and moves the case to field_verified. */
+  /** Signs off the visit: sets the verified need (the goal adds Yusr's fee) and moves the case to field_verified. */
   async complete(taskId: string, input: { recommendedMinor: number; notes?: string | null }, context: CallContext): Promise<VerificationTaskRow> {
     const { actor, task } = await this.ownTask(taskId, context);
     if (!hasPermission(actor.roles, 'cases:verify')) throw new DomainError('FORBIDDEN', 'Missing permission cases:verify');
@@ -115,19 +115,20 @@ export class VerificationService {
       if (!item) throw new DomainError('NOT_FOUND', 'Case not found');
       const completedAt = clock.now();
       await tx.verification.update(task.id, { status: 'completed', completedAt, recommendedMinor: input.recommendedMinor, notes: input.notes ?? task.notes });
-      if (input.recommendedMinor !== item.goalMinor) {
-        await tx.cases.update(item.id, { goalMinor: input.recommendedMinor });
+      const amounts = caseAmountsFor(input.recommendedMinor);
+      if (amounts.goalMinor !== item.goalMinor || amounts.platformFeeMinor !== item.platformFeeMinor) {
+        await tx.cases.update(item.id, { goalMinor: amounts.goalMinor, platformFeeMinor: amounts.platformFeeMinor });
         await tx.audit.record({
           actorId: actor.id,
           actorRole: primaryRole(actor),
           action: 'case.goal_adjusted',
           entityType: 'case',
           entityId: item.id,
-          before: { goalMinor: item.goalMinor },
-          after: { goalMinor: input.recommendedMinor },
+          before: { goalMinor: item.goalMinor, platformFeeMinor: item.platformFeeMinor },
+          after: { goalMinor: amounts.goalMinor, platformFeeMinor: amounts.platformFeeMinor },
         });
       }
-      await cases.move(tx, { ...item, goalMinor: input.recommendedMinor }, 'field_verified', actor, null, context);
+      await cases.move(tx, { ...item, goalMinor: amounts.goalMinor, platformFeeMinor: amounts.platformFeeMinor }, 'field_verified', actor, null, context);
       return { ...task, status: 'completed', completedAt, recommendedMinor: input.recommendedMinor };
     });
   }

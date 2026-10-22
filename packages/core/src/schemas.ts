@@ -254,7 +254,7 @@ export const listQuerySchema = z.object({ limit: limit(100, 50) });
 export const adminCasesQuerySchema = z.object({ status: z.enum(CASE_STATUSES).optional(), q: z.string().trim().max(100).optional() });
 export const ledgerQuerySchema = z.object({
   limit: limit(1_000, 200),
-  kind: z.enum(['donation', 'refund', 'payout', 'settlement']).optional(),
+  kind: z.enum(['donation', 'refund', 'payout', 'settlement', 'platform_fee']).optional(),
   account: z.string().trim().max(120).optional(),
 });
 export const adminDonationsQuerySchema = z.object({ status: z.enum(DONATION_STATUSES).optional() });

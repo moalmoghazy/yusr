@@ -20,6 +20,7 @@ function fixture(overrides: Partial<CaseSummary> = {}): CaseSummary {
     region: 'EG-C',
     currency: 'EGP',
     goalMinor: 250_000_00,
+    platformFeeMinor: 0,
     raisedMinor: 97_481_00,
     donorsCount: 214,
     isUrgent: true,

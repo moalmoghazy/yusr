@@ -90,7 +90,10 @@ export interface CaseRow {
   story: Localized;
   region: string;
   currency: Currency;
+  /** What donors are asked for: the partner's need plus Yusr's fee. */
   goalMinor: number;
+  /** Yusr's 10% inside the goal; the disbursement plan adds up to the rest. */
+  platformFeeMinor: number;
   raisedMinor: number;
   donorsCount: number;
   isUrgent: boolean;
@@ -268,7 +271,7 @@ export interface RefundRow {
   createdAt: Timestamp;
 }
 
-export type EntryKind = 'donation' | 'refund' | 'payout' | 'settlement' | 'adjustment';
+export type EntryKind = 'donation' | 'refund' | 'payout' | 'settlement' | 'adjustment' | 'platform_fee';
 
 export interface JournalLineInput {
   account: string;

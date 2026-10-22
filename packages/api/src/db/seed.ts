@@ -12,6 +12,7 @@ import {
   CURRENCY_META,
   buildDonationPostings,
   buildPayoutPostings,
+  buildPlatformFeePostings,
   computeDonationBreakdown,
   formatReceiptNumber,
   resolveProvider,
@@ -21,7 +22,7 @@ import {
   type PaymentMethod,
   type Role,
 } from '@yusr/core';
-import { demoPartnerFor, DONORS, SEED_CASES, STAFF, VOLUNTEERS, type SeedCase } from '@yusr/sdk/mock';
+import { demoPartnerFor, DONORS, SEED_CASES, seedAmounts, STAFF, VOLUNTEERS, type SeedCase } from '@yusr/sdk/mock';
 import type { FieldCipher } from '../common/cipher';
 import type { Tx } from './ports';
 import type { CaseRow, DonationRow, UserRow } from './rows';
@@ -210,7 +211,8 @@ export async function seedDemo(tx: Tx, options: { now: Date; cipher: FieldCipher
       story: seed.story,
       region: seed.region,
       currency: seed.currency,
-      goalMinor: seed.goal * 100,
+      goalMinor: seedAmounts(seed).goalMinor,
+      platformFeeMinor: seedAmounts(seed).platformFeeMinor,
       raisedMinor: 0,
       donorsCount: 0,
       isUrgent: seed.urgentInHours !== undefined,
@@ -267,7 +269,7 @@ export async function seedDemo(tx: Tx, options: { now: Date; cipher: FieldCipher
         status: 'completed',
         visitAt: new Date(verifiedAt.getTime() - 6 * HOUR),
         checklist: { identity: true, residence: true, documents: true, cost: true, alternatives: true },
-        recommendedMinor: row.goalMinor,
+        recommendedMinor: row.goalMinor - row.platformFeeMinor,
         notes: null,
         baserowRowId: null,
         completedAt: verifiedAt,
@@ -294,7 +296,7 @@ export async function seedDemo(tx: Tx, options: { now: Date; cipher: FieldCipher
     if (seed.raised > 0 && publishedAt) {
       await tx.ledger.ensureCaseFund(caseId, seed.currency);
       const until = (fundedAt ?? now).getTime();
-      for (const netMinor of splitGifts(seed.raised * 100, seed.currency, next)) {
+      for (const netMinor of splitGifts(seedAmounts(seed).raisedMinor, seed.currency, next)) {
         const method = pick(next, METHODS[seed.currency].methods, METHODS[seed.currency].weights);
         const coverFees = next() < 0.6;
         // Solve for the amount whose net credit equals the planned gift, whichever way the fee is paid.
@@ -364,7 +366,15 @@ export async function seedDemo(tx: Tx, options: { now: Date; cipher: FieldCipher
       }
     }
 
-    // ------------------------------------------------------------------ payouts for funded work
+    // ------------------------------------------------------------------ Yusr's fee, then payouts for funded work
+    if (fundedAt && seedAmounts(seed).platformFeeMinor > 0) {
+      await tx.ledger.post({
+        kind: 'platform_fee',
+        memo: `YSR-${seed.ref}`,
+        postedAt: fundedAt,
+        lines: buildPlatformFeePostings(caseId, seedAmounts(seed).platformFeeMinor, seed.currency),
+      });
+    }
     if (seed.payout && fundedAt) {
       for (const [position, line] of seed.plan.entries()) {
         const payoutId = stableId(`payout:${seed.slug}:${position}`);

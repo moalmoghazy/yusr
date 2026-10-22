@@ -1,4 +1,4 @@
-import { CHECKLIST_ITEMS, CURRENCY_META, regionByCode, type AdminCase, type Locale } from '@yusr/core';
+import { caseNeedMinor, CHECKLIST_ITEMS, CURRENCY_META, regionByCode, type AdminCase, type Locale } from '@yusr/core';
 import { Badge, cn, Icon, textFor } from '@yusr/ui';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -110,7 +110,7 @@ export default async function VerificationPage() {
                       locale={locale}
                       taskId={task.id}
                       currency={item.currency}
-                      suggestedMajor={String((task.recommendedMinor ?? item.goalMinor) / 10 ** CURRENCY_META[item.currency].exponent)}
+                      suggestedMajor={String((task.recommendedMinor ?? caseNeedMinor(item)) / 10 ** CURRENCY_META[item.currency].exponent)}
                       ready={done === CHECKLIST_ITEMS.length}
                     />
                   )}

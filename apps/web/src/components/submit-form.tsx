@@ -1,10 +1,12 @@
 'use client';
 
 import {
+  caseAmountsFor,
   CASE_CATEGORIES,
   CATEGORY_META,
   EGYPT_GOVERNORATES,
   parseAmountInput,
+  PLATFORM_FEE_BPS,
   SAUDI_REGIONS,
   toE164,
   toMinor,
@@ -345,6 +347,14 @@ export function SubmitForm({ locale }: { locale: Locale }) {
               />
               <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">{f.currencyLabel(currency)}</span>
             </span>
+            {goalValid && goalMinor !== null && (
+              <span className="mt-1.5 block text-xs text-muted-foreground">
+                {t('submit.goalWithFee', {
+                  total: f.money(caseAmountsFor(goalMinor).goalMinor, currency, { fractionDigits: 0 }),
+                  percent: f.percent(PLATFORM_FEE_BPS / 100),
+                })}
+              </span>
+            )}
           </Field>
         </div>
 
@@ -441,6 +451,10 @@ export function SubmitForm({ locale }: { locale: Locale }) {
             [t('submit.fields.category'), t(`categories.${category}`)],
             [t('submit.fields.title'), title.trim() || '—'],
             [t('submit.fields.goal'), goalValid && goalMinor !== null ? f.money(goalMinor, currency) : '—'],
+            [
+              t('submit.goalForDonors', { percent: f.percent(PLATFORM_FEE_BPS / 100) }),
+              goalValid && goalMinor !== null ? f.money(caseAmountsFor(goalMinor).goalMinor, currency) : '—',
+            ],
             [t('submit.steps.documents'), t('units.documents', { count: Number(Boolean(idDoc)) + Number(Boolean(proofDoc)) })],
             [
               t('submit.fields.region'),

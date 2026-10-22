@@ -1,4 +1,15 @@
-import type { CaseCategory, CaseStatus, Currency, DocumentKind, Localized, PartnerAssociation, PayeeType } from '@yusr/core';
+import {
+  caseAmountsFor,
+  toMinor,
+  type CaseAmounts,
+  type CaseCategory,
+  type CaseStatus,
+  type Currency,
+  type DocumentKind,
+  type Localized,
+  type PartnerAssociation,
+  type PayeeType,
+} from '@yusr/core';
 
 /**
  * Demo cases. Content is fictional and written the way real Yusr cases should be:
@@ -56,6 +67,17 @@ export const DEMO_PARTNERS: readonly PartnerAssociation[] = [
 ];
 
 /** The demo partner behind a seed case (stable per case). */
+/**
+ * A seed's money in minor units. `goal` and `plan` in a seed are what the partner needs; donors are
+ * asked for that plus Yusr's 10%, and `raised` grows by the same ratio so progress reads as written.
+ */
+export function seedAmounts(seed: SeedCase): CaseAmounts & { raisedMinor: number } {
+  const amounts = caseAmountsFor(toMinor(seed.goal, seed.currency));
+  const raised = toMinor(seed.raised, seed.currency);
+  const raisedMinor = seed.raised >= seed.goal ? amounts.goalMinor : Math.round((raised * amounts.goalMinor) / amounts.needMinor);
+  return { ...amounts, raisedMinor };
+}
+
 export function demoPartnerFor(slug: string): PartnerAssociation {
   const index = Math.max(
     0,

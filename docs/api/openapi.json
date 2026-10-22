@@ -2979,7 +2979,8 @@
                 "donation",
                 "refund",
                 "payout",
-                "settlement"
+                "settlement",
+                "platform_fee"
               ]
             }
           },

@@ -144,6 +144,7 @@ export const protoEn: Widen<typeof protoAr> = {
         refund: 'Refund',
         payout: 'Payout',
         settlement: 'Gateway settlement',
+        platform_fee: 'Yusr fee',
       },
       auditActions: {
         case_under_review: 'sent the case for review',

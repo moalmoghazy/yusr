@@ -234,6 +234,9 @@ export const en: Messages = {
     redacted: 'Redacted',
     verifiedBy: 'Verified by',
     disbursementPlan: 'Disbursement plan',
+    platformFee: 'Yusr operating fee ({percent})',
+    platformFeeNote:
+      'Marketing the case, collecting donations and following up the payout, VAT included. Added on top of what the case needs, never taken out of it.',
     paidDirectly: 'The partner association pays the institution directly — never cash to the beneficiary.',
     partner: 'Partner association',
     partnerRegistration: 'Registered with the Ministry of Social Solidarity, no. {number}',
@@ -578,6 +581,8 @@ export const en: Messages = {
     fileInvalid: 'Use a PDF or an image of up to 20 MB',
     uploadFailed: 'The upload didn’t go through — please try again',
     goalRange: 'Between {min} and {max}',
+    goalWithFee: 'Donors will see {total}: the amount needed plus a {percent} Yusr operating fee. The case receives the full amount needed.',
+    goalForDonors: 'Amount shown to donors (+ {percent} Yusr fee)',
     another: 'Submit another case',
     countries: { EG: 'Egypt', SA: 'Saudi Arabia' },
   },

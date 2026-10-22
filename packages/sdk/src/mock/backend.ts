@@ -14,7 +14,10 @@ import {
   balanceOf,
   buildDonationPostings,
   buildPayoutPostings,
+  buildPlatformFeePostings,
   buildRefundPostings,
+  caseAmountsFor,
+  caseNeedMinor,
   buildSettlementPostings,
   computeDonationBreakdown,
   convertMinor,
@@ -67,7 +70,7 @@ import {
 } from '@yusr/core';
 import type { EditCaseInput } from '@yusr/core/schemas';
 import type { AdminClient, LedgerQuery, YusrClient } from '../client';
-import { demoPartnerFor, SEED_CASES, type SeedCase } from './cases';
+import { demoPartnerFor, SEED_CASES, seedAmounts, type SeedCase } from './cases';
 import { CURRENT_DONOR, DONORS, STAFF, VOLUNTEERS, type SeedDonor } from './people';
 import { createRandom, type Random } from './random';
 
@@ -216,6 +219,7 @@ function toSummary(item: AdminCase): CaseSummary {
     region: item.region,
     currency: item.currency,
     goalMinor: item.goalMinor,
+    platformFeeMinor: item.platformFeeMinor,
     raisedMinor: item.raisedMinor,
     donorsCount: item.donorsCount,
     isUrgent: item.isUrgent,
@@ -486,6 +490,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
         history: [...next.history, { from: 'published', to: 'funded', at: iso(at), actorName: 'system', reason: null }],
         timeline: [...next.timeline, { kind: 'funded', at: iso(at), actor: SYSTEM_NAME }],
       };
+      if (next.platformFeeMinor > 0) postLedger('platform_fee', buildPlatformFeePostings(next.id, next.platformFeeMinor, next.currency), at, next.reference);
     }
     putCase(next);
 
@@ -619,7 +624,8 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       partner: { name: demoPartnerFor(seed.slug).name, registrationNumber: demoPartnerFor(seed.slug).registrationNumber },
       region: seed.region,
       currency: seed.currency,
-      goalMinor: toMinor(seed.goal, seed.currency),
+      goalMinor: seedAmounts(seed).goalMinor,
+      platformFeeMinor: seedAmounts(seed).platformFeeMinor,
       raisedMinor: 0,
       donorsCount: 0,
       isUrgent: seed.urgentInHours !== undefined,
@@ -733,7 +739,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       const start = Date.parse(item.publishedAt);
       const end = item.fundedAt ? Date.parse(item.fundedAt) - HOUR : item.status === 'paused' ? now - 2 * DAY : now - 10 * 60_000;
       const target = SEED_CASES.find((seed) => seed.slug === item.slug)!;
-      let remaining = toMinor(target.raised, item.currency);
+      let remaining = seedAmounts(target).raisedMinor;
 
       const mine = MY_HISTORY.filter(([slug]) => slug === item.slug);
       for (const [, amount, daysAgo] of mine) {
@@ -864,8 +870,11 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
 
     for (const seed of SEED_CASES) {
       const item = state.cases.get(`case_${seed.ref}`)!;
-      if (!seed.payout) continue;
       const fundedAt = item.fundedAt ? Date.parse(item.fundedAt) : now;
+      if (item.fundedAt && item.platformFeeMinor > 0) {
+        postLedger('platform_fee', buildPlatformFeePostings(item.id, item.platformFeeMinor, item.currency), fundedAt, item.reference);
+      }
+      if (!seed.payout) continue;
       const lines = item.disbursements.map((line) => ({ ...line }));
       for (const line of lines) {
         state.seq.payout += 1;
@@ -981,7 +990,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
           cost: done,
           alternatives: done,
         },
-        recommendedMinor: done ? item.goalMinor : null,
+        recommendedMinor: done ? caseNeedMinor(item) : null,
         notes: done ? 'تمت الزيارة ومطابقة المستندات، والاحتياج مطابق للمبلغ المطلوب.' : null,
       });
     }
@@ -1516,7 +1525,8 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
           : null,
       region: request.region,
       currency: request.currency,
-      goalMinor: request.goalMinor,
+      goalMinor: caseAmountsFor(request.goalMinor).goalMinor,
+      platformFeeMinor: caseAmountsFor(request.goalMinor).platformFeeMinor,
       raisedMinor: 0,
       donorsCount: 0,
       isUrgent: request.isUrgent,

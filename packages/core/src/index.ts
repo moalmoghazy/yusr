@@ -7,6 +7,7 @@ export * from './lifecycle';
 export * from './payments';
 export * from './donation';
 export * from './ledger';
+export * from './platform-fee';
 export * from './categories';
 export * from './regions';
 export * from './catalog';

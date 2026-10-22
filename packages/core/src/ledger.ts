@@ -18,6 +18,8 @@ export const ACCOUNTS = {
   caseFund: (caseId: string) => `liability:case:${caseId}`,
   gatewayFees: 'expense:gateway_fees',
   feeRecovery: 'revenue:fee_recovery',
+  /** Yusr's 10% on top of each case's need, earned when the case is funded. */
+  platformFees: 'revenue:platform_fees',
   fxPosition: (currency: Currency) => `equity:fx:${currency}`,
 } as const;
 

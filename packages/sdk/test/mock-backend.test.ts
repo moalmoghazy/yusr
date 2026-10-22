@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { ACCOUNTS, DomainError, computeProgress, toMinor, type Actor } from '@yusr/core';
-import { SEED_CASES, createMockBackend } from '../src/mock/index';
+import { SEED_CASES, createMockBackend, seedAmounts } from '../src/mock/index';
 
 const NOW = Date.parse('2026-09-26T16:00:00Z');
 const make = () => {
@@ -22,7 +22,7 @@ describe('seeded demo data', () => {
   it('builds every case total from individual donations', () => {
     for (const seed of SEED_CASES) {
       const item = backend.read.adminCases().find((entry) => entry.slug === seed.slug)!;
-      const target = toMinor(seed.raised, seed.currency);
+      const target = seedAmounts(seed).raisedMinor;
       const fromDonations = backend.read
         .donations()
         .filter((donation) => donation.caseId === item.id && donation.status === 'succeeded')
@@ -39,7 +39,7 @@ describe('seeded demo data', () => {
     assert.ok(balance.lines > 1_000);
   });
 
-  it('holds exactly the raised amount (minus payouts) in each case fund', () => {
+  it('holds exactly the raised amount (minus payouts and, once funded, Yusr’s fee) in each case fund', () => {
     const balances = backend.read.accountBalances();
     for (const item of backend.read.adminCases()) {
       const fund = balances.find((entry) => entry.account === ACCOUNTS.caseFund(item.id) && entry.currency === item.currency);
@@ -47,8 +47,27 @@ describe('seeded demo data', () => {
         .payouts()
         .filter((p) => p.caseId === item.id && p.status === 'paid')
         .reduce((s, p) => s + p.amountMinor, 0);
-      assert.equal((fund?.balanceMinor ?? 0) + paidOut, item.raisedMinor, item.slug);
+      const fee = item.fundedAt ? item.platformFeeMinor : 0;
+      assert.equal((fund?.balanceMinor ?? 0) + paidOut + fee, item.raisedMinor, item.slug);
     }
+  });
+
+  it('adds Yusr’s 10% on top of each case’s need and books it as revenue once funded', () => {
+    const balances = backend.read.accountBalances();
+    for (const seed of SEED_CASES) {
+      const item = backend.read.adminCases().find((entry) => entry.slug === seed.slug)!;
+      const need = item.disbursements.reduce((sum, line) => sum + line.amountMinor, 0);
+      if (seed.plan.length) assert.equal(need, toMinor(seed.goal, seed.currency), seed.slug);
+      assert.equal(item.platformFeeMinor, Math.round(toMinor(seed.goal, seed.currency) / 10), seed.slug);
+      assert.equal(item.goalMinor, toMinor(seed.goal, seed.currency) + item.platformFeeMinor, seed.slug);
+    }
+    const earned = backend.read
+      .adminCases()
+      .filter((item) => item.fundedAt)
+      .reduce((sum, item) => sum + item.platformFeeMinor, 0);
+    const revenue = balances.filter((entry) => entry.account === ACCOUNTS.platformFees).reduce((sum, entry) => sum + entry.balanceMinor, 0);
+    assert.ok(earned > 0);
+    assert.equal(revenue, earned);
   });
 
   it('exposes only public cases in the catalog', () => {

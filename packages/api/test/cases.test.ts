@@ -104,6 +104,9 @@ describe('verification and publishing pipeline', () => {
     const auditor = actorOf(USERS.auditor);
     const finance = actorOf(USERS.financeA);
     const { id } = await cases.submit(submission(volunteer.id), { actor: volunteer });
+    const submitted = await db.read.cases.byId(id);
+    assert.equal(submitted?.goalMinor, 19_800_00, 'donors are asked for the need plus Yusr’s 10%');
+    assert.equal(submitted?.platformFeeMinor, 1_800_00);
 
     await rejects(verification.assign(id, { auditorId: USERS.auditor.id }, { actor: auditor }), 'FORBIDDEN');
     const task = await verification.assign(id, { auditorId: USERS.auditor.id, visitAt: new Date('2026-09-28T10:00:00Z') }, { actor: moderator });
@@ -115,7 +118,8 @@ describe('verification and publishing pipeline', () => {
     await verification.complete(task.id, { recommendedMinor: 17_500_00, notes: 'Visited; eviction notice confirmed.' }, { actor: auditor });
     const verified = await db.read.cases.byId(id);
     assert.equal(verified?.status, 'field_verified');
-    assert.equal(verified?.goalMinor, 17_500_00);
+    assert.equal(verified?.goalMinor, 19_250_00, 'the verified need plus Yusr’s 10%');
+    assert.equal(verified?.platformFeeMinor, 1_750_00);
 
     await rejects(cases.transition(id, { to: 'published' }, { actor: auditor }), 'FORBIDDEN_TRANSITION');
     await rejects(cases.transition(id, { to: 'published' }, { actor: moderator }), 'VALIDATION_FAILED');
