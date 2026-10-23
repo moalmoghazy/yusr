@@ -3,7 +3,7 @@
 import type { CaseStatus, Locale } from '@yusr/core';
 import { buttonClasses, cn, Icon, textFor } from '@yusr/ui';
 import { useActionState, useState } from 'react';
-import { togglePriority, transitionCase } from '@/app/(hub)/cases/actions';
+import { toggleFeatured, togglePriority, transitionCase } from '@/app/(hub)/cases/actions';
 import type { ActionResult } from '@/lib/session';
 
 export interface TransitionOption {
@@ -24,18 +24,24 @@ export function CaseActions({
   options,
   pinned,
   canPin,
+  featured,
+  canFeature,
 }: {
   locale: Locale;
   caseId: string;
   options: TransitionOption[];
   pinned: boolean;
   canPin: boolean;
+  /** Shown in the website's «يحدث الآن» card; `canFeature`: the role may choose, and the case is published (or already shown). */
+  featured: boolean;
+  canFeature: boolean;
 }) {
   const { t } = textFor(locale);
   const [state, move, moving] = useActionState<ActionResult, FormData>(transitionCase, null);
   const [pinState, pin, pinning] = useActionState<ActionResult, FormData>(togglePriority, null);
   const [asking, setAsking] = useState<CaseStatus | null>(null);
-  const result = state ?? pinState;
+  const [featureState, feature, featuring] = useActionState<ActionResult, FormData>(toggleFeatured, null);
+  const result = state ?? pinState ?? featureState;
 
   if (options.length === 0 && !canPin) return <span className="text-xs text-muted-foreground">{t('admin.cases.noActions')}</span>;
 
@@ -70,6 +76,16 @@ export function CaseActions({
             <button type="submit" disabled={pinning} className={buttonClasses({ variant: 'ghost', size: 'sm' })} aria-pressed={pinned}>
               <Icon name="pin" size={15} className={cn(pinned && 'text-highlight')} />
               {pinned ? t('admin.cases.unprioritize') : t('admin.cases.prioritize')}
+            </button>
+          </form>
+        )}
+        {canFeature && (
+          <form action={feature}>
+            <input type="hidden" name="caseId" value={caseId} />
+            <input type="hidden" name="featured" value={String(featured)} />
+            <button type="submit" disabled={featuring} className={buttonClasses({ variant: 'ghost', size: 'sm' })} aria-pressed={featured}>
+              <Icon name="zap" size={15} className={cn(featured && 'text-highlight')} />
+              {featured ? t('admin.cases.unfeature') : t('admin.cases.feature')}
             </button>
           </form>
         )}

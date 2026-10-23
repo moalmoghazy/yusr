@@ -5,7 +5,7 @@
  * errors it raises are translated back into domain errors here.
  */
 import { DomainError, accountType, normalizeForSearch, type Currency } from '@yusr/core';
-import { and, asc, desc, eq, gte, inArray, isNull, lte, ne, sql, type SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, lte, ne, sql, type SQL } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type { CasePage, Database, LockMode, RatesToEgp, Tx } from './ports';
 import type { CaseFundSummary, CaseRow, DonationRow, JournalLineRow, OutboxRow, PaymentAttemptRow } from './rows';
@@ -181,6 +181,7 @@ function createTx(x: Executor): Tx & { raw: Executor } {
         if (filters.categories?.length) conditions.push(inArray(t.cases.category, filters.categories));
         if (filters.regions?.length) conditions.push(inArray(t.cases.region, filters.regions));
         if (filters.urgentOnly) conditions.push(eq(t.cases.isUrgent, true));
+        if (filters.featuredOnly) conditions.push(isNotNull(t.cases.featuredAt));
         if (filters.zakatOnly) conditions.push(eq(t.cases.zakatEligible, true));
         if (filters.minProgress !== undefined) conditions.push(gte(t.cases.progressPercent, filters.minProgress));
         if (filters.maxProgress !== undefined) conditions.push(lte(t.cases.progressPercent, filters.maxProgress));

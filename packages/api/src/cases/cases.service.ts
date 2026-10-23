@@ -317,6 +317,7 @@ export class CasesService {
         deadline: input.deadline ? new Date(input.deadline) : null,
         zakatEligible: false,
         priority: input.isUrgent ? 50 : 0,
+        featuredAt: null,
         coverSeed: Math.floor(Math.random() * 1_000),
         auditorId: null,
         verifiedAt: null,
@@ -444,6 +445,28 @@ export class CasesService {
         entityId: caseId,
         before: { priority: item.priority },
         after: { priority },
+      });
+    });
+  }
+
+  /** Adds a published case to the home page's «يحدث الآن» card, or takes it off. */
+  async feature(caseId: string, featured: boolean, context: CallContext): Promise<void> {
+    const actor = requirePermission(context.actor, 'cases:prioritize');
+    await this.deps.db.transaction(async (tx) => {
+      const item = await tx.cases.byId(caseId, 'update');
+      if (!item) throw new DomainError('NOT_FOUND', 'Case not found');
+      if (featured && item.status !== 'published') throw new DomainError('CASE_NOT_DONATABLE', 'Only a published case can be shown on the home page');
+      if (featured === (item.featuredAt !== null)) return;
+      const featuredAt = featured ? this.deps.clock.now() : null;
+      await tx.cases.update(caseId, { featuredAt });
+      await tx.audit.record({
+        actorId: actor.id,
+        actorRole: primaryRole(actor),
+        action: featured ? 'case.featured' : 'case.unfeatured',
+        entityType: 'case',
+        entityId: caseId,
+        before: { featured: item.featuredAt !== null },
+        after: { featured },
       });
     });
   }

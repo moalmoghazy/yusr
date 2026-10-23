@@ -106,6 +106,8 @@ export interface CaseSummary {
   fundedAt: string | null;
   /** Higher numbers float to the top of listings (set by moderators). */
   priority: number;
+  /** When a moderator chose it for the home page's «يحدث الآن» card; null when not chosen. */
+  featuredAt?: string | null;
   /** Deterministic seed for the illustrated cover (no beneficiary photos by design). */
   coverSeed: number;
   /**
@@ -181,6 +183,8 @@ export interface CaseFilters {
   categories?: CaseCategory[];
   regions?: string[];
   urgentOnly?: boolean;
+  /** Only the cases moderators chose for the home page («يحدث الآن»). */
+  featuredOnly?: boolean;
   zakatOnly?: boolean;
   /** Inclusive completion range, 0–100. */
   minProgress?: number;

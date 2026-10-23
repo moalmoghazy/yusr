@@ -32,6 +32,7 @@ export function matchesFilters(item: CaseSummary, filters: CaseFilters): boolean
   if (filters.categories?.length && !filters.categories.includes(item.category)) return false;
   if (filters.regions?.length && !filters.regions.includes(item.region)) return false;
   if (filters.urgentOnly && !item.isUrgent) return false;
+  if (filters.featuredOnly && !item.featuredAt) return false;
   if (filters.zakatOnly && !item.zakatEligible) return false;
   const percent = progressPercent(item);
   if (filters.minProgress !== undefined && percent < filters.minProgress) return false;

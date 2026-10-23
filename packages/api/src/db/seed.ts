@@ -253,6 +253,7 @@ export async function seedDemo(tx: Tx, options: { now: Date; cipher: FieldCipher
       deadline: seed.urgentInHours !== undefined ? new Date(now.getTime() + seed.urgentInHours * HOUR) : null,
       zakatEligible: seed.zakat,
       priority: seed.priority ?? (seed.urgentInHours !== undefined ? 60 : 20),
+      featuredAt: null,
       coverSeed: index * 7 + 3,
       auditorId,
       verifiedAt,

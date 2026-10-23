@@ -71,6 +71,7 @@ export const caseFiltersSchema = z.object({
   categories: csv(z.enum(CASE_CATEGORIES)).optional(),
   regions: csv(z.string().regex(/^[A-Z]{2}-[A-Z0-9]{1,3}$/)).optional(),
   urgentOnly: booleanish.optional(),
+  featuredOnly: booleanish.optional(),
   zakatOnly: booleanish.optional(),
   includeFunded: booleanish.optional(),
   minProgress: z.coerce.number().int().min(0).max(100).optional(),
@@ -88,6 +89,11 @@ export const transitionCaseSchema = z.object({
 
 export const prioritizeCaseSchema = z.object({
   priority: z.number().int().min(0).max(100),
+});
+
+/** Show (or stop showing) a published case in the home page's «يحدث الآن» card. */
+export const featureCaseSchema = z.object({
+  featured: z.boolean(),
 });
 
 /** Text in either language; moderators add the other one before publishing. */

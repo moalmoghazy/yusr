@@ -18,6 +18,7 @@ import {
   ledgerQuerySchema,
   markPayoutPaidSchema,
   presignRedactedSchema,
+  featureCaseSchema,
   prioritizeCaseSchema,
   refundRequestSchema,
   rejectSchema,
@@ -117,6 +118,22 @@ export const caseOperations = [
     returns: 'AdminCase',
     handle: async ({ services, ctx, params, body }) => {
       await services.cases.prioritize(params['id']!, body.priority, ctx);
+      return services.cases.adminCase(params['id']!, ctx);
+    },
+  }),
+  endpoint({
+    id: 'admin.cases.feature',
+    method: 'PUT',
+    path: '/admin/cases/:id/featured',
+    version: '1',
+    access: 'staff',
+    tag: CASES,
+    summary: "Show a published case in the home page's «يحدث الآن» card, or take it off",
+    permission: 'cases:prioritize',
+    body: featureCaseSchema,
+    returns: 'AdminCase',
+    handle: async ({ services, ctx, params, body }) => {
+      await services.cases.feature(params['id']!, body.featured, ctx);
       return services.cases.adminCase(params['id']!, ctx);
     },
   }),

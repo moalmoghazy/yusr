@@ -240,6 +240,7 @@ function toSummary(item: AdminCase): CaseSummary {
     publishedAt: item.publishedAt,
     fundedAt: item.fundedAt,
     priority: item.priority,
+    featuredAt: item.featuredAt ?? null,
     coverSeed: item.coverSeed,
     createdAt: item.createdAt,
   };
@@ -1266,6 +1267,18 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
         emit({ type: 'case.updated', caseId });
         return next;
       },
+      setFeatured: (caseId: string, featured: boolean) => {
+        ensure('cases:prioritize');
+        const item = mustCase(caseId);
+        if (featured && item.status !== 'published') throw new DomainError('CASE_NOT_DONATABLE', 'Only a published case can be shown on the home page');
+        if (featured === Boolean(item.featuredAt)) return item;
+        const at = iso(clock());
+        const next = { ...item, featuredAt: featured ? at : null, updatedAt: at };
+        putCase(next);
+        logAudit(actorRef, featured ? 'case.featured' : 'case.unfeatured', 'case', caseId, item.reference, { featured: !featured }, { featured });
+        emit({ type: 'case.updated', caseId });
+        return next;
+      },
       editCase: (caseId: string, input: EditCaseInput) => {
         ensure('cases:edit');
         // The same limits as editCaseSchema, checked by hand so the demo bundle stays free of zod.
@@ -1671,6 +1684,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       cases: wrap(sync.cases),
       transitionCase: wrap(sync.transitionCase),
       setPriority: wrap(sync.setPriority),
+      setFeatured: wrap(sync.setFeatured),
       editCase: wrap(sync.editCase),
       assignAuditor: wrap(sync.assignAuditor),
       verificationTasks: wrap(sync.verificationTasks),

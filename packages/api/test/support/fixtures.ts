@@ -74,6 +74,7 @@ export function caseRow(overrides: Partial<CaseRow> & { id: string }): CaseRow {
     deadline: null,
     zakatEligible: true,
     priority: 10,
+    featuredAt: null,
     coverSeed: 3,
     auditorId: USERS.auditor.id,
     verifiedAt: at,

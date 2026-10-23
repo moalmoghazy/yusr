@@ -325,6 +325,14 @@
             }
           },
           {
+            "name": "featuredOnly",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "zakatOnly",
             "in": "query",
             "required": false,
@@ -2343,6 +2351,72 @@
                 },
                 "required": [
                   "priority"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "cases:prioritize",
+        "responses": {
+          "200": {
+            "description": "AdminCase",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "AdminCase (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/cases/{id}/featured": {
+      "put": {
+        "operationId": "admin.cases.feature",
+        "tags": [
+          "Operations · Cases"
+        ],
+        "summary": "Show a published case in the home page's «يحدث الآن» card, or take it off",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `cases:prioritize`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "featured": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "featured"
                 ]
               }
             }

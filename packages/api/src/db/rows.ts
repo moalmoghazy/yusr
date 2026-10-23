@@ -109,6 +109,8 @@ export interface CaseRow {
   deadline: Timestamp | null;
   zakatEligible: boolean;
   priority: number;
+  /** Chosen for the home page's «يحدث الآن» card (0008_case_featured.sql); null when not. */
+  featuredAt: Timestamp | null;
   coverSeed: number;
   auditorId: Id | null;
   verifiedAt: Timestamp | null;

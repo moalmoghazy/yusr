@@ -68,6 +68,8 @@ export interface AdminClient {
   cases(filter?: { status?: CaseStatus; q?: string }): Promise<AdminCase[]>;
   transitionCase(caseId: string, to: CaseStatus, reason?: string): Promise<AdminCase>;
   setPriority(caseId: string, priority: number): Promise<AdminCase>;
+  /** Shows a published case in the home page's «يحدث الآن» card, or takes it off. */
+  setFeatured(caseId: string, featured: boolean): Promise<AdminCase>;
   /** Edit a case's wording, its share line («نص المشاركة»; null = composed) and flags. */
   editCase(caseId: string, patch: EditCaseInput): Promise<AdminCase>;
   assignAuditor(caseId: string, auditorId: string): Promise<VerificationTask>;

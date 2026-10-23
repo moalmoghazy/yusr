@@ -2,6 +2,7 @@ import { CASE_CATEGORIES, CATEGORY_META, methodsForCurrency, type CaseSummary, t
 import { buttonClasses, CaseCard, cn, DonationProgress, Icon, LogoMark, textFor, type CaseCardProps, type IconName } from '@yusr/ui';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { FeaturedRotator } from '@/components/featured-rotator';
 import { HowReveal } from '@/components/how-reveal';
 import { SupervisionBadge } from '@/components/supervision-badge';
 import { catalog } from '@/lib/api';
@@ -12,7 +13,16 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
   const locale = await pageLocale(params);
   const { t } = textFor(locale);
   const api = catalog(locale);
-  const [stats, urgent, feed] = await Promise.all([api.stats(), api.listCases({ urgentOnly: true, sort: 'urgent', limit: 3 }), api.liveDonations(5)]);
+  const [stats, urgent, feed, chosen] = await Promise.all([
+    api.stats(),
+    api.listCases({ urgentOnly: true, sort: 'urgent', limit: 3 }),
+    api.liveDonations(5),
+    api.listCases({ featuredOnly: true, limit: 6 }),
+  ]);
+  // «يحدث الآن»: the cases moderators chose in the hub (most recently chosen first), else the most urgent one.
+  const featured = chosen.items.length
+    ? [...chosen.items].sort((a, b) => Date.parse(b.featuredAt ?? '') - Date.parse(a.featuredAt ?? ''))
+    : urgent.items.slice(0, 1);
   const now = Date.now();
   const cardProps = (item: CaseSummary): CaseCardProps => ({ item, locale, href: href(locale, `/cases/${item.slug}`), link: Link, now });
 
@@ -51,7 +61,7 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
             </div>
             <HowItWorks locale={locale} />
           </div>
-          <LiveBoard locale={locale} feed={feed} featured={urgent.items[0]} now={now} />
+          <LiveBoard locale={locale} feed={feed} featured={featured} now={now} />
         </div>
       </section>
 
@@ -268,7 +278,7 @@ function StatsBand({ locale, stats }: { locale: Locale; stats: PlatformStats }) 
 }
 
 /** Latest gifts across the platform (anonymous donors stay «فاعل خير») and the most urgent case. */
-function LiveBoard({ locale, feed, featured, now }: { locale: Locale; feed: LiveDonation[]; featured: CaseSummary | undefined; now: number }) {
+function LiveBoard({ locale, feed, featured, now }: { locale: Locale; feed: LiveDonation[]; featured: CaseSummary[]; now: number }) {
   const { t, f, l } = textFor(locale);
   return (
     <aside aria-labelledby="live-title" className="rounded-[1.4rem] border border-border bg-card p-5 shadow-lg">
@@ -305,17 +315,23 @@ function LiveBoard({ locale, feed, featured, now }: { locale: Locale; feed: Live
           );
         })}
       </ol>
-      {featured && (
-        <div className="mt-4 flex flex-col gap-3 rounded-card bg-muted/60 p-4">
-          <p className="text-xs font-bold text-destructive">{t('case.urgent')}</p>
-          <Link href={href(locale, `/cases/${featured.slug}`)} className="font-bold hover:text-primary">
-            {l(featured.title)}
-          </Link>
-          <DonationProgress raisedMinor={featured.raisedMinor} goalMinor={featured.goalMinor} currency={featured.currency} locale={locale} size="sm" />
-          <Link href={href(locale, `/cases/${featured.slug}#donate`)} className={buttonClasses({ block: true })}>
-            <Icon name="heart" size={17} />
-            {t('case.donateCta')}
-          </Link>
+      {featured.length > 0 && (
+        <div className="mt-4">
+          <FeaturedRotator labels={featured.map((item) => l(item.title))}>
+            {featured.map((item) => (
+              <div key={item.id} className="flex h-full flex-col gap-3 rounded-card bg-muted/60 p-4">
+                {item.isUrgent && <p className="text-xs font-bold text-destructive">{t('case.urgent')}</p>}
+                <Link href={href(locale, `/cases/${item.slug}`)} className="font-bold hover:text-primary">
+                  {l(item.title)}
+                </Link>
+                <DonationProgress raisedMinor={item.raisedMinor} goalMinor={item.goalMinor} currency={item.currency} locale={locale} size="sm" />
+                <Link href={href(locale, `/cases/${item.slug}#donate`)} className={buttonClasses({ block: true, className: 'mt-auto' })}>
+                  <Icon name="heart" size={17} />
+                  {t('case.donateCta')}
+                </Link>
+              </div>
+            ))}
+          </FeaturedRotator>
         </div>
       )}
     </aside>

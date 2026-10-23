@@ -283,4 +283,21 @@ describe('verification and publishing pipeline', () => {
     await cases.prioritize(CASE_ID, 90, { actor: actorOf(USERS.moderator) });
     assert.equal((await db.read.cases.byId(CASE_ID))?.priority, 90);
   });
+
+  it('lets moderators choose published cases for the home page «يحدث الآن» card', async () => {
+    const { cases, db } = await setupCases();
+    await rejects(cases.feature(CASE_ID, true, { actor: actorOf(USERS.auditor) }), 'FORBIDDEN');
+    assert.equal((await cases.list({ featuredOnly: true })).items.length, 0);
+    await cases.feature(CASE_ID, true, { actor: actorOf(USERS.moderator) });
+    const featured = await cases.list({ featuredOnly: true });
+    assert.deepEqual(
+      featured.items.map((item) => item.id),
+      [CASE_ID],
+    );
+    assert.ok(featured.items[0]?.featuredAt);
+    await rejects(cases.feature(DRAFT_CASE_ID, true, { actor: actorOf(USERS.moderator) }), 'CASE_NOT_DONATABLE');
+    await cases.feature(CASE_ID, false, { actor: actorOf(USERS.moderator) });
+    assert.equal((await db.read.cases.byId(CASE_ID))?.featuredAt, null);
+    assert.equal((await cases.list({ featuredOnly: true })).items.length, 0);
+  });
 });

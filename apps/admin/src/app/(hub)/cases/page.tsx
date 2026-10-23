@@ -103,6 +103,7 @@ export default async function CasesPage({ searchParams }: { searchParams: Promis
                     <td className="whitespace-nowrap p-3 font-mono text-xs" dir="ltr">
                       {item.reference}
                       {item.priority > 0 && <Icon name="pin" size={13} className="ms-1 inline text-highlight" label={t('admin.cases.pinned')} />}
+                      {item.featuredAt && <Icon name="zap" size={13} className="ms-1 inline text-highlight" label={t('admin.cases.featured')} />}
                     </td>
                     <td className="max-w-[22rem] p-3">
                       <p className="font-semibold">{l(item.title)}</p>
@@ -140,6 +141,8 @@ export default async function CasesPage({ searchParams }: { searchParams: Promis
                         options={options}
                         pinned={item.priority > 0}
                         canPin={staff.permissions.has('cases:prioritize')}
+                        featured={Boolean(item.featuredAt)}
+                        canFeature={staff.permissions.has('cases:prioritize') && (item.status === 'published' || Boolean(item.featuredAt))}
                       />
                       {staff.permissions.has('cases:edit') && (
                         <ShareTextForm locale={locale} caseId={item.id} title={item.title} category={item.category} shareText={item.shareText} />

@@ -48,3 +48,15 @@ export async function togglePriority(_previous: ActionResult, form: FormData): P
   if (result?.ok) revalidatePath('/cases');
   return result;
 }
+
+/** Shows a published case in the website's «يحدث الآن» card on the home page, or takes it off. */
+export async function toggleFeatured(_previous: ActionResult, form: FormData): Promise<ActionResult> {
+  const { t } = textFor(await hubLocale());
+  const caseId = formId(form, 'caseId');
+  if (!caseId) return { ok: false, message: t('errors.VALIDATION_FAILED') };
+  const featured = form.get('featured') === 'true';
+  const api = await adminApi();
+  const result = await attempt(() => api.setFeatured(caseId, !featured), featured ? t('admin.cases.unfeatured') : t('admin.cases.featuredOn'));
+  if (result?.ok) revalidatePath('/cases');
+  return result;
+}

@@ -217,6 +217,8 @@ export const cases = pgTable(
     deadline: at('deadline'),
     zakatEligible: boolean('zakat_eligible').notNull().default(false),
     priority: smallint('priority').notNull().default(0),
+    /** The home page's «يحدث الآن» card (0008_case_featured.sql). */
+    featuredAt: at('featured_at'),
     coverSeed: integer('cover_seed').notNull().default(0),
     auditorId: uuid('auditor_id').references(() => users.id),
     verifiedAt: at('verified_at'),
@@ -230,7 +232,11 @@ export const cases = pgTable(
       sql`yusr_normalize(coalesce(title ->> 'ar', '') || ' ' || coalesce(title ->> 'en', '') || ' ' || coalesce(summary ->> 'ar', '') || ' ' || coalesce(summary ->> 'en', '') || ' ' || reference)`,
     ),
   },
-  (t) => [index('cases_catalog_idx').on(t.status, t.category, t.region, t.priority), index('cases_partner_idx').on(t.partnerId)],
+  (t) => [
+    index('cases_catalog_idx').on(t.status, t.category, t.region, t.priority),
+    index('cases_partner_idx').on(t.partnerId),
+    index('cases_featured_idx').on(t.featuredAt),
+  ],
 );
 
 export const caseDocuments = pgTable(

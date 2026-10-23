@@ -116,6 +116,7 @@ export function createHttpAdminClient(options: HttpClientOptions): AdminClient {
     cases: (filter) => request('GET', `/admin/cases${toQuery(filter)}`),
     transitionCase: (caseId, to, reason) => post(`/admin/cases/${seg(caseId)}/transitions`, { to, reason }),
     setPriority: (caseId, priority) => request('PATCH', `/admin/cases/${seg(caseId)}/priority`, { priority }),
+    setFeatured: (caseId, featured) => request('PUT', `/admin/cases/${seg(caseId)}/featured`, { featured }),
     editCase: (caseId, patch) => request('PATCH', `/admin/cases/${seg(caseId)}`, patch),
     assignAuditor: (caseId, auditorId) => post(`/admin/cases/${seg(caseId)}/verification`, { auditorId }),
     verificationTasks: () => request('GET', '/admin/verification-tasks'),
