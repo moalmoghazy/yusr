@@ -12,7 +12,6 @@ export function SiteHeader({ locale, theme, donor }: { locale: Locale; theme: Th
   const links = [
     { href: href(locale), label: t('nav.home'), exact: true },
     { href: href(locale, '/cases'), label: t('nav.cases') },
-    { href: `${href(locale)}#how`, label: t('nav.howItWorks') },
     { href: `${href(locale)}#transparency`, label: t('nav.transparency') },
     { href: href(locale, '/submit'), label: t('nav.submitCase') },
     { href: href(locale, '/about'), label: t('nav.about') },

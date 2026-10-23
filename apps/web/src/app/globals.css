@@ -92,6 +92,100 @@
   }
 }
 
+/* «كيف نعمل» in the hero (page.tsx, HowItWorks): each step appears in turn, then a glowing gold line
+   runs down to the next one. --step is the step's index; one step every --how-beat. */
+.how-step {
+  --how-beat: 1.1s;
+}
+
+.how-line {
+  position: absolute;
+  inset-inline-start: calc(1.125rem - 1px);
+  top: calc(2.25rem + 4px);
+  bottom: 4px;
+  width: 2px;
+  border-radius: 999px;
+  background: var(--border);
+}
+
+.how-line-fill {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(to bottom, color-mix(in oklab, var(--highlight) 55%, transparent), var(--highlight));
+  box-shadow: 0 0 8px color-mix(in oklab, var(--highlight) 70%, transparent);
+}
+
+/* Hidden only once the script has armed it (how-reveal.tsx), and played when it scrolls into view. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-how='armed'] .how-step,
+  [data-how='armed'] .how-line-fill {
+    opacity: 0;
+  }
+  [data-how='run'] .how-step {
+    animation: how-step-in 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) calc(var(--step) * var(--how-beat) + 0.2s) both;
+  }
+  [data-how='run'] .how-dot {
+    animation: how-dot-glow 1.2s ease-out calc(var(--step) * var(--how-beat) + 0.25s) both;
+  }
+  [data-how='run'] .how-line-fill {
+    animation: how-line-run 0.75s cubic-bezier(0.45, 0, 0.3, 1) calc(var(--step) * var(--how-beat) + 0.65s) both;
+  }
+  /* The glowing head that travels down the line, then fades as it reaches the next step. */
+  [data-how='run'] .how-line-fill::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    margin-left: -4px;
+    border-radius: 999px;
+    background: var(--highlight);
+    box-shadow:
+      0 0 6px 2px color-mix(in oklab, var(--highlight) 80%, transparent),
+      0 0 16px 4px color-mix(in oklab, var(--highlight) 45%, transparent);
+    animation: how-head 0.75s ease-in calc(var(--step) * var(--how-beat) + 0.65s) both;
+  }
+}
+
+@keyframes how-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes how-dot-glow {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--highlight) 0%, transparent);
+  }
+  35% {
+    box-shadow: 0 0 0 5px color-mix(in oklab, var(--highlight) 45%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--highlight) 0%, transparent);
+  }
+}
+
+@keyframes how-line-run {
+  from {
+    height: 0;
+  }
+}
+
+@keyframes how-head {
+  0%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 /* Case covers: the same drift inside each card's lattice (see case-cover.tsx; the mask fades it out). */
 @media (prefers-reduced-motion: no-preference) {
   .case-cover-drift {

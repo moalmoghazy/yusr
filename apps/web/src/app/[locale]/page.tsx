@@ -2,6 +2,7 @@ import { CASE_CATEGORIES, CATEGORY_META, methodsForCurrency, type CaseSummary, t
 import { buttonClasses, CaseCard, cn, DonationProgress, Icon, LogoMark, textFor, type CaseCardProps, type IconName } from '@yusr/ui';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { HowReveal } from '@/components/how-reveal';
 import { SupervisionBadge } from '@/components/supervision-badge';
 import { catalog } from '@/lib/api';
 import { href } from '@/lib/i18n';
@@ -48,20 +49,7 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
                 {t('landing.heroSecondary')}
               </Link>
             </div>
-            <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-              {(
-                [
-                  ['clipboard-check', t('landing.howSteps.verify.title')],
-                  ['landmark', t('landing.howSteps.disburse.title')],
-                  ['receipt', t('receipt.title')],
-                ] as const
-              ).map(([icon, text]) => (
-                <li key={icon} className="inline-flex items-center gap-1.5">
-                  <Icon name={icon} size={18} className="text-primary" />
-                  {text}
-                </li>
-              ))}
-            </ul>
+            <HowItWorks locale={locale} />
           </div>
           <LiveBoard locale={locale} feed={feed} featured={urgent.items[0]} now={now} />
         </div>
@@ -105,22 +93,6 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
             </li>
           ))}
         </ul>
-      </section>
-
-      {/* ---------------------------------------------------------------- how it works */}
-      <section id="how" className="container-page py-14" aria-labelledby="how-title">
-        <SectionHead id="how-title" title={t('landing.howTitle')} body={t('landing.howBody')} />
-        <ol className="grid grid-cols-1 gap-4 md:grid-cols-4">
-          {(['submit', 'verify', 'publish', 'disburse'] as const).map((step, index) => (
-            <li key={step} className="relative flex flex-col gap-2 rounded-card border border-border bg-card p-5">
-              <span className="grid size-9 place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground tabular-nums">
-                {f.number(index + 1)}
-              </span>
-              <h3 className="font-bold">{t(`landing.howSteps.${step}.title`)}</h3>
-              <p className="text-sm text-muted-foreground">{t(`landing.howSteps.${step}.body`)}</p>
-            </li>
-          ))}
-        </ol>
       </section>
 
       {/* ---------------------------------------------------------------- transparency */}
@@ -213,6 +185,47 @@ const METHOD_ICON: Partial<Record<string, IconName>> = {
   fawry: 'store',
   instapay: 'landmark',
 };
+
+const HOW_STEPS = ['submit', 'verify', 'publish', 'disburse'] as const;
+
+/**
+ * «كيف نعمل» inside the hero: the four stages a case passes, shown one after another, with a glowing
+ * gold line running from each step to the next (globals.css, `.how-*`). Without motion it is all shown.
+ */
+function HowItWorks({ locale }: { locale: Locale }) {
+  const { t, f } = textFor(locale);
+  return (
+    <HowReveal
+      labelledBy="how-title"
+      className="scroll-mt-24 flex flex-col gap-4 rounded-card border border-border/70 bg-card/75 p-5 shadow-sm backdrop-blur-sm"
+    >
+      <div className="flex flex-col gap-1">
+        <h2 id="how-title" className="font-display text-lg font-bold">
+          {t('landing.howTitle')}
+        </h2>
+        <p className="text-sm text-muted-foreground">{t('landing.howBody')}</p>
+      </div>
+      <ol className="flex flex-col">
+        {HOW_STEPS.map((step, index) => (
+          <li key={step} className="how-step relative flex gap-3 pb-5 last:pb-0" style={{ ['--step' as string]: index }}>
+            <span className="how-dot relative z-10 grid size-9 shrink-0 place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground tabular-nums">
+              {f.number(index + 1)}
+            </span>
+            {index < HOW_STEPS.length - 1 && (
+              <span aria-hidden className="how-line">
+                <span className="how-line-fill" />
+              </span>
+            )}
+            <div className="flex flex-col gap-0.5 pt-1.5">
+              <h3 className="font-bold leading-snug">{t(`landing.howSteps.${step}.title`)}</h3>
+              <p className="text-sm text-muted-foreground">{t(`landing.howSteps.${step}.body`)}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </HowReveal>
+  );
+}
 
 function SectionHead({ id, title, body, children }: { id: string; title: string; body?: string; children?: ReactNode }) {
   return (
