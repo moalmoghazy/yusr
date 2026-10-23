@@ -449,6 +449,7 @@ git push -u origin feature/housing-category
   و`DATA_KEY_BASE64` (32 بايت base64).
 - **متغيرات الموقع**: `YUSR_API_URL` (عنوان الـ API + `/v1`)، `NEXT_PUBLIC_SITE_URL`، `NEXT_PUBLIC_DEMO=true`،
   `NEXT_PUBLIC_SHOW_SUPERVISION=false`، `UPLOAD_ORIGIN` (عنوان الـ API). **ولوحة التحكم**: `YUSR_API_URL` و`NEXT_PUBLIC_DEMO=true`.
+  وفي الاثنين `YUSR_EDGE_SECRET` إن ضُبط في الـ API (القيمة نفسها).
 - **حدود المجانية**: البيانات التجريبية في ذاكرة الدالة، فتبدأ من جديد كلما أُعيد تشغيلها بعد فترة
   هدوء (أول طلب بعدها يأخذ ثانيتين تقريبًا). وخطة Vercel المجانية للاستخدام الشخصي غير التجاري — للإطلاق
   الفعلي استخدم البنية التالية. (بديل: `render.yaml` يشغّل الـ API على Render، ويطلب Render بطاقة للتحقق.)
@@ -510,10 +511,12 @@ node dist/db/create-staff.js --phone 01001234567 --name "اسمك" --role super_
 - متغيرات البيئة: `YUSR_API_URL=https://api.<نطاقك>/v1`، `NEXT_PUBLIC_SITE_URL=https://<نطاقك>`،
   `UPLOAD_ORIGIN` (عنوان حاوية R2)، و`NEXT_PUBLIC_SHOW_SUPERVISION` و`NEXT_PUBLIC_MOSS_REGISTRATION_NUMBER`،
   و`APPLE_TEAM_ID` و`ANDROID_CERT_SHA256` لروابط التطبيق.
+- `YUSR_EDGE_SECRET`: نفس قيمة `YUSR_EDGE_SECRET` في الـ API (سر خادمي، لا يبدأ بـ `NEXT_PUBLIC_`). به يمرّر
+  الموقع عنوان كل زائر إلى الـ API، فتُحسب حدود الطلبات لكل زائر لا للخادم كله. بدونه لا يُرسَل شيء.
 - ملاحظة: المتغيرات التي تبدأ بـ `NEXT_PUBLIC_` تُثبَّت وقت البناء؛ بعد تغييرها أعد النشر (Redeploy).
 
 **5) لوحة التحكم على Vercel** — مشروع ثانٍ بنفس الطريقة: Root Directory `apps/admin`، Build Command
-`pnpm turbo run build --filter=@yusr/admin...`، ومتغير واحد: `YUSR_API_URL`.
+`pnpm turbo run build --filter=@yusr/admin...`، والمتغيران: `YUSR_API_URL` و`YUSR_EDGE_SECRET` (نفس قيمته في الـ API).
 
 **6) النطاقات (DNS)**: `<نطاقك>` للموقع، `admin.<نطاقك>` للوحة التحكم، `api.<نطاقك>` للـ API. ثم في
 متغيرات الـ API: `PUBLIC_API_URL` و`PUBLIC_WEB_URL` و`PUBLIC_ADMIN_URL` و`CORS_ORIGINS` بالعناوين الحقيقية.

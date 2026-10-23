@@ -1,6 +1,6 @@
 import { createHttpAuthClient } from '@yusr/sdk';
 import { NextResponse, type NextRequest } from 'next/server';
-import { apiTimeoutMs, apiUrl } from './lib/env';
+import { apiEdge, apiTimeoutMs, apiUrl } from './lib/env';
 import { ACCESS_COOKIE, clearedCookies, readClaims, REFRESH_COOKIE, sessionCookies, type CookieWrite } from './lib/tokens';
 
 /**
@@ -22,7 +22,9 @@ export async function proxy(request: NextRequest) {
   let writes: CookieWrite[] = [];
   if (!fresh && refreshToken) {
     try {
-      writes = sessionCookies(await createHttpAuthClient({ baseUrl: apiUrl(), timeoutMs: apiTimeoutMs() }).refresh(refreshToken));
+      const edge = apiEdge(request.headers);
+      const auth = createHttpAuthClient({ baseUrl: apiUrl(), timeoutMs: apiTimeoutMs(), ...(edge ? { edge } : {}) });
+      writes = sessionCookies(await auth.refresh(refreshToken));
     } catch {
       writes = clearedCookies();
     }

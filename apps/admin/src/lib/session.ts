@@ -2,10 +2,10 @@ import 'server-only';
 import { permissionsFor, type Permission } from '@yusr/core';
 import { ApiError, createHttpAdminClient, type AdminClient } from '@yusr/sdk';
 import { textFor } from '@yusr/ui';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { cache } from 'react';
-import { apiTimeoutMs, apiUrl } from './env';
+import { apiEdge, apiTimeoutMs, apiUrl } from './env';
 import { hubLocale } from './i18n';
 import { ACCESS_COOKIE, readClaims, type StaffClaims } from './tokens';
 
@@ -25,10 +25,12 @@ export const currentStaff = cache(async (): Promise<Staff> => {
 
 /** The SDK's admin client acting as that person. Never cached: every screen shows live money. */
 export const adminApi = cache(async (): Promise<AdminClient> => {
-  const [staff, locale] = await Promise.all([currentStaff(), hubLocale()]);
+  const [staff, locale, incoming] = await Promise.all([currentStaff(), hubLocale(), headers()]);
+  const edge = apiEdge(incoming);
   return createHttpAdminClient({
     baseUrl: apiUrl(),
     timeoutMs: apiTimeoutMs(),
+    ...(edge ? { edge } : {}),
     getAccessToken: () => staff.token,
     locale,
     fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }),

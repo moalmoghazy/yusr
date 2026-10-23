@@ -52,7 +52,7 @@ export default async function ReceiptPage({
 
   let receipt: DonationReceipt;
   try {
-    receipt = await live(locale).getDonation(id, token);
+    receipt = await (await live(locale)).getDonation(id, token);
   } catch (error) {
     if (error instanceof ApiError && [400, 403, 404, 422].includes(error.status)) notFound();
     throw error;

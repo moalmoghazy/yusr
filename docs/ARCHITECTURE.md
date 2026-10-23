@@ -478,8 +478,8 @@ defaults (memory storage, simulated payments, missing secrets).
 | App | Key settings |
 |---|---|
 | API | `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `OTP_PEPPER`, `NATIONAL_ID_PEPPER`, `DATA_KEY_BASE64`, gateway keys, `S3_*`, messaging and ops tokens |
-| Web | `YUSR_API_URL`, `NEXT_PUBLIC_SITE_URL`, `UPLOAD_ORIGIN`, `NEXT_PUBLIC_SHOW_SUPERVISION`, `NEXT_PUBLIC_MOSS_REGISTRATION_NUMBER` |
-| Admin | `YUSR_API_URL` |
+| Web | `YUSR_API_URL`, `YUSR_EDGE_SECRET`, `NEXT_PUBLIC_SITE_URL`, `UPLOAD_ORIGIN`, `NEXT_PUBLIC_SHOW_SUPERVISION`, `NEXT_PUBLIC_MOSS_REGISTRATION_NUMBER` |
+| Admin | `YUSR_API_URL`, `YUSR_EDGE_SECRET` |
 | Mobile | `EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_WEB_URL` (and `app.json` → `extra`) |
 
 `YUSR_STORAGE=memory` runs the API with no database or Redis (seeded demo data, simulated

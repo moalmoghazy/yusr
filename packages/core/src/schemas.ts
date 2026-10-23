@@ -21,6 +21,9 @@ import {
 /** E.164 phone numbers, e.g. +201001234567 or +966501234567. */
 export const phoneSchema = z.string().regex(/^\+[1-9]\d{7,14}$/, 'Use international format, e.g. +201001234567');
 
+/** A record id (UUID), e.g. one posted back by a form before it goes into an API path. */
+export const idSchema = z.uuid();
+
 const csv = <T extends z.ZodType>(item: T) =>
   z.preprocess((value) => (typeof value === 'string' ? value.split(',').filter(Boolean) : value), z.array(item).max(30));
 

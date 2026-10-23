@@ -66,7 +66,7 @@ export async function startDonation(_previous: DonateState, form: FormData): Pro
   const idempotencyKey = text(form.get('idempotencyKey'));
   let created: CreateDonationResponse;
   try {
-    created = await live(locale).createDonation(parsed.data, idempotencyKey ? { idempotencyKey } : undefined);
+    created = await (await live(locale)).createDonation(parsed.data, idempotencyKey ? { idempotencyKey } : undefined);
   } catch (error) {
     if (error instanceof ApiError) {
       const remaining = error.details?.['remainingMinor'];
