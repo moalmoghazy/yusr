@@ -11,6 +11,9 @@ overrides:
   react-dom: 19.1.0
   '@types/react': ~19.1.10
   '@types/react-dom': ~19.1.9
+  # Security: build-time CSS tooling inside Expo's Metro config pinned an old PostCSS
+  # (GHSA-fxqj-rqcc-2cmp and earlier source-map advisories). Remove once Expo ships >=8.5.23.
+  '@expo/metro-config>postcss': ^8.5.31
 
 # pnpm 10 blocks dependency lifecycle scripts by default; allow the native builds we rely on.
 onlyBuiltDependencies:
