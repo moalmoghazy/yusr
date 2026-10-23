@@ -7,6 +7,7 @@ import {
   CASE_STATUSES,
   DomainError,
   hasPermission,
+  isStaff,
   type ActivityItem,
   type AdminCase,
   type AdminDonation,
@@ -28,10 +29,11 @@ import {
   type VolunteerRow,
 } from '@yusr/core';
 import { primaryRole, requirePermission, type CallContext, type RequestActor } from '../common/actor';
-import type { Clock } from '../common/clock';
+import { systemClock, type Clock } from '../common/clock';
 import { mask } from '../common/crypto';
 import type { Database, RatesToEgp } from '../db/ports';
 import type { AuditRow, DonationRow, PayoutRow, RefundRow, UserRow, VerificationTaskRow } from '../db/rows';
+import { MFA_ENROLLMENT_WINDOW_MS } from '../auth/auth.service';
 import type { CasesService } from '../cases/cases.service';
 import type { DonationsService } from '../donations/donations.service';
 import type { FxProvider } from '../payments/fx';
@@ -444,7 +446,10 @@ export class AdminQueries {
 
 /** Role management for super admins, with guard rails. */
 export class TeamService {
-  constructor(private readonly db: Database) {}
+  constructor(
+    private readonly db: Database,
+    private readonly clock: Clock = systemClock,
+  ) {}
 
   async updateRoles(userId: string, roles: Role[], context: CallContext): Promise<TeamMember> {
     const actor: RequestActor = requirePermission(context.actor, 'team:manage');
@@ -459,7 +464,18 @@ export class TeamService {
         const admins = (await tx.users.staff()).filter((member) => member.roles.includes('super_admin'));
         if (admins.length <= 1) throw new DomainError('FORBIDDEN', 'The platform needs at least one super admin');
       }
-      await tx.users.update(user.id, { roles });
+      const now = this.clock.now();
+      const promoted = isStaff(roles) && !isStaff(user.roles);
+      // A new staff member gets a fresh authenticator through a one-day enrollment opened by this
+      // super admin; anything enrolled before the promotion is discarded.
+      const mfaPatch: Partial<UserRow> = promoted
+        ? { mfaEnabled: false, totpSecretCipher: null, totpLastStep: null, mfaEnrollmentExpiresAt: new Date(now.getTime() + MFA_ENROLLMENT_WINDOW_MS) }
+        : !isStaff(roles)
+          ? { mfaEnrollmentExpiresAt: null }
+          : {};
+      await tx.users.update(user.id, { roles, ...mfaPatch });
+      // Live sessions carry the old roles: sign the person out everywhere so the change applies now.
+      const revoked = await tx.refreshTokens.revokeAllForUser(user.id, now);
       await tx.audit.record({
         actorId: actor.id,
         actorRole: primaryRole(actor),
@@ -467,11 +483,18 @@ export class TeamService {
         entityType: 'user',
         entityId: user.id,
         before: { roles: user.roles },
-        after: { roles },
+        after: { roles, sessionsRevoked: revoked, ...(promoted ? { mfaEnrollmentOpened: true } : {}) },
         ip: context.ip ?? null,
         requestId: context.requestId ?? null,
       });
-      return { id: user.id, name: same(user.displayName), email: user.email ?? '', roles, mfa: user.mfaEnabled, lastActiveAt: new Date().toISOString() };
+      return {
+        id: user.id,
+        name: same(user.displayName),
+        email: user.email ?? '',
+        roles,
+        mfa: promoted ? false : user.mfaEnabled,
+        lastActiveAt: now.toISOString(),
+      };
     });
   }
 }

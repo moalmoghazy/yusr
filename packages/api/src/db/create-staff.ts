@@ -60,6 +60,8 @@ export async function createStaff(options: {
         region: null,
         mfaEnabled: false,
         totpSecretCipher: null,
+        totpLastStep: null,
+        mfaEnrollmentExpiresAt: null,
         marketingOptIn: false,
         status: 'active',
         createdAt: now,
@@ -73,11 +75,16 @@ export async function createStaff(options: {
         status: 'active',
         updatedAt: now,
         ...(options.name?.trim() ? { displayName: options.name.trim() } : {}),
-        ...(secret ? { mfaEnabled: true, totpSecretCipher: cipher.encrypt(secret, `totp:${user.id}`) } : {}),
+        ...(secret ? { mfaEnabled: true, totpSecretCipher: cipher.encrypt(secret, `totp:${user.id}`), totpLastStep: null, mfaEnrollmentExpiresAt: null } : {}),
       };
 
+      let sessionsRevoked = 0;
       if (existing) {
         await tx.users.update(user.id, patch);
+        // New roles or a new authenticator: sessions signed in before this run end now (a lost phone
+        // must not stay signed in to the control hub).
+        const rolesChanged = existing.roles.length !== roles.length || existing.roles.some((role) => !roles.includes(role));
+        if (rolesChanged || secret || existing.status !== 'active') sessionsRevoked = await tx.refreshTokens.revokeAllForUser(user.id, now);
       } else {
         await tx.users.insert({ ...user, ...patch });
         await tx.users.insertIdentity({ id: newId(), userId: user.id, provider: 'phone', subject: options.phone, createdAt: now });
@@ -89,7 +96,7 @@ export async function createStaff(options: {
         entityType: 'user',
         entityId: user.id,
         before: existing ? { roles: existing.roles, mfaEnabled: existing.mfaEnabled } : null,
-        after: { roles, mfaEnabled: true, authenticatorIssued: Boolean(secret) },
+        after: { roles, mfaEnabled: true, authenticatorIssued: Boolean(secret), sessionsRevoked },
       });
       return { user: { ...user, ...patch }, created: !existing, secret };
     });

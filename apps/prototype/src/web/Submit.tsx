@@ -46,7 +46,7 @@ export function SubmitPage() {
   const [consent, setConsent] = useState(false);
   const [sending, setSending] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
-  const [submitted, setSubmitted] = useState<{ reference: string; possibleDuplicate: boolean } | null>(null);
+  const [submitted, setSubmitted] = useState<{ reference: string } | null>(null);
 
   const goalMajor = parseAmountInput(goal);
   const nationalIdValid = nationalId.trim() === '' || /^(\d{14}|\d{10})$/.test(nationalId.trim());
@@ -89,7 +89,7 @@ export function SubmitPage() {
         documents,
         consent: true,
       });
-      setSubmitted({ reference: result.reference, possibleDuplicate: result.possibleDuplicate });
+      setSubmitted({ reference: result.reference });
     } catch (error) {
       setFailure(t(`errors.${errorCode(error)}` as 'errors.generic'));
     } finally {
@@ -118,11 +118,6 @@ export function SubmitPage() {
               </li>
             ))}
           </ol>
-          {submitted.possibleDuplicate && (
-            <p className="notice notice-warning">
-              <Icon name="alert" size={16} /> {t('submit.possibleDuplicate')}
-            </p>
-          )}
           <p className="notice notice-info">
             <Icon name="info" size={16} /> {t('proto.web.submitSuccessAdmin')}
           </p>

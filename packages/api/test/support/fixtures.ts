@@ -27,6 +27,8 @@ function user(id: string, name: string, roles: Role[], phone: string): UserRow {
     region: 'EG-C',
     mfaEnabled: roles.some((role) => role !== 'donor'),
     totpSecretCipher: null,
+    totpLastStep: null,
+    mfaEnrollmentExpiresAt: null,
     marketingOptIn: false,
     status: 'active',
     createdAt: at,

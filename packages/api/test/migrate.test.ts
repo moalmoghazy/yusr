@@ -150,6 +150,23 @@ describe('staff:create', { skip: SKIP }, () => {
     assert.equal(again.created, false);
     assert.equal(again.secret, null);
     assert.deepEqual([...again.user.roles].sort(), ['financial_officer', 'super_admin']);
+
+    // A lost phone: the new key also ends every session signed in with the old one.
+    const sessions = new Client({ connectionString: databaseUrl(STAFF_DB) });
+    await sessions.connect();
+    await sessions.query(
+      `INSERT INTO refresh_tokens (user_id, family_id, token_hash, mfa, expires_at) VALUES ($1, gen_random_uuid(), 'h1', true, now() + interval '1 day')`,
+      [first.user.id],
+    );
+    const { DrizzleDatabase } = await import('../src/db/drizzle');
+    const { drizzle } = await import('drizzle-orm/node-postgres');
+    const { schema } = await import('../src/db/schema');
+    const db = new DrizzleDatabase(drizzle(sessions, { schema }));
+    assert.equal(await db.transaction((tx) => tx.users.claimTotpStep(first.user.id, 100)), true);
+    assert.equal(await db.transaction((tx) => tx.users.claimTotpStep(first.user.id, 100)), false, 'a step is used once');
+    assert.equal(await db.transaction((tx) => tx.users.claimTotpStep(first.user.id, 99)), false, 'older steps too');
+    assert.equal(await db.transaction((tx) => tx.users.claimTotpStep(first.user.id, 101)), true);
+
     const reset = await createStaff({
       databaseUrl: databaseUrl(STAFF_DB),
       dataKeyBase64: KEY,
@@ -159,6 +176,12 @@ describe('staff:create', { skip: SKIP }, () => {
     });
     assert.ok(reset.secret && reset.secret !== first.secret);
     assert.deepEqual(reset.user.roles, ['super_admin'], 'roles not listed are removed');
+    const live = await sessions.query<{ revoked: boolean; last: string | null }>(
+      `SELECT t.revoked_at IS NOT NULL AS revoked, u.totp_last_step AS last FROM refresh_tokens t JOIN users u ON u.id = t.user_id WHERE t.user_id = $1`,
+      [first.user.id],
+    );
+    await sessions.end();
+    assert.deepEqual(live.rows, [{ revoked: true, last: null }], 'sessions revoked, the new key starts with no used step');
 
     const client = new Client({ connectionString: databaseUrl(STAFF_DB) });
     await client.connect();

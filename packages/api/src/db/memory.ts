@@ -241,6 +241,12 @@ export class MemoryDatabase implements Database {
       update: async (id, patch) => {
         patchRow(s().users, id, { ...patch, updatedAt: this.clock() }, 'user');
       },
+      claimTotpStep: async (id, step) => {
+        const user = s().users.get(id);
+        if (!user || ((user.totpLastStep ?? null) !== null && user.totpLastStep! >= step)) return false;
+        user.totpLastStep = step;
+        return true;
+      },
       staff: async () =>
         cloneAll(
           [...s().users.values()].filter((user) =>
@@ -274,6 +280,16 @@ export class MemoryDatabase implements Database {
         let count = 0;
         for (const row of s().refreshTokens.values()) {
           if (row.familyId === familyId && !row.revokedAt) {
+            row.revokedAt = at;
+            count += 1;
+          }
+        }
+        return count;
+      },
+      revokeAllForUser: async (userId, at) => {
+        let count = 0;
+        for (const row of s().refreshTokens.values()) {
+          if (row.userId === userId && !row.revokedAt) {
             row.revokedAt = at;
             count += 1;
           }

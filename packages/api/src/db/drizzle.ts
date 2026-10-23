@@ -39,21 +39,33 @@ function toDonation(row: typeof t.donations.$inferSelect): DonationRow {
   return { ...row, fxRate: Number(row.fxRate) } as DonationRow;
 }
 
+/** Page cursors are offsets this API issued: a non-negative integer, anything else starts over. */
+export function parseCursor(cursor: string | null | undefined): number {
+  if (!cursor || !/^\d{1,9}$/.test(cursor)) return 0;
+  return Number.parseInt(cursor, 10);
+}
+
 const escapeLike = (term: string) => term.replace(/[\\%_]/g, (char) => `\\${char}`);
 
 /** PostgreSQL errors raised by our constraints and triggers, in domain terms. */
 export function mapPgError(error: unknown): unknown {
   const pg = error as { code?: string; message?: string; constraint?: string };
   const message = pg.message ?? '';
-  if (/is unbalanced|needs at least two lines/.test(message)) return new DomainError('LEDGER_UNBALANCED', message);
-  if (/would be overdrawn/.test(message)) return new DomainError('INSUFFICIENT_CASE_FUNDS', message);
-  if (/only holds/.test(message)) return new DomainError('CURRENCY_MISMATCH', message);
-  if (/cannot move from|new cases start/.test(message)) return new DomainError('INVALID_TRANSITION', message);
-  if (/only the platform can move/.test(message)) return new DomainError('FORBIDDEN_TRANSITION', message);
-  if (/is append-only/.test(message)) return new DomainError('FORBIDDEN', message);
+  // Clients get fixed messages: the database's own wording (ids, amounts, table names) is never sent.
+  if (/is unbalanced|needs at least two lines/.test(message)) return new DomainError('LEDGER_UNBALANCED', 'The journal entry does not balance');
+  if (/would be overdrawn/.test(message)) return new DomainError('INSUFFICIENT_CASE_FUNDS', 'The case fund does not hold enough');
+  if (/only holds/.test(message)) return new DomainError('CURRENCY_MISMATCH', 'The account holds another currency');
+  if (/cannot move from|new cases start/.test(message)) return new DomainError('INVALID_TRANSITION', 'This status change is not allowed');
+  if (/only the platform can move/.test(message)) return new DomainError('FORBIDDEN_TRANSITION', 'Only the platform can make this status change');
+  if (/is append-only/.test(message)) return new DomainError('FORBIDDEN', 'Records here cannot be changed');
   if (pg.constraint === 'payouts_four_eyes' || pg.constraint === 'refunds_four_eyes') return new DomainError('SELF_APPROVAL_FORBIDDEN');
   if (pg.code === '23505' && /idempotency_key/.test(pg.constraint ?? message)) return new DomainError('IDEMPOTENCY_CONFLICT');
-  if (pg.code === '23505' || pg.code === '23514' || pg.code === '23503') return new DomainError('VALIDATION_FAILED', message, { constraint: pg.constraint });
+  // Constraint names and PostgreSQL's wording describe the schema: they are not sent either.
+  if (pg.code === '23505') return new DomainError('VALIDATION_FAILED', 'This record already exists');
+  if (pg.code === '23514' || pg.code === '23503' || pg.code === '23502')
+    return new DomainError('VALIDATION_FAILED', 'The request does not satisfy a data rule');
+  // Malformed input that reached a query (e.g. a value that is not a UUID): a client error, not a 500.
+  if (pg.code === '22P02') return new DomainError('VALIDATION_FAILED', 'A value has the wrong format');
   return error;
 }
 
@@ -99,6 +111,14 @@ function createTx(x: Executor): Tx & { raw: Executor } {
           .set({ ...patch, updatedAt: new Date() })
           .where(eq(t.users.id, id));
       },
+      claimTotpStep: async (id, step) => {
+        const rows = await x
+          .update(t.users)
+          .set({ totpLastStep: step })
+          .where(and(eq(t.users.id, id), sql`(${t.users.totpLastStep} IS NULL OR ${t.users.totpLastStep} < ${step})`))
+          .returning({ id: t.users.id });
+        return rows.length > 0;
+      },
       staff: async () =>
         x
           .select()
@@ -133,6 +153,14 @@ function createTx(x: Executor): Tx & { raw: Executor } {
           .update(t.refreshTokens)
           .set({ revokedAt: at })
           .where(and(eq(t.refreshTokens.familyId, familyId), isNull(t.refreshTokens.revokedAt)))
+          .returning({ id: t.refreshTokens.id });
+        return rows.length;
+      },
+      revokeAllForUser: async (userId, at) => {
+        const rows = await x
+          .update(t.refreshTokens)
+          .set({ revokedAt: at })
+          .where(and(eq(t.refreshTokens.userId, userId), isNull(t.refreshTokens.revokedAt)))
           .returning({ id: t.refreshTokens.id });
         return rows.length;
       },
@@ -171,7 +199,7 @@ function createTx(x: Executor): Tx & { raw: Executor } {
           least_funded: [liveFirst, sql`${ratio} ASC`, desc(t.cases.priority)],
         }[filters.sort ?? 'urgent'];
         const limit = Math.min(Math.max(filters.limit ?? 12, 1), 50);
-        const offset = filters.cursor ? Number.parseInt(filters.cursor, 10) || 0 : 0;
+        const offset = parseCursor(filters.cursor);
         const [rows, totals] = await Promise.all([
           x
             .select()

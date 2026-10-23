@@ -39,6 +39,8 @@ export interface UsersRepo {
   byEmail(email: string): Promise<UserRow | null>;
   insert(row: UserRow): Promise<void>;
   update(id: Id, patch: Partial<Omit<UserRow, 'id'>>): Promise<void>;
+  /** Records an accepted authenticator step; false when that step (or a later one) was already used. */
+  claimTotpStep(id: Id, step: number): Promise<boolean>;
   staff(): Promise<UserRow[]>;
   identity(provider: AuthIdentityRow['provider'], subject: string): Promise<AuthIdentityRow | null>;
   insertIdentity(row: AuthIdentityRow): Promise<void>;
@@ -50,6 +52,8 @@ export interface RefreshTokensRepo {
   insert(row: RefreshTokenRow): Promise<void>;
   markReplaced(id: Id, replacedBy: Id, at: Date): Promise<void>;
   revokeFamily(familyId: Id, at: Date): Promise<number>;
+  /** Signs a person out everywhere: revokes every live refresh token of the user. */
+  revokeAllForUser(userId: Id, at: Date): Promise<number>;
 }
 
 export interface CasePage {

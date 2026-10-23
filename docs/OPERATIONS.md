@@ -118,8 +118,9 @@ checks the database and Redis before traffic is sent to a new instance.
 - **Payments not confirming**: check the provider status page and the webhook deliveries in its
   dashboard; `webhook_events` shows what arrived and when. Donations stay `requires_action` and
   expire safely; nothing is credited without a verified webhook.
-- **Suspected account compromise (staff)**: change the person's roles (`PUT /v1/admin/team/:id/roles`) — the next
-  access token (≤ 15 minutes) carries the new roles; revoke their refresh tokens in the database
-  for an immediate cut-off; review the audit log for the user's actions.
+- **Suspected account compromise (staff)**: change the person's roles (`PUT /v1/admin/team/:id/roles`) — this
+  revokes all their refresh tokens at once, and the access token they hold lapses within 15 minutes;
+  if their phone is lost, `staff:create --reset-authenticator` issues a new key (and also signs them
+  out); review the audit log for the user's actions.
 - **Data request from a beneficiary**: locate by case reference; beneficiaries' national IDs are
   retrievable only by an auditor through the API, and every access is audited.

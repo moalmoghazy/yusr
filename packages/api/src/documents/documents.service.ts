@@ -1,4 +1,4 @@
-import { DomainError, type DocumentKind } from '@yusr/core';
+import { DomainError, hasPermission, type DocumentKind } from '@yusr/core';
 import { primaryRole, requirePermission, type CallContext } from '../common/actor';
 import type { Clock } from '../common/clock';
 import type { IdGenerator } from '../common/ids';
@@ -39,12 +39,22 @@ export class DocumentsService {
     return { key, ...upload, expiresAt: new Date(this.deps.clock.now().getTime() + 600_000).toISOString() };
   }
 
-  /** Auditors and moderators open originals through a 5-minute link; every opening is audited. */
+  /**
+   * Staff with documents:read_private open originals through a 5-minute link; every opening is audited.
+   * A field auditor opens only the documents of cases assigned to them (the case's auditor, or an open
+   * verification task); people who assign verifications (moderators, super admins) open any.
+   */
   async openOriginal(documentId: string, context: CallContext): Promise<{ url: string; expiresInSeconds: number }> {
     const actor = requirePermission(context.actor, 'documents:read_private');
     const { db, storage } = this.deps;
     const document = await db.read.cases.document(documentId);
     if (!document) throw new DomainError('NOT_FOUND', 'Document not found');
+    if (!hasPermission(actor.roles, 'verifications:assign')) {
+      const item = await db.read.cases.byId(document.caseId);
+      const assigned =
+        item?.auditorId === actor.id || (await db.read.verification.list({ auditorId: actor.id, open: true })).some((task) => task.caseId === document.caseId);
+      if (!assigned) throw new DomainError('FORBIDDEN', 'This case is not assigned to you');
+    }
     await db.transaction((tx) =>
       tx.audit.record({
         actorId: actor.id,

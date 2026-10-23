@@ -1,9 +1,13 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { DomainError } from '@yusr/core';
-import { CasesService, type SubmissionInput } from '../src/cases/cases.service';
+import { CasesService, publicDonorName, type SubmissionInput } from '../src/cases/cases.service';
 import { VerificationService } from '../src/cases/verification.service';
 import { FieldCipher } from '../src/common/cipher';
+import { MemoryKv } from '../src/common/kv';
+import { RateLimiter } from '../src/common/rate-limit';
+import { DocumentsService } from '../src/documents/documents.service';
+import { DevStorage } from '../src/documents/storage';
 import { CASE_ID, DRAFT_CASE_ID, USERS, actorOf, setup } from './support/fixtures';
 
 async function rejects(promise: Promise<unknown>, code: string) {
@@ -50,13 +54,86 @@ describe('public catalog', () => {
   });
 });
 
+describe('donor names in public', () => {
+  it('shows first name and initial only, like the live ticker', () => {
+    assert.equal(publicDonorName('Mona Adel Hassan'), 'Mona A.');
+    assert.equal(publicDonorName('  منى   عادل '), 'منى ع.');
+    assert.equal(publicDonorName('Mona'), 'Mona');
+    assert.equal(publicDonorName('   '), null);
+    assert.equal(publicDonorName(null), null);
+  });
+});
+
+describe('original documents', () => {
+  async function setupDocuments() {
+    const context = await setupCases();
+    const storage = new DevStorage('http://localhost:4000', { now: () => context.clock.now().getTime() });
+    const kv = new MemoryKv(context.clock);
+    const documents = new DocumentsService({ db: context.db, storage, limiter: new RateLimiter(kv), clock: context.clock, ids: context.ids });
+    const documentId = '00000000-0000-4000-8000-00000000d0c1';
+    await context.db.transaction((tx) =>
+      tx.cases.insertDocument({
+        id: documentId,
+        caseId: CASE_ID,
+        kind: 'medical_report',
+        storageKey: `uploads/${USERS.volunteer.id}/report.pdf`,
+        redactedKey: null,
+        sha256: 'a'.repeat(64),
+        pages: 1,
+        uploadedBy: USERS.volunteer.id,
+        redactedBy: null,
+        createdAt: context.clock.now(),
+      }),
+    );
+    return { ...context, documents, documentId };
+  }
+
+  it('opens only for the field auditor the case is assigned to, or for those who assign visits', async () => {
+    const { documents, documentId, db } = await setupDocuments();
+    const auditor = actorOf(USERS.auditor);
+    await db.transaction((tx) => tx.cases.update(CASE_ID, { auditorId: null }));
+    await rejects(documents.openOriginal(documentId, { actor: auditor }), 'FORBIDDEN');
+    await rejects(documents.openOriginal(documentId, { actor: actorOf(USERS.moderator) }), 'FORBIDDEN');
+
+    await db.transaction((tx) => tx.cases.update(CASE_ID, { auditorId: USERS.auditor.id }));
+    const opened = await documents.openOriginal(documentId, { actor: auditor });
+    assert.equal(opened.expiresInSeconds, 300);
+    const admin = { id: '00000000-0000-4000-8000-0000000000ad', name: 'Admin', roles: ['super_admin' as const], mfa: true };
+    await db.transaction((tx) => tx.cases.update(CASE_ID, { auditorId: null }));
+    assert.ok((await documents.openOriginal(documentId, { actor: admin })).url);
+    assert.ok(db.auditRows().filter((row) => row.action === 'document.viewed').length === 2);
+  });
+
+  it('opens for an auditor with an open verification task on the case', async () => {
+    const { documents, documentId, db, clock } = await setupDocuments();
+    await db.transaction((tx) => tx.cases.update(CASE_ID, { auditorId: null }));
+    await db.transaction((tx) =>
+      tx.verification.insert({
+        id: '00000000-0000-4000-8000-00000000a5c1',
+        caseId: CASE_ID,
+        auditorId: USERS.auditor.id,
+        assignedBy: USERS.moderator.id,
+        status: 'assigned',
+        visitAt: null,
+        checklist: {} as never,
+        recommendedMinor: null,
+        notes: null,
+        baserowRowId: null,
+        completedAt: null,
+        createdAt: clock.now(),
+      }),
+    );
+    assert.ok((await documents.openOriginal(documentId, { actor: actorOf(USERS.auditor) })).url);
+  });
+});
+
 describe('submission portal', () => {
   it('stores the national ID only as a keyed hash and ciphertext, and flags repeats', async () => {
     const { cases, db, cipher } = await setupCases();
     const volunteer = actorOf(USERS.volunteer, false);
     const first = await cases.submit(submission(volunteer.id), { actor: volunteer });
     assert.equal(first.status, 'under_review');
-    assert.equal(first.possibleDuplicate, false);
+    assert.equal('possibleDuplicate' in first, false, 'the submitter is never told');
 
     const stored = await db.read.cases.byId(first.id);
     const beneficiary = await db.read.cases.beneficiary(stored!.beneficiaryId);
@@ -66,7 +143,10 @@ describe('submission portal', () => {
     assert.ok(db.outboxEvents().some((event) => event.type === 'case.submitted'));
 
     const again = await cases.submit(submission(volunteer.id, { title: { ar: 'طلب آخر لنفس الأسرة بعد أشهر', en: 'Another request' } }), { actor: volunteer });
-    assert.equal(again.possibleDuplicate, true);
+    assert.equal('possibleDuplicate' in again, false, 'no national-ID oracle for submitters');
+    const flagged = db.auditRows().filter((row) => row.action === 'case.submitted' && row.entityId === again.id);
+    assert.equal(flagged[0]?.after?.['possibleDuplicate'], true, 'reviewers see the repeat in the audit log');
+    assert.ok(db.outboxEvents().some((event) => event.aggregateId === again.id && event.payload['possibleDuplicate'] === true));
   });
 
   it('records the partner association that submitted a case and shows it to staff', async () => {

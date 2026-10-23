@@ -84,6 +84,10 @@ export const users = pgTable('users', {
   region: text('region'),
   mfaEnabled: boolean('mfa_enabled').notNull().default(false),
   totpSecretCipher: bytea('totp_secret_cipher'),
+  /** 30-second step of the last accepted authenticator code (0005_staff_mfa_guards.sql): no reuse. */
+  totpLastStep: bigint('totp_last_step', { mode: 'number' }),
+  /** Until when an administrator lets this person enroll an authenticator (0005_staff_mfa_guards.sql). */
+  mfaEnrollmentExpiresAt: at('mfa_enrollment_expires_at'),
   marketingOptIn: boolean('marketing_opt_in').notNull().default(false),
   status: text('status').$type<'active' | 'suspended' | 'deleted'>().notNull().default('active'),
   createdAt: created(),

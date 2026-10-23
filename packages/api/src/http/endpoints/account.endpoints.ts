@@ -32,7 +32,7 @@ export const accountEndpoints = [
     body: otpVerifySchema,
     returns: 'Session',
     rateLimit: SIGN_IN_LIMIT,
-    handle: ({ services, body, request }) => services.auth.verifyOtp({ ...body, userAgent: header(request, 'user-agent') }),
+    handle: ({ services, ctx, body, request }) => services.auth.verifyOtp({ ...body, userAgent: header(request, 'user-agent'), ip: ctx.ip ?? null }),
   }),
 
   endpoint({

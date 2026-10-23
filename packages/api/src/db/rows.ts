@@ -35,6 +35,10 @@ export interface UserRow {
   mfaEnabled: boolean;
   /** Encrypted authenticator (TOTP) secret; staff only. */
   totpSecretCipher: Uint8Array | null;
+  /** The 30-second step of the last accepted authenticator code: a code works once. */
+  totpLastStep: number | null;
+  /** An administrator opened authenticator enrollment for this person until then (staff cannot self-enroll). */
+  mfaEnrollmentExpiresAt: Timestamp | null;
   marketingOptIn: boolean;
   status: 'active' | 'suspended' | 'deleted';
   createdAt: Timestamp;
