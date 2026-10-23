@@ -143,10 +143,13 @@ describe('CaseCard', () => {
     assert.equal(new Set(patterns).size, 2, 'each cover has its own lattice pattern');
   });
 
-  it('puts every cover motif in the same place, without the golden dot, over a drifting lattice', () => {
+  it('puts every cover motif in the same place, over a drifting lattice, with the mark loop hidden until animated', () => {
     const motif = (coverSeed: number) => {
       const html = renderToStaticMarkup(<CaseCard item={{ ...fixture(), coverSeed }} locale="ar" href={HREF} now={NOW} />);
-      assert.ok(!html.includes('fill-highlight'), 'no golden dot on the cover');
+      // The Yusr mark and its golden ḍamma only appear through the stylesheet's loop; without it, the motif alone.
+      assert.equal(html.match(/fill-highlight/g)?.length, 1, 'the only gold is the ḍamma of the mark loop');
+      assert.match(html, /class="cover-morph-mark" style="opacity:0"/);
+      assert.match(html, /class="cover-morph-drop" style="opacity:0;/);
       assert.ok(html.includes('class="case-cover-drift"'));
       return html.match(/transform="(translate\([^"]+scale\([^"]+)"/)?.[1];
     };
