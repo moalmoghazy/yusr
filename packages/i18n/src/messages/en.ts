@@ -234,9 +234,7 @@ export const en: Messages = {
     redacted: 'Redacted',
     verifiedBy: 'Verified by',
     disbursementPlan: 'Disbursement plan',
-    platformFee: 'Yusr operating fee ({percent})',
-    platformFeeNote:
-      'Marketing the case, collecting donations and following up the payout, VAT included. Added on top of what the case needs, never taken out of it.',
+    planTotal: 'Total paid to providers',
     paidDirectly: 'The partner association pays the institution directly — never cash to the beneficiary.',
     partner: 'Partner association',
     partnerRegistration: 'Registered with the Ministry of Social Solidarity, no. {number}',

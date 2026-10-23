@@ -1,4 +1,4 @@
-import { CATEGORY_META, PLATFORM_FEE_BPS, regionByCode, type CaseDetail, type DisbursementStatus } from '@yusr/core';
+import { CATEGORY_META, regionByCode, type CaseDetail, type DisbursementStatus } from '@yusr/core';
 import { caseShareMessage } from '@yusr/i18n';
 import type { IconName } from '@yusr/ui/icons';
 import { Stack, useLocalSearchParams } from 'expo-router';
@@ -252,21 +252,6 @@ function Transparency({ item }: { item: CaseDetail }) {
           </Card>
         );
       })}
-      {item.platformFeeMinor > 0 && (
-        <Card>
-          <View style={styles.meta}>
-            <Text weight="semibold" style={{ flex: 1 }}>
-              {t('case.platformFee', { percent: f.percent(PLATFORM_FEE_BPS / 100) })}
-            </Text>
-            <Text weight="bold" style={{ fontVariant: ['tabular-nums'] }}>
-              {f.money(item.platformFeeMinor, item.currency, { fractionDigits: 0 })}
-            </Text>
-          </View>
-          <Text variant="label" weight="regular" muted>
-            {t('case.platformFeeNote')}
-          </Text>
-        </Card>
-      )}
     </Section>
   );
 }
