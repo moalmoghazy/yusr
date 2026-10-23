@@ -10,7 +10,7 @@ import { pageLocale, type LocaleParams } from '@/lib/page';
 
 export default async function HomePage({ params }: { params: LocaleParams }) {
   const locale = await pageLocale(params);
-  const { t, f } = textFor(locale);
+  const { t } = textFor(locale);
   const api = catalog(locale);
   const [stats, urgent, feed] = await Promise.all([api.stats(), api.listCases({ urgentOnly: true, sort: 'urgent', limit: 3 }), api.liveDonations(5)]);
   const now = Date.now();
