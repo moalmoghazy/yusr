@@ -1,9 +1,10 @@
-import { DomainError, hasPermission, type DocumentKind } from '@yusr/core';
+import { DomainError, hasPermission, type DocumentKind, type PartnerCredentials } from '@yusr/core';
 import { primaryRole, requirePermission, type CallContext } from '../common/actor';
 import type { Clock } from '../common/clock';
 import type { IdGenerator } from '../common/ids';
 import type { RateLimiter } from '../common/rate-limit';
 import type { Database } from '../db/ports';
+import type { PartnersService } from '../partners/partners.service';
 import type { ObjectStorage } from './storage';
 
 const EXTENSIONS: Readonly<Record<string, string>> = {
@@ -15,20 +16,33 @@ const EXTENSIONS: Readonly<Record<string, string>> = {
 };
 const MAX_BYTES = 20 * 1024 * 1024;
 
-export class DocumentsService {
-  constructor(private readonly deps: { db: Database; storage: ObjectStorage; limiter: RateLimiter; clock: Clock; ids: IdGenerator }) {}
+/** Where an uploader's files go: a person's own prefix, or a partner's when it uploads with its «كود يُسر». */
+export function uploadPrefix(owner: { actorId: string } | { partnerId: string }): string {
+  return 'partnerId' in owner ? `uploads/partner-${owner.partnerId}/` : `uploads/${owner.actorId}/`;
+}
 
-  /** Step 1 of submitting a document: a 10-minute upload link into the private bucket. */
-  async presignUpload(input: { kind: DocumentKind; contentType: string; sizeBytes: number }, context: CallContext) {
+export class DocumentsService {
+  constructor(
+    private readonly deps: { db: Database; storage: ObjectStorage; limiter: RateLimiter; clock: Clock; ids: IdGenerator; partners: PartnersService },
+  ) {}
+
+  /**
+   * Step 1 of submitting a document: a 10-minute upload link into the private bucket. A partner
+   * association uploads with its رقم الإشهار and «كود يُسر» (no account needed) into its own prefix;
+   * anyone else needs to be signed in and uploads into theirs.
+   */
+  async presignUpload(input: { kind: DocumentKind; contentType: string; sizeBytes: number; association?: PartnerCredentials | null }, context: CallContext) {
+    const partner = input.association ? await this.deps.partners.verify(input.association, context) : null;
     const actor = context.actor;
-    if (!actor) throw new DomainError('UNAUTHENTICATED', 'Sign in to upload documents');
+    if (!partner && !actor) throw new DomainError('UNAUTHENTICATED', 'Sign in, or enter your association’s registration number and Yusr code');
     const extension = EXTENSIONS[input.contentType];
     if (!extension) throw new DomainError('VALIDATION_FAILED', 'Upload a PDF or a photo', { field: 'contentType' });
     if (!Number.isInteger(input.sizeBytes) || input.sizeBytes <= 0 || input.sizeBytes > MAX_BYTES) {
       throw new DomainError('VALIDATION_FAILED', 'Files are limited to 20 MB', { field: 'sizeBytes' });
     }
-    await this.deps.limiter.consume(`uploads:${actor.id}`, { limit: 40, windowSeconds: 3_600 });
-    const key = `uploads/${actor.id}/${this.deps.ids()}.${extension}`;
+    const prefix = partner ? uploadPrefix({ partnerId: partner.id }) : uploadPrefix({ actorId: actor!.id });
+    await this.deps.limiter.consume(partner ? `uploads:partner-${partner.id}` : `uploads:${actor!.id}`, { limit: 40, windowSeconds: 3_600 });
+    const key = `${prefix}${this.deps.ids()}.${extension}`;
     const upload = await this.deps.storage.presignPut({
       bucket: 'private',
       key,

@@ -20,6 +20,7 @@ import type {
   LedgerRepo,
   NotificationsRepo,
   OutboxRepo,
+  PartnersRepo,
   PayoutsRepo,
   RefreshTokensRepo,
   RatesToEgp,
@@ -45,6 +46,7 @@ import type {
   JournalLineRow,
   NotificationRow,
   OutboxRow,
+  PartnerRow,
   PaymentAttemptRow,
   PayoutRow,
   RefreshTokenRow,
@@ -79,6 +81,7 @@ interface State {
   identities: AuthIdentityRow[];
   refreshTokens: Map<Id, RefreshTokenRow>;
   beneficiaries: Map<Id, BeneficiaryRow>;
+  partners: Map<Id, PartnerRow>;
   cases: Map<Id, CaseRow>;
   transitions: CaseTransitionRow[];
   documents: Map<Id, CaseDocumentRow>;
@@ -123,6 +126,7 @@ function emptyState(): State {
     identities: [],
     refreshTokens: new Map(),
     beneficiaries: new Map(),
+    partners: new Map(),
     cases: new Map(),
     transitions: [],
     documents: new Map(),
@@ -210,6 +214,7 @@ export class MemoryDatabase implements Database {
       users: this.usersRepo(),
       refreshTokens: this.refreshTokensRepo(),
       cases: this.casesRepo(),
+      partners: this.partnersRepo(),
       verification: this.verificationRepo(),
       donations: this.donationsRepo(),
       webhooks: this.webhooksRepo(),
@@ -220,6 +225,50 @@ export class MemoryDatabase implements Database {
       audit: this.auditRepo(),
       notifications: this.notificationsRepo(),
       reports: this.reportsRepo(),
+    };
+  }
+
+  // ------------------------------------------------------------------ approved partners
+  private partnersRepo(): PartnersRepo {
+    const s = () => this.state;
+    const assertUnique = (row: PartnerRow) => {
+      for (const other of s().partners.values()) {
+        if (other.id === row.id) continue;
+        if (other.registrationNumber === row.registrationNumber) throw new DomainError('VALIDATION_FAILED', 'This record already exists');
+        if (other.codeHash === row.codeHash) throw new DomainError('VALIDATION_FAILED', 'This record already exists');
+      }
+      if ((row.status === 'suspended') !== (row.suspendedAt !== null)) throw new DomainError('VALIDATION_FAILED', 'suspended partners carry suspendedAt');
+    };
+    return {
+      byId: async (id) => clone(s().partners.get(id) ?? null),
+      byRegistrationNumber: async (registrationNumber) =>
+        clone([...s().partners.values()].find((row) => row.registrationNumber === registrationNumber) ?? null),
+      byCodeHash: async (codeHash) => clone([...s().partners.values()].find((row) => row.codeHash === codeHash) ?? null),
+      list: async () => cloneAll([...s().partners.values()].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())),
+      insert: async (row) => {
+        if (s().partners.has(row.id)) throw new DomainError('VALIDATION_FAILED', 'This record already exists');
+        assertUnique(row);
+        s().partners.set(row.id, clone(row));
+      },
+      update: async (id, patch) => {
+        const current = s().partners.get(id);
+        if (!current) throw new DomainError('NOT_FOUND', `partner ${id} not found`);
+        const next: PartnerRow = { ...current, ...clone(patch), updatedAt: this.clock() };
+        assertUnique(next);
+        s().partners.set(id, next);
+        // Like partners_sync_cases in 0006: the registry's name and number follow onto its cases.
+        if (next.name !== current.name || next.registrationNumber !== current.registrationNumber) {
+          for (const item of s().cases.values()) {
+            if (item.partnerId === id && item.association)
+              item.association = { ...item.association, name: next.name, registrationNumber: next.registrationNumber };
+          }
+        }
+      },
+      caseCounts: async () => {
+        const counts = new Map<Id, number>();
+        for (const item of s().cases.values()) if (item.partnerId) counts.set(item.partnerId, (counts.get(item.partnerId) ?? 0) + 1);
+        return counts;
+      },
     };
   }
 
@@ -319,7 +368,18 @@ export class MemoryDatabase implements Database {
           throw new DomainError('INVALID_TRANSITION', `new cases start as draft or under_review, not ${row.status}`);
         }
         if ([...s().cases.values()].some((item) => item.slug === row.slug)) throw new DomainError('VALIDATION_FAILED', 'slug taken');
-        const created: CaseRow = { ...clone(row), reference: row.reference ?? `YSR-${(s().seq.caseReference += 1)}` };
+        if (!row.submittedBy && !row.partnerId) throw new DomainError('VALIDATION_FAILED', 'a case needs a submitter or a partner');
+        if (row.partnerId && row.submitterRelation !== 'association') throw new DomainError('VALIDATION_FAILED', 'only association cases name a partner');
+        let association = row.association;
+        // Like cases_partner_guard in 0006: an association case comes from an active partner, named as in the registry.
+        if (row.submitterRelation === 'association') {
+          const partner = row.partnerId ? s().partners.get(row.partnerId) : undefined;
+          if (!partner) throw new DomainError('VALIDATION_FAILED', 'association cases need a partner from the registry');
+          if (partner.status !== 'active') throw new DomainError('VALIDATION_FAILED', 'the partner is suspended');
+          if (!association) throw new DomainError('VALIDATION_FAILED', 'association cases need a contact');
+          association = { ...association, name: partner.name, registrationNumber: partner.registrationNumber };
+        }
+        const created: CaseRow = { ...clone(row), association, reference: row.reference ?? `YSR-${(s().seq.caseReference += 1)}` };
         s().cases.set(created.id, created);
         return clone(created);
       },

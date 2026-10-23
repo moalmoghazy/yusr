@@ -13,6 +13,7 @@ import { createServices, type Services } from '../src/app.services';
 import { totpAt } from '../src/auth/totp';
 import { ManualClock } from '../src/common/clock';
 import { loadConfig } from '../src/config/env';
+import { DEMO_PARTNER_REGISTRY, DEMO_PARTNERS } from '@yusr/sdk/mock';
 import { DEMO_TOTP_SECRET } from '../src/db/seed';
 import { fullPath } from '../src/http/endpoint';
 import { ENDPOINTS } from '../src/http/endpoints';
@@ -398,6 +399,94 @@ describe('operations', () => {
     assert.equal((await fetch(link.json.url.replace(/sig=[^&]+/, 'sig=x'))).status, 403);
     const views = await services.db.read.audit.list({ limit: 5 });
     assert.ok(views.some((row) => row.action === 'document.viewed' && row.entityId === result.id));
+  });
+
+  it('lets only moderators and super admins manage partners, and shows codes only to them', async () => {
+    for (const token of [heba, mahmoud]) {
+      const listed = await call('GET', '/v1/admin/partners', { token });
+      assert.equal(listed.status, 403);
+      assert.equal(listed.json.error.details.permission, 'partners:manage');
+    }
+    assert.equal((await call('GET', '/v1/admin/partners')).status, 401);
+    const demo = await adminFor(sara).partners();
+    assert.equal(demo.length, 3, 'the three demo partners are in the registry');
+    assert.ok(demo.every((partner) => partner.status === 'active' && partner.casesCount > 0));
+    assert.deepEqual(demo.map((partner) => partner.yusrCode).sort(), DEMO_PARTNER_REGISTRY.map((entry) => entry.yusrCode).sort());
+
+    const created = await adminFor(youssef).createPartner({
+      name: 'جمعية البر بالمنيا',
+      registrationNumber: ' ٨٨١ / 2015 ',
+      region: 'EG-MN',
+      contractSignedOn: '2026-01-20',
+      contactName: 'أحمد فتحي',
+      contactPhone: '+201011112222',
+    });
+    assert.equal(created.registrationNumber, '881/2015');
+    assert.match(created.yusrCode, /^YSR-[2-9A-HJKMNP-Z]{8}$/);
+    await isApiError(adminFor(youssef).createPartner({ ...created, registrationNumber: '881/2015', contractSignedOn: '2026-01-20' }), 'VALIDATION_FAILED', 422);
+    await isApiError(adminFor(heba).regeneratePartnerCode(created.id), 'FORBIDDEN', 403);
+    const regenerated = await adminFor(youssef).regeneratePartnerCode(created.id);
+    assert.notEqual(regenerated.yusrCode, created.yusrCode);
+
+    // Nothing public carries a code.
+    const codes = [...demo.map((partner) => partner.yusrCode), created.yusrCode, regenerated.yusrCode];
+    const catalog = await call('GET', '/v1/cases?limit=50&includeFunded=true');
+    const first = catalog.json.items[0];
+    const page = await call('GET', `/v1/cases/${first.slug}`);
+    for (const body of [catalog.text, page.text, (await call('GET', '/v1/openapi.json')).text, (await call('GET', '/v1/stats')).text]) {
+      for (const code of codes) assert.ok(!body.includes(code), 'no code in public responses');
+    }
+    assert.ok(
+      DEMO_PARTNERS.some((partner) => partner.name === first.partner?.name),
+      'the public partner is a registry entry',
+    );
+    assert.ok(!page.text.includes(DEMO_PARTNERS[0]!.contactPhone));
+  });
+
+  it('accepts an association’s case with its رقم الإشهار and «كود يُسر», without an account', async () => {
+    const guest = clientFor();
+    const [partner] = await adminFor(youssef).partners();
+    assert.ok(partner);
+    const credentials = { registrationNumber: partner.registrationNumber, yusrCode: partner.yusrCode.toLowerCase() };
+    const bytes = Buffer.from('%PDF-1.7\n% quote from the hospital\n');
+    await isApiError(guest.presignUpload({ kind: 'price_quote', contentType: 'application/pdf', sizeBytes: bytes.length }), 'UNAUTHENTICATED', 401);
+    const wrong = await call('POST', '/v1/uploads', {
+      body: { kind: 'price_quote', contentType: 'application/pdf', sizeBytes: bytes.length, association: { ...credentials, yusrCode: 'YSR-AAAAAAAA' } },
+    });
+    assert.equal(wrong.status, 422);
+    assert.deepEqual(wrong.json.error.details.fields ?? [wrong.json.error.details.field], ['association.yusrCode']);
+
+    const ticket = await guest.presignUpload({ kind: 'price_quote', contentType: 'application/pdf', sizeBytes: bytes.length, association: credentials });
+    assert.ok(ticket.key.startsWith(`uploads/partner-${partner.id}/`));
+    assert.equal((await fetch(ticket.url, { method: 'PUT', headers: ticket.headers, body: bytes })).status, 200);
+
+    const request = {
+      category: 'medical' as const,
+      submitterRelation: 'association' as const,
+      association: { ...credentials, contactName: 'منسقة الحالات', contactPhone: '+201022223333' },
+      title: { ar: 'تركيب دعامة قلبية لرجل في الستين' },
+      story: { ar: 'يحتاج المريض إلى تركيب دعامة قلبية عاجلة بحسب التقرير الطبي، ولا يغطي التأمين الصحي تكلفة الدعامة المستوردة. '.repeat(2) },
+      region: 'EG-C',
+      currency: 'EGP' as const,
+      goalMinor: 45_000_00,
+      isUrgent: false,
+      deadline: null,
+      beneficiary: {},
+      documents: [{ kind: 'price_quote' as const, storageKey: ticket.key, sha256: createHash('sha256').update(bytes).digest('hex') }],
+      consent: true as const,
+    };
+    await isApiError(guest.submitCase({ ...request, association: { ...request.association, yusrCode: 'YSR-AAAAAAAA' } }), 'VALIDATION_FAILED', 422);
+    const result = await guest.submitCase(request);
+    assert.equal(result.status, 'under_review');
+    const submitted = (await call('GET', `/v1/admin/cases/${result.id}`, { token: youssef })).json;
+    assert.equal(submitted.submittedBy.name, partner.name, 'named from the registry');
+    assert.equal(submitted.partner.registrationNumber, partner.registrationNumber);
+    assert.ok(!JSON.stringify(submitted).includes(partner.yusrCode));
+
+    const suspended = await adminFor(youssef).setPartnerStatus(partner.id, 'suspended', 'Contract renewal');
+    assert.equal(suspended.status, 'suspended');
+    await isApiError(guest.submitCase(request), 'VALIDATION_FAILED', 422);
+    await adminFor(youssef).setPartnerStatus(partner.id, 'active');
   });
 });
 

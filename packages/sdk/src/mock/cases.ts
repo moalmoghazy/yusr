@@ -66,6 +66,17 @@ export const DEMO_PARTNERS: readonly PartnerAssociation[] = [
   { name: 'جمعية يد العون الخيرية (تجريبية)', registrationNumber: '0003/2026', contactName: 'منسق الحالات', contactPhone: '+201000000003' },
 ];
 
+/**
+ * The demo partners in the approved-partner registry, with fixed «كود يُسر» so the submission form can be
+ * tried on the demo (they are printed in docs/GUIDE.ar.md). Demo only: real codes are issued by the
+ * platform and never written down in code.
+ */
+export const DEMO_PARTNER_REGISTRY: ReadonlyArray<{ registrationNumber: string; region: string; contractSignedOn: string; yusrCode: string }> = [
+  { registrationNumber: '0001/2026', region: 'EG-C', contractSignedOn: '2026-01-15', yusrCode: 'YSR-RAHMA226' },
+  { registrationNumber: '0002/2026', region: 'EG-GZ', contractSignedOn: '2026-02-01', yusrCode: 'YSR-SANABE26' },
+  { registrationNumber: '0003/2026', region: 'EG-ALX', contractSignedOn: '2026-03-10', yusrCode: 'YSR-YADAWN26' },
+];
+
 /** The demo partner behind a seed case (stable per case). */
 /**
  * A seed's money in minor units. `goal` and `plan` in a seed are what the partner needs; donors are

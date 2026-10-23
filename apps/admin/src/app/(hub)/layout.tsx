@@ -9,7 +9,7 @@ import { currentStaff } from '@/lib/session';
 /** Each section shows when the staff member holds any of its permissions (the API re-checks every call). */
 const SECTIONS: ReadonlyArray<{
   href: string;
-  key: 'overview' | 'cases' | 'verification' | 'finance' | 'crm' | 'audit';
+  key: 'overview' | 'cases' | 'verification' | 'finance' | 'crm' | 'partners' | 'audit';
   icon: IconName;
   anyOf: readonly Permission[];
 }> = [
@@ -18,6 +18,7 @@ const SECTIONS: ReadonlyArray<{
   { href: '/verification', key: 'verification', icon: 'clipboard-check', anyOf: ['verifications:assign', 'verifications:perform'] },
   { href: '/finance', key: 'finance', icon: 'landmark', anyOf: ['finance:read'] },
   { href: '/people', key: 'crm', icon: 'users', anyOf: ['cases:read'] },
+  { href: '/partners', key: 'partners', icon: 'hand-heart', anyOf: ['partners:manage'] },
   { href: '/audit', key: 'audit', icon: 'history', anyOf: ['audit:read'] },
 ];
 

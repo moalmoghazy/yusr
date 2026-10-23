@@ -421,6 +421,7 @@ export class AdminQueries {
     if (row.entityType === 'donation') label = (await db.read.donations.byId(row.entityId))?.receiptNo ?? label;
     if (row.entityType === 'payout') label = (await db.read.payouts.byId(row.entityId))?.reference ?? label;
     if (row.entityType === 'user') label = await this.name(row.entityId);
+    if (row.entityType === 'partner') label = (await db.read.partners.byId(row.entityId))?.name ?? label;
     if (row.entityType === 'refund') {
       const refund = await db.read.refunds.byId(row.entityId);
       label = refund ? ((await db.read.donations.byId(refund.donationId))?.receiptNo ?? label) : label;

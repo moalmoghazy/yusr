@@ -5,6 +5,9 @@ import {
   CASE_CATEGORIES,
   CATEGORY_META,
   EGYPT_GOVERNORATES,
+  isYusrCode,
+  normalizeRegistrationNumber,
+  normalizeYusrCode,
   parseAmountInput,
   PLATFORM_FEE_BPS,
   SAUDI_REGIONS,
@@ -13,6 +16,7 @@ import {
   type CaseCategory,
   type DocumentKind,
   type Locale,
+  type PartnerCredentials,
   type SubmitCaseResult,
 } from '@yusr/core';
 import { buttonClasses, cn, Icon, textFor, type IconName } from '@yusr/ui';
@@ -44,18 +48,23 @@ async function sha256Hex(file: File): Promise<string> {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
+/** Where the API reports a wrong registration number / «كود يُسر» pair (the same for unknown, wrong and suspended). */
+const CODE_FIELD = 'association.yusrCode';
+
 /**
- * The case submission portal, for partner associations (جمعيات أهلية registered with the Ministry of
- * Social Solidarity). Submissions by individuals are paused: shown greyed out, not selectable.
+ * The case submission portal, for approved partner associations (جمعيات أهلية registered with the Ministry
+ * of Social Solidarity that Yusr signed a contract with). Anyone from the association submits with its
+ * رقم الإشهار and «كود يُسر», without an account; the association's public name comes from Yusr's registry.
+ * Submissions by individuals are paused: shown greyed out, not selectable.
  * Documents go straight from the browser to private storage through ten-minute upload links;
  * the case then refers to them by key and hash. Nothing is published from here: every case is
  * reviewed and visited in the field first.
  */
-export function SubmitForm({ locale }: { locale: Locale }) {
+export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; demoPartner?: PartnerCredentials | null }) {
   const { t, f, l } = textFor(locale);
   const ids = useId();
-  const [orgName, setOrgName] = useState('');
   const [orgNumber, setOrgNumber] = useState('');
+  const [yusrCode, setYusrCode] = useState('');
   const [contactName, setContactName] = useState('');
   const [contactPhone, setContactPhone] = useState('');
   const [category, setCategory] = useState<CaseCategory>('medical');
@@ -84,7 +93,9 @@ export function SubmitForm({ locale }: { locale: Locale }) {
   const idDoc = uploads.id?.status === 'done' ? uploads.id : null;
   const proofDoc = uploads.proof?.status === 'done' ? uploads.proof : null;
   const contactE164 = toE164(contactPhone, currency === 'SAR' ? 'SA' : 'EG');
-  const associationValid = orgName.trim().length >= 3 && orgNumber.trim() !== '' && contactName.trim().length >= 2 && contactE164 !== null;
+  const credentials: PartnerCredentials = { registrationNumber: normalizeRegistrationNumber(orgNumber), yusrCode: normalizeYusrCode(yusrCode) };
+  const credentialsReady = credentials.registrationNumber !== '' && isYusrCode(credentials.yusrCode);
+  const associationValid = credentialsReady && contactName.trim().length >= 2 && contactE164 !== null;
   const ready =
     associationValid &&
     title.trim().length >= TITLE_MIN &&
@@ -95,6 +106,16 @@ export function SubmitForm({ locale }: { locale: Locale }) {
     Boolean(idDoc && proofDoc) &&
     consent;
   const flagged = (field: string) => problem?.fields.includes(field) || undefined;
+  /** An API error in the form's words: a wrong code (or number) gets its own explanation. */
+  const describe = (code: string, fields: string[]) =>
+    fields.includes(CODE_FIELD) ? t('submit.partner.codeInvalid') : t(`errors.${code}` as 'errors.generic');
+
+  /** Uploads are filed under the partner that made them: changing who is submitting starts them over. */
+  function changeCredentials(update: () => void) {
+    update();
+    if (Object.keys(uploads).length) setUploads({});
+    if (problem?.fields.includes(CODE_FIELD)) setProblem(null);
+  }
 
   async function attach(slot: Slot, file: File | undefined) {
     if (!file) return;
@@ -103,11 +124,19 @@ export function SubmitForm({ locale }: { locale: Locale }) {
       setUploads((current) => ({ ...current, [slot]: { status: 'error', name: file.name, message: t('submit.fileInvalid') } }));
       return;
     }
+    if (!credentialsReady) {
+      setUploads((current) => ({ ...current, [slot]: { status: 'error', name: file.name, message: t('submit.partner.codeHint') } }));
+      setProblem({ message: t('submit.partner.intro'), fields: [CODE_FIELD] });
+      return;
+    }
     const kind: DocumentKind = slot === 'id' ? 'national_id' : proofKind;
     setUploads((current) => ({ ...current, [slot]: { status: 'uploading', name: file.name } }));
     try {
-      const [sha256, grant] = await Promise.all([sha256Hex(file), requestUpload({ kind, contentType, sizeBytes: file.size })]);
-      if (!grant.ok) throw new Error(t(`errors.${grant.code}`));
+      const [sha256, grant] = await Promise.all([sha256Hex(file), requestUpload({ kind, contentType, sizeBytes: file.size, association: credentials })]);
+      if (!grant.ok) {
+        if (grant.fields.includes(CODE_FIELD)) setProblem({ message: t('submit.partner.codeInvalid'), fields: grant.fields });
+        throw new Error(describe(grant.code, grant.fields));
+      }
       // The browser sets Content-Length itself (it may not be set by script).
       const headers = Object.fromEntries(Object.entries(grant.ticket.headers).filter(([name]) => name.toLowerCase() !== 'content-length'));
       const response = await fetch(grant.ticket.url, { method: 'PUT', headers, body: file });
@@ -130,7 +159,7 @@ export function SubmitForm({ locale }: { locale: Locale }) {
     const result = await sendCase(locale, {
       category,
       submitterRelation: 'association',
-      association: { name: orgName.trim(), registrationNumber: orgNumber.trim(), contactName: contactName.trim(), contactPhone: contactE164 },
+      association: { ...credentials, contactName: contactName.trim(), contactPhone: contactE164 },
       title: text(title),
       story: text(story),
       region,
@@ -148,7 +177,7 @@ export function SubmitForm({ locale }: { locale: Locale }) {
       setDone(result.result);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      setProblem({ message: t(`errors.${result.code}`), fields: result.fields });
+      setProblem({ message: describe(result.code, result.fields), fields: result.fields });
     }
   }
 
@@ -193,29 +222,74 @@ export function SubmitForm({ locale }: { locale: Locale }) {
             disabled
           />
         </div>
-        <Field label={t('submit.association.name')} htmlFor={`${ids}-org`}>
-          <input
-            id={`${ids}-org`}
-            maxLength={120}
-            value={orgName}
-            placeholder={t('submit.association.namePlaceholder')}
-            onChange={(event) => setOrgName(event.target.value)}
-            aria-invalid={flagged('association')}
-            autoComplete="organization"
-            dir="auto"
-            className={cn(control, 'h-11')}
-          />
-        </Field>
+        <p className="flex items-start gap-2 rounded-control bg-info-soft p-3 text-sm leading-relaxed text-info-soft-foreground">
+          <Icon name="shield-check" size={17} className="mt-0.5 shrink-0" />
+          {t('submit.partner.intro')}
+        </p>
+        {demoPartner && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-dashed border-border-strong bg-warning-soft p-3 text-sm text-warning-soft-foreground">
+            <span className="flex flex-col gap-0.5">
+              <span className="font-semibold">{t('submit.partner.demoTitle')}</span>
+              <span>
+                {t('submit.partner.demoBody', { number: '{number}', code: '{code}' })
+                  .split(/(\{number\}|\{code\})/)
+                  .map((part, index) =>
+                    part === '{number}' || part === '{code}' ? (
+                      <bdi key={index} dir="ltr" className="whitespace-nowrap font-mono font-semibold">
+                        {part === '{number}' ? demoPartner.registrationNumber : demoPartner.yusrCode}
+                      </bdi>
+                    ) : (
+                      part
+                    ),
+                  )}
+              </span>
+            </span>
+            <button
+              type="button"
+              className={buttonClasses({ variant: 'outline', size: 'sm' })}
+              onClick={() =>
+                changeCredentials(() => {
+                  setOrgNumber(demoPartner.registrationNumber);
+                  setYusrCode(demoPartner.yusrCode);
+                })
+              }
+            >
+              {t('submit.partner.demoFill')}
+            </button>
+          </div>
+        )}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label={t('submit.association.registrationNumber')} htmlFor={`${ids}-org-number`} hint={t('submit.association.registrationHint')}>
             <input
               id={`${ids}-org-number`}
               maxLength={40}
               value={orgNumber}
-              onChange={(event) => setOrgNumber(event.target.value)}
-              aria-invalid={flagged('association')}
+              onChange={(event) => changeCredentials(() => setOrgNumber(event.target.value))}
+              aria-invalid={flagged('association') || flagged('association.registrationNumber') || flagged(CODE_FIELD)}
+              autoComplete="off"
               dir="ltr"
-              className={cn(control, 'h-11 text-start')}
+              className={cn(control, 'h-11 text-start font-mono')}
+            />
+          </Field>
+          <Field
+            label={t('submit.partner.code')}
+            htmlFor={`${ids}-yusr-code`}
+            hint={flagged(CODE_FIELD) ? t('submit.partner.codeInvalid') : t('submit.partner.codeHint')}
+            invalid={flagged(CODE_FIELD)}
+          >
+            <input
+              id={`${ids}-yusr-code`}
+              maxLength={20}
+              value={yusrCode}
+              placeholder="YSR-XXXXXXXX"
+              onChange={(event) => changeCredentials(() => setYusrCode(event.target.value.toUpperCase()))}
+              aria-invalid={flagged(CODE_FIELD) || (yusrCode !== '' && !isYusrCode(normalizeYusrCode(yusrCode))) || undefined}
+              aria-describedby={`${ids}-yusr-code-hint`}
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              dir="ltr"
+              className={cn(control, 'h-11 text-start font-mono uppercase tracking-wider')}
             />
           </Field>
           <Field label={t('submit.association.contactName')} htmlFor={`${ids}-contact`}>
@@ -442,7 +516,10 @@ export function SubmitForm({ locale }: { locale: Locale }) {
       <Step number={4} total={4} title={t('submit.steps.review')} locale={locale}>
         <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
           {[
-            [t('submit.steps.who'), orgName.trim() || t('submit.relation.association')],
+            [
+              t('submit.steps.who'),
+              credentials.registrationNumber ? t('submit.partner.who', { number: credentials.registrationNumber }) : t('submit.relation.association'),
+            ],
             [t('submit.fields.category'), t(`categories.${category}`)],
             [t('submit.fields.title'), title.trim() || '—'],
             [t('submit.fields.goal'), goalValid && goalMinor !== null ? f.money(goalMinor, currency) : '—'],
@@ -560,7 +637,11 @@ function Field({ label, htmlFor, hint, invalid, children }: { label: string; htm
         {label}
       </label>
       {children}
-      {hint && <p className={cn('text-xs', invalid ? 'text-destructive' : 'text-muted-foreground')}>{hint}</p>}
+      {hint && (
+        <p id={`${htmlFor}-hint`} className={cn('text-xs', invalid ? 'text-destructive' : 'text-muted-foreground')}>
+          {hint}
+        </p>
+      )}
     </div>
   );
 }

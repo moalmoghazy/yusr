@@ -291,6 +291,45 @@ describe('PostgreSQL schema', { skip: SKIP }, () => {
     assert.match(psql(url, attempt).err, /payment_attempts_order_ref/);
   });
 
+  it('keeps the partner registry consistent and names association cases from it (0006)', () => {
+    const partner = '00000000-0000-4000-8000-0000000000b7';
+    const hash = (char: string) => char.repeat(64);
+    const insertPartner = (id: string, number: string, codeHash: string, extra = '') =>
+      `INSERT INTO partners (id, name, registration_number, region, contract_signed_on, contact_name, contact_phone, code_hash, code_cipher, created_by${extra ? ', status' : ''})
+       VALUES ('${id}', 'جمعية الأمل', '${number}', 'EG-C', '2026-09-01', 'سعاد', '+201001234567', '${codeHash}', '\\x01', '${ID.donor}'${extra ? `, '${extra}'` : ''});`;
+    const created = psql(url, insertPartner(partner, '4521/2018', hash('a')));
+    assert.ok(created.ok, created.err);
+    assert.match(psql(url, insertPartner('00000000-0000-4000-8000-0000000000b8', '4521/2018', hash('b'))).err, /partners_registration_number_key/);
+    assert.match(psql(url, insertPartner('00000000-0000-4000-8000-0000000000b8', '1/2019', hash('a'))).err, /partners_code_hash_key/);
+    assert.match(psql(url, insertPartner('00000000-0000-4000-8000-0000000000b8', '1 / 2019', hash('c'))).err, /registration_number_check/);
+    assert.match(psql(url, insertPartner('00000000-0000-4000-8000-0000000000b8', '1/2019', hash('c'), 'suspended')).err, /partners_suspended_at/);
+
+    const insertCase = (id: string, slug: string, partnerId: string | null, submittedBy: string | null, relation = 'association') =>
+      `INSERT INTO cases (id, slug, category, status, beneficiary_id, submitted_by, submitter_relation, association, partner_id, title, summary, story, region, goal_minor)
+       VALUES ('${id}', '${slug}', 'medical', 'under_review', '${ID.beneficiary}', ${submittedBy ? `'${submittedBy}'` : 'NULL'}, '${relation}',
+               '{"name": "اسم مكتوب باليد", "registrationNumber": "999", "contactName": "منى", "contactPhone": "+201007654321"}',
+               ${partnerId ? `'${partnerId}'` : 'NULL'}, '{"ar": "حالة"}', '{"ar": "ملخص"}', '{"ar": "القصة"}', 'EG-C', 100000);`;
+    const caseId = '00000000-0000-4000-8000-00000000c0a1';
+    const fromPartner = psql(url, insertCase(caseId, 'partner-case', partner, null));
+    assert.ok(fromPartner.ok, fromPartner.err);
+    assert.equal(
+      psql(url, `SELECT association ->> 'name', association ->> 'registrationNumber', association ->> 'contactName' FROM cases WHERE id = '${caseId}';`).out,
+      'جمعية الأمل|4521/2018|منى',
+      'the public name and number come from the registry, the contact from the request',
+    );
+    assert.match(psql(url, insertCase('00000000-0000-4000-8000-00000000c0a2', 'no-partner', null, ID.donor)).err, /need a partner from the registry/);
+    assert.match(psql(url, insertCase('00000000-0000-4000-8000-00000000c0a3', 'nobody', null, null, 'family')).err, /cases_submitter_known/);
+    assert.match(
+      psql(url, insertCase('00000000-0000-4000-8000-00000000c0a4', 'family-partner', partner, ID.donor, 'family')).err,
+      /cases_partner_is_association/,
+    );
+
+    assert.ok(psql(url, `UPDATE partners SET name = 'جمعية الأمل للتنمية' WHERE id = '${partner}';`).ok);
+    assert.equal(psql(url, `SELECT association ->> 'name' FROM cases WHERE id = '${caseId}';`).out, 'جمعية الأمل للتنمية', 'renames follow onto cases');
+    assert.ok(psql(url, `UPDATE partners SET status = 'suspended', suspended_at = now() WHERE id = '${partner}';`).ok);
+    assert.match(psql(url, insertCase('00000000-0000-4000-8000-00000000c0a5', 'suspended', partner, null)).err, /is suspended/);
+  });
+
   it('matches the Drizzle schema: every table and column in schema.ts exists in the migration', () => {
     const source = readFileSync(SCHEMA_TS, 'utf8');
     const declared = new Map<string, string[]>();

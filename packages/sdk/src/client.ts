@@ -1,4 +1,4 @@
-import type { EditCaseInput } from '@yusr/core/schemas';
+import type { CreatePartnerInput, EditCaseInput, UpdatePartnerInput } from '@yusr/core/schemas';
 import type {
   AdminCase,
   AdminDonation,
@@ -20,6 +20,9 @@ import type {
   Locale,
   OtpChallenge,
   Page,
+  Partner,
+  PartnerCredentials,
+  PartnerStatus,
   Payout,
   PlatformStats,
   Refund,
@@ -44,8 +47,11 @@ export interface YusrClient {
   getDonation(id: string, receiptToken?: string): Promise<DonationReceipt>;
   myDonations(): Promise<DonationReceipt[]>;
   myNotifications(): Promise<DonorNotification[]>;
-  /** Step 1 of a submission: a short-lived upload link per document (PUT the file there, then submit its key). */
-  presignUpload(input: { kind: DocumentKind; contentType: string; sizeBytes: number }): Promise<UploadTicket>;
+  /**
+   * Step 1 of a submission: a short-lived upload link per document (PUT the file there, then submit its key).
+   * A partner association passes its رقم الإشهار and «كود يُسر» as `association` instead of signing in.
+   */
+  presignUpload(input: { kind: DocumentKind; contentType: string; sizeBytes: number; association?: PartnerCredentials | null }): Promise<UploadTicket>;
   submitCase(request: SubmitCaseRequest): Promise<SubmitCaseResult>;
 }
 
@@ -83,6 +89,15 @@ export interface AdminClient {
   team(): Promise<TeamMember[]>;
   updateRoles(userId: string, roles: Role[]): Promise<TeamMember>;
   audit(limit?: number): Promise<AuditEntry[]>;
+  /** The approved-partner registry (partners:manage): content moderators and super admins. */
+  partners(): Promise<Partner[]>;
+  /** Adds an association after approval and contract signature; the result carries its new «كود يُسر». */
+  createPartner(input: CreatePartnerInput): Promise<Partner>;
+  updatePartner(partnerId: string, patch: UpdatePartnerInput): Promise<Partner>;
+  /** Suspending stops new submissions with its code at once. */
+  setPartnerStatus(partnerId: string, status: PartnerStatus, reason?: string): Promise<Partner>;
+  /** A new «كود يُسر»; the old one stops working at once. */
+  regeneratePartnerCode(partnerId: string): Promise<Partner>;
 }
 
 /** Sign-in and sessions (phone OTP, Google/Apple, rotation, logout). */

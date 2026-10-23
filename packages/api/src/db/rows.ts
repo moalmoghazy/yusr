@@ -16,6 +16,7 @@ import type {
   PayeeType,
   PaymentMethod,
   PartnerAssociation,
+  PartnerStatus,
   PaymentProvider,
   Role,
   SubmitterRelation,
@@ -83,10 +84,13 @@ export interface CaseRow {
   category: CaseCategory;
   status: CaseStatus;
   beneficiaryId: Id;
-  submittedBy: Id;
+  /** Null when a partner submitted with its «كود يُسر» and no account (0006). */
+  submittedBy: Id | null;
   submitterRelation: SubmitterRelation;
   /** The partner association that submitted the case (0002_partner_association.sql); null for individuals. */
   association: PartnerAssociation | null;
+  /** The approved partner (0006_partner_registry.sql); its registry name and number fill `association`. */
+  partnerId: Id | null;
   title: Localized;
   summary: Localized;
   /** «نص المشاركة»: the case's own line for social sharing; null = composed from title and category. */
@@ -114,6 +118,29 @@ export interface CaseRow {
   updatedAt: Timestamp;
 }
 
+/** An approved partner association (0006_partner_registry.sql). */
+export interface PartnerRow {
+  id: Id;
+  name: string;
+  /** رقم الإشهار, normalized (ASCII digits, no spaces). */
+  registrationNumber: string;
+  region: string;
+  /** YYYY-MM-DD. */
+  contractSignedOn: string;
+  contactName: string;
+  contactPhone: string;
+  status: PartnerStatus;
+  suspendedAt: Timestamp | null;
+  /** HMAC-SHA256 of «كود يُسر» (hex); unique. */
+  codeHash: string;
+  /** «كود يُسر», AES-256-GCM with the partner id as associated data. */
+  codeCipher: Uint8Array;
+  codeIssuedAt: Timestamp;
+  createdBy: Id;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
 export interface BeneficiaryRow {
   id: Id;
   pseudonym: Localized;
@@ -133,7 +160,8 @@ export interface CaseDocumentRow {
   redactedKey: string | null;
   sha256: string;
   pages: number;
-  uploadedBy: Id;
+  /** Null when a partner uploaded with its «كود يُسر» and no account (0006). */
+  uploadedBy: Id | null;
   redactedBy: Id | null;
   createdAt: Timestamp;
 }

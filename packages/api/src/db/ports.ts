@@ -21,6 +21,7 @@ import type {
   NotificationRow,
   OutboxInput,
   OutboxRow,
+  PartnerRow,
   PaymentAttemptRow,
   PayoutRow,
   RefreshTokenRow,
@@ -84,6 +85,18 @@ export interface CasesRepo {
   beneficiary(id: Id): Promise<BeneficiaryRow | null>;
   beneficiaryByNationalIdHash(hash: string): Promise<BeneficiaryRow | null>;
   insertBeneficiary(row: BeneficiaryRow): Promise<void>;
+}
+
+/** The approved-partner registry. Renaming a partner renames it on its cases too (a trigger in SQL). */
+export interface PartnersRepo {
+  byId(id: Id, lock?: LockMode): Promise<PartnerRow | null>;
+  byRegistrationNumber(registrationNumber: string): Promise<PartnerRow | null>;
+  byCodeHash(codeHash: string): Promise<PartnerRow | null>;
+  list(): Promise<PartnerRow[]>;
+  insert(row: PartnerRow): Promise<void>;
+  update(id: Id, patch: Partial<Omit<PartnerRow, 'id' | 'createdBy' | 'createdAt'>>): Promise<void>;
+  /** Cases submitted per partner id. */
+  caseCounts(): Promise<Map<Id, number>>;
 }
 
 export interface VerificationRepo {
@@ -199,6 +212,7 @@ export interface Tx {
   users: UsersRepo;
   refreshTokens: RefreshTokensRepo;
   cases: CasesRepo;
+  partners: PartnersRepo;
   verification: VerificationRepo;
   donations: DonationsRepo;
   webhooks: WebhooksRepo;

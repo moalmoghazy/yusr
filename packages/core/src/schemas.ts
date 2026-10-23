@@ -5,6 +5,7 @@
 import { z } from 'zod';
 import { CHECKLIST_ITEMS, SUBMITTER_RELATIONS } from './admin-types';
 import { DEDICATION_MAX_LENGTH } from './donation';
+import { isYusrCode, normalizeRegistrationNumber, normalizeYusrCode, PARTNER_STATUSES } from './partners';
 import {
   CASE_CATEGORIES,
   CASE_STATUSES,
@@ -87,14 +88,49 @@ const localized = (max: number) => z.object({ ar: z.string().trim().min(1).max(m
 
 const regionSchema = z.string().regex(/^[A-Z]{2}-[A-Z0-9]{1,3}$/);
 
+// ------------------------------------------------------------------ approved partners («كود يُسر»)
+/** رقم الإشهار, normalized (ASCII digits, no spaces) before it is checked or stored. */
+export const registrationNumberSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(40)
+  .transform(normalizeRegistrationNumber)
+  .pipe(z.string().regex(/^[0-9A-Z/-]{1,40}$/, 'Use digits, letters, / or -'));
+
+/** «كود يُسر», normalized from what people type (spaces, lower case, missing prefix, Arabic-Indic digits). */
+export const yusrCodeSchema = z.string().trim().min(4).max(40).transform(normalizeYusrCode).refine(isYusrCode, 'Enter the Yusr code, e.g. YSR-7K2M9QXA');
+
+export const partnerCredentialsSchema = z.object({ registrationNumber: registrationNumberSchema, yusrCode: yusrCodeSchema });
+
+/** A YYYY-MM-DD calendar day (a contract's signing date). */
+const calendarDay = z.iso.date();
+
+export const createPartnerSchema = z.object({
+  name: z.string().trim().min(3).max(120),
+  registrationNumber: registrationNumberSchema,
+  region: regionSchema,
+  contractSignedOn: calendarDay,
+  contactName: z.string().trim().min(2).max(80),
+  contactPhone: phoneSchema,
+});
+export type CreatePartnerInput = z.infer<typeof createPartnerSchema>;
+
+export const updatePartnerSchema = createPartnerSchema.partial().refine((patch) => Object.keys(patch).length > 0, { message: 'Nothing to change' });
+export type UpdatePartnerInput = z.infer<typeof updatePartnerSchema>;
+
+export const partnerStatusSchema = z.object({
+  status: z.enum(PARTNER_STATUSES),
+  reason: z.string().trim().max(500).nullish(),
+});
+
 export const submitCaseSchema = z
   .object({
     category: z.enum(CASE_CATEGORIES),
     submitterRelation: z.enum(SUBMITTER_RELATIONS),
-    association: z
-      .object({
-        name: z.string().trim().min(3).max(120),
-        registrationNumber: z.string().trim().min(1).max(40),
+    /** The association's رقم الإشهار and «كود يُسر» (checked against the registry) and this case's contact person. */
+    association: partnerCredentialsSchema
+      .extend({
         contactName: z.string().trim().min(2).max(80),
         contactPhone: phoneSchema,
       })
@@ -177,6 +213,8 @@ export const presignUploadSchema = z.object({
     .int()
     .positive()
     .max(20 * 1024 * 1024),
+  /** A partner association uploading without an account: its رقم الإشهار and «كود يُسر». */
+  association: partnerCredentialsSchema.nullish(),
 });
 
 const sixDigits = z.string().regex(/^\d{6}$/, 'Enter the 6-digit code');
@@ -243,7 +281,7 @@ export const completeVerificationSchema = z.object({
 
 export const updateRolesSchema = z.object({ roles: z.array(z.enum(ROLES)).min(1).max(ROLES.length) });
 
-export const presignRedactedSchema = presignUploadSchema.omit({ kind: true });
+export const presignRedactedSchema = presignUploadSchema.omit({ kind: true, association: true });
 export const confirmRedactedSchema = z.object({ key: z.string().min(8).max(300) });
 
 export const quoteDonationSchema = createDonationSchema.pick({ caseId: true, amountMinor: true, currency: true, method: true, coverFees: true });

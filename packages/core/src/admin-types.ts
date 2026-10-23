@@ -1,5 +1,6 @@
 /** Contract types for the operations dashboard (API ↔ admin app). */
 import type { Direction } from './ledger';
+import type { PartnerCredentials } from './partners';
 import type { Permission } from './rbac';
 import type { CaseCategory, CaseDetail, CaseStatus, Currency, DocumentKind, DonationReceipt, Localized, PayeeType, PaymentMethod, Role } from './types';
 
@@ -24,6 +25,16 @@ export interface PartnerAssociation {
   name: string;
   /** رقم الإشهار: its registration number with the Ministry of Social Solidarity. */
   registrationNumber: string;
+  contactName: string;
+  /** E.164, e.g. +201001234567. */
+  contactPhone: string;
+}
+
+/**
+ * What an association sends with its case: رقم الإشهار and «كود يُسر» (checked against the approved
+ * registry) and the contact person for this case. Its name comes from the registry, not from the form.
+ */
+export interface PartnerSubmission extends PartnerCredentials {
   contactName: string;
   /** E.164, e.g. +201001234567. */
   contactPhone: string;
@@ -113,7 +124,7 @@ export interface Refund {
   createdAt: string;
 }
 
-export type AuditEntity = 'case' | 'donation' | 'payout' | 'refund' | 'user' | 'verification';
+export type AuditEntity = 'case' | 'donation' | 'payout' | 'refund' | 'user' | 'verification' | 'partner';
 
 export interface AuditEntry {
   id: string;
@@ -233,8 +244,8 @@ export interface SubmittedText {
 export interface SubmitCaseRequest {
   category: CaseCategory;
   submitterRelation: SubmitterRelation;
-  /** Required when submitterRelation is `association`. */
-  association?: PartnerAssociation | null;
+  /** Required when submitterRelation is `association`: checked against the approved-partner registry. */
+  association?: PartnerSubmission | null;
   title: SubmittedText;
   story: SubmittedText;
   region: string;

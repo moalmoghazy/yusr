@@ -24,6 +24,8 @@ export const PERMISSIONS = [
   'team:manage',
   'audit:read',
   'settings:manage',
+  /** The approved-partner registry: add associations after contract signature, suspend them, issue «كود يُسر». */
+  'partners:manage',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -48,6 +50,7 @@ export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Permission[]>> = {
     'verifications:assign',
     'volunteers:manage',
     'crm:read',
+    'partners:manage',
   ],
   financial_officer: ['cases:read', 'cases:close', 'finance:read', 'finance:reconcile', 'finance:refunds', 'finance:payouts', 'finance:approve', 'crm:read'],
   super_admin: PERMISSIONS,

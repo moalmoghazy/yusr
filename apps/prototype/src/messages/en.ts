@@ -128,6 +128,7 @@ export const protoEn: Widen<typeof protoAr> = {
         refund: 'Refund',
         user: 'User',
         verification: 'Visit',
+        partner: 'Partner association',
       },
       fields: {
         status: 'Status',

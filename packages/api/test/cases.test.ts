@@ -8,6 +8,7 @@ import { MemoryKv } from '../src/common/kv';
 import { RateLimiter } from '../src/common/rate-limit';
 import { DocumentsService } from '../src/documents/documents.service';
 import { DevStorage } from '../src/documents/storage';
+import { PartnersService } from '../src/partners/partners.service';
 import { CASE_ID, DRAFT_CASE_ID, USERS, actorOf, setup } from './support/fixtures';
 
 async function rejects(promise: Promise<unknown>, code: string) {
@@ -17,9 +18,11 @@ async function rejects(promise: Promise<unknown>, code: string) {
 async function setupCases() {
   const context = await setup();
   const cipher = new FieldCipher(FieldCipher.randomKey());
-  const cases = new CasesService({ db: context.db, cipher, clock: context.clock, ids: context.ids, config: { nationalIdPepper: 'nid-pepper' } });
+  const limiter = new RateLimiter(new MemoryKv(context.clock));
+  const partners = new PartnersService({ db: context.db, cipher, clock: context.clock, ids: context.ids, limiter, config: { codePepper: 'code-pepper' } });
+  const cases = new CasesService({ db: context.db, cipher, clock: context.clock, ids: context.ids, partners, config: { nationalIdPepper: 'nid-pepper' } });
   const verification = new VerificationService({ db: context.db, cases, clock: context.clock, ids: context.ids });
-  return { ...context, cipher, cases, verification };
+  return { ...context, cipher, cases, verification, partners, limiter };
 }
 
 const submission = (actorId: string, overrides: Partial<SubmissionInput> = {}): SubmissionInput => ({
@@ -69,7 +72,14 @@ describe('original documents', () => {
     const context = await setupCases();
     const storage = new DevStorage('http://localhost:4000', { now: () => context.clock.now().getTime() });
     const kv = new MemoryKv(context.clock);
-    const documents = new DocumentsService({ db: context.db, storage, limiter: new RateLimiter(kv), clock: context.clock, ids: context.ids });
+    const documents = new DocumentsService({
+      db: context.db,
+      storage,
+      limiter: new RateLimiter(kv),
+      clock: context.clock,
+      ids: context.ids,
+      partners: context.partners,
+    });
     const documentId = '00000000-0000-4000-8000-00000000d0c1';
     await context.db.transaction((tx) =>
       tx.cases.insertDocument({
@@ -149,18 +159,34 @@ describe('submission portal', () => {
     assert.ok(db.outboxEvents().some((event) => event.aggregateId === again.id && event.payload['possibleDuplicate'] === true));
   });
 
-  it('records the partner association that submitted a case and shows it to staff', async () => {
-    const { cases } = await setupCases();
+  it('records the registered partner behind an association case, with its name from the registry', async () => {
+    const { cases, partners } = await setupCases();
     const volunteer = actorOf(USERS.volunteer, false);
-    const association = { name: 'جمعية الخير لتنمية المجتمع', registrationNumber: '1234/2019', contactName: 'سعاد محمود', contactPhone: '+201001234567' };
+    const partner = await partners.create(
+      {
+        name: 'جمعية الخير لتنمية المجتمع',
+        registrationNumber: '1234/2019',
+        region: 'EG-C',
+        contractSignedOn: '2026-09-01',
+        contactName: 'سعاد محمود',
+        contactPhone: '+201001234567',
+      },
+      { actor: actorOf(USERS.moderator) },
+    );
+    const association = { registrationNumber: '1234/2019', yusrCode: partner.yusrCode, contactName: 'منى سعيد', contactPhone: '+201007654321' };
     const created = await cases.submit(submission(volunteer.id, { submitterRelation: 'association', association }), { actor: volunteer });
     const staff = await cases.adminCase(created.id, { actor: actorOf(USERS.moderator) });
     assert.equal(staff.submittedBy.relation, 'association');
-    assert.equal(staff.submittedBy.name, association.name);
-    assert.deepEqual(staff.submittedBy.association, association);
-    assert.deepEqual(staff.partner, { name: association.name, registrationNumber: association.registrationNumber }, 'the public view names the partner');
-    assert.ok(!JSON.stringify(staff.partner).includes(association.contactPhone), 'never its contact');
-    assert.equal(staff.timeline[0]?.actor.ar, association.name, 'the association submitted it');
+    assert.equal(staff.submittedBy.name, partner.name);
+    assert.deepEqual(staff.submittedBy.association, {
+      name: partner.name,
+      registrationNumber: '1234/2019',
+      contactName: 'منى سعيد',
+      contactPhone: '+201007654321',
+    });
+    assert.deepEqual(staff.partner, { name: partner.name, registrationNumber: '1234/2019' }, 'the public view names the partner');
+    assert.ok(!JSON.stringify(staff).includes(partner.yusrCode), 'the code is never part of a case');
+    assert.equal(staff.timeline[0]?.actor.ar, partner.name, 'the association submitted it');
   });
 
   it('refuses documents uploaded by someone else and anonymous submissions', async () => {

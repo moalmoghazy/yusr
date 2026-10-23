@@ -109,12 +109,15 @@ export const publicEndpoints = [
     method: 'POST',
     path: '/uploads',
     version: '1',
-    access: 'user',
+    access: 'public',
     tag: 'Submissions',
     summary: 'A 10-minute upload link into private storage (step 1 of submitting a document)',
-    description: 'PUT the file to the returned URL with the returned headers, then reference its key when submitting the case.',
+    description:
+      'PUT the file to the returned URL with the returned headers, then reference its key when submitting the case. ' +
+      'A partner association sends `association` (رقم الإشهار and «كود يُسر») instead of signing in; anyone else needs a session.',
     body: presignUploadSchema,
     returns: 'UploadTicket',
+    rateLimit: { name: 'uploads:create', limit: 60, windowSeconds: 3_600, by: 'ip' },
     handle: ({ services, ctx, body }) => services.documents.presignUpload(body, ctx),
   }),
 
@@ -123,14 +126,17 @@ export const publicEndpoints = [
     method: 'POST',
     path: '/cases',
     version: '1',
-    access: 'user',
+    access: 'public',
     tag: 'Submissions',
     summary: 'Submit a case for review',
-    description: 'Starts the pipeline under_review → field_verified → published. A repeat national ID is flagged for reviewers, never rejected.',
+    description:
+      'Starts the pipeline under_review → field_verified → published. A repeat national ID is flagged for reviewers, never rejected. ' +
+      'An association’s case (submitterRelation `association`) always carries its رقم الإشهار and «كود يُسر», checked against the approved-partner ' +
+      'registry (a session is not needed); its documents must have been uploaded with the same credentials. Other submissions need a session.',
     body: submitCaseSchema,
     status: 201,
     returns: 'SubmitCaseResult',
-    rateLimit: { name: 'cases:submit', limit: 10, windowSeconds: 86_400, by: 'actor' },
+    rateLimit: { name: 'cases:submit', limit: 10, windowSeconds: 86_400, by: 'ip' },
     handle: ({ services, ctx, body }) => services.cases.submit(body, ctx),
   }),
 ];
