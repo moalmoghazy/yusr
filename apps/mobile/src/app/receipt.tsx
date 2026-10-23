@@ -35,10 +35,12 @@ export default function ReceiptScreen() {
   const receipt = query.data ?? null;
   const inFlight = receipt !== null && IN_FLIGHT.has(receipt.status);
 
-  // Opened from a link on this device: keep it under «تبرعاتي».
+  // Opened from a link on this device: keep it under «تبرعاتي», but only once the API has shown this
+  // receipt for that token, so a crafted link cannot plant entries.
+  const confirmed = receipt !== null && receipt.id === donationId;
   useEffect(() => {
-    if (donationId && token) void saveReceipt(donationId, token);
-  }, [donationId, token]);
+    if (confirmed && donationId && token) void saveReceipt(donationId, token);
+  }, [confirmed, donationId, token]);
 
   useEffect(() => {
     if (!inFlight) return;

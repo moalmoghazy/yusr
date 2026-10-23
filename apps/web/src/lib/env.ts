@@ -29,3 +29,15 @@ export function siteUrl(): string {
   const vercel = process.env['VERCEL_PROJECT_PRODUCTION_URL'];
   return (process.env['NEXT_PUBLIC_SITE_URL'] ?? (vercel ? `https://${vercel}` : 'http://localhost:3000')).replace(/\/$/, '');
 }
+
+/**
+ * Lets the API rate-limit per visitor rather than per web server: the shared secret (YUSR_EDGE_SECRET,
+ * the same value as the API's) and the visitor's address from the request headers. Without the
+ * secret nothing is sent and the API sees this server's address.
+ */
+export function apiEdge(incoming: { get(name: string): string | null }): { secret: string; clientIp: string | null } | undefined {
+  const secret = process.env['YUSR_EDGE_SECRET'];
+  if (!secret) return undefined;
+  const clientIp = incoming.get('x-real-ip')?.trim() || incoming.get('x-forwarded-for')?.split(',')[0]?.trim() || null;
+  return { secret, clientIp };
+}

@@ -3,15 +3,16 @@
 import { CASE_STATUSES, type CaseStatus } from '@yusr/core';
 import { textFor } from '@yusr/ui';
 import { revalidatePath } from 'next/cache';
+import { formId } from '@/lib/form';
 import { hubLocale } from '@/lib/i18n';
 import { adminApi, attempt, type ActionResult } from '@/lib/session';
 
 /** Moves a case along the pipeline. The API re-checks the rule, the role and the reason. */
 export async function transitionCase(_previous: ActionResult, form: FormData): Promise<ActionResult> {
   const { t } = textFor(await hubLocale());
-  const caseId = String(form.get('caseId') ?? '');
+  const caseId = formId(form, 'caseId');
   const to = String(form.get('to') ?? '');
-  if (!(CASE_STATUSES as readonly string[]).includes(to)) return { ok: false, message: t('errors.VALIDATION_FAILED') };
+  if (!caseId || !(CASE_STATUSES as readonly string[]).includes(to)) return { ok: false, message: t('errors.VALIDATION_FAILED') };
   const reason = String(form.get('reason') ?? '').trim() || undefined;
   const api = await adminApi();
   const result = await attempt(
@@ -25,7 +26,8 @@ export async function transitionCase(_previous: ActionResult, form: FormData): P
 /** Saves a case's share line («نص المشاركة»); both languages empty clears it, so the line is composed. */
 export async function saveShareText(_previous: ActionResult, form: FormData): Promise<ActionResult> {
   const { t } = textFor(await hubLocale());
-  const caseId = String(form.get('caseId') ?? '');
+  const caseId = formId(form, 'caseId');
+  if (!caseId) return { ok: false, message: t('errors.VALIDATION_FAILED') };
   const ar = String(form.get('ar') ?? '').trim();
   const en = String(form.get('en') ?? '').trim();
   if (Boolean(ar) !== Boolean(en)) return { ok: false, message: t('admin.cases.shareTextBoth') };
@@ -38,12 +40,11 @@ export async function saveShareText(_previous: ActionResult, form: FormData): Pr
 
 export async function togglePriority(_previous: ActionResult, form: FormData): Promise<ActionResult> {
   const { t } = textFor(await hubLocale());
+  const caseId = formId(form, 'caseId');
+  if (!caseId) return { ok: false, message: t('errors.VALIDATION_FAILED') };
   const pinned = form.get('pinned') === 'true';
   const api = await adminApi();
-  const result = await attempt(
-    () => api.setPriority(String(form.get('caseId') ?? ''), pinned ? 0 : 10),
-    pinned ? t('admin.cases.unprioritize') : t('admin.cases.pinned'),
-  );
+  const result = await attempt(() => api.setPriority(caseId, pinned ? 0 : 10), pinned ? t('admin.cases.unprioritize') : t('admin.cases.pinned'));
   if (result?.ok) revalidatePath('/cases');
   return result;
 }

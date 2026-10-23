@@ -15,7 +15,7 @@ export async function requestUpload(input: unknown): Promise<{ ok: true; ticket:
   const parsed = presignUploadSchema.safeParse(input);
   if (!parsed.success) return { ok: false, code: 'VALIDATION_FAILED', fields: ['documents'] };
   try {
-    return { ok: true, ticket: await live(DEFAULT_LOCALE).presignUpload(parsed.data) };
+    return { ok: true, ticket: await (await live(DEFAULT_LOCALE)).presignUpload(parsed.data) };
   } catch (error) {
     return actionError(error, 'requestUpload');
   }
@@ -30,7 +30,7 @@ export async function sendCase(localeValue: string, input: unknown): Promise<{ o
   }
   try {
     const { data } = parsed;
-    return { ok: true, result: await live(locale).submitCase({ ...data, deadline: data.deadline ?? null, consent: true }) };
+    return { ok: true, result: await (await live(locale)).submitCase({ ...data, deadline: data.deadline ?? null, consent: true }) };
   } catch (error) {
     return actionError(error, 'sendCase');
   }

@@ -4,19 +4,14 @@ import { isStaff, toE164, type AuthSession } from '@yusr/core';
 import { phoneSchema } from '@yusr/core/schemas';
 import { ApiError, createHttpAuthClient } from '@yusr/sdk';
 import { textFor } from '@yusr/ui';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { apiTimeoutMs, apiUrl } from '@/lib/env';
+import { apiEdge, apiTimeoutMs, apiUrl } from '@/lib/env';
 import { hubLocale } from '@/lib/i18n';
+import { safeNext } from '@/lib/safe-next';
 import { sessionCookies } from '@/lib/tokens';
 
 export type LoginState = { step: 'phone'; error?: string } | { step: 'code'; phone: string; resendIn: number; demoCode?: string; error?: string };
-
-/** Only same-site paths: `next` comes from the query string and must not become an open redirect. */
-function safeNext(value: FormDataEntryValue | null): string {
-  const path = typeof value === 'string' ? value : '';
-  return path.startsWith('/') && !path.startsWith('//') && !path.startsWith('/\\') ? path : '/';
-}
 
 /**
  * Staff sign-in in two steps: a code by SMS, then that code with the authenticator-app code.
@@ -25,7 +20,8 @@ function safeNext(value: FormDataEntryValue | null): string {
 export async function login(previous: LoginState, form: FormData): Promise<LoginState> {
   const locale = await hubLocale();
   const { t } = textFor(locale);
-  const auth = createHttpAuthClient({ baseUrl: apiUrl(), timeoutMs: apiTimeoutMs(), locale });
+  const edge = apiEdge(await headers());
+  const auth = createHttpAuthClient({ baseUrl: apiUrl(), timeoutMs: apiTimeoutMs(), locale, ...(edge ? { edge } : {}) });
   const intent = form.get('intent');
   const failure = (error: unknown) => (error instanceof ApiError ? t(`errors.${error.code}`) : t('errors.generic'));
 

@@ -9,6 +9,11 @@ export interface HttpClientOptions {
   locale?: 'ar' | 'en';
   fetch?: typeof fetch;
   timeoutMs?: number;
+  /**
+   * Server-side callers only (the Next.js servers): the shared secret that lets the API trust the
+   * visitor's address sent alongside it, so rate limits apply per visitor and not per server.
+   */
+  edge?: { secret: string; clientIp?: string | null };
 }
 
 /** Error returned by the API: `{ error: { code, message, details } }`. */
@@ -36,6 +41,12 @@ function toQuery(params: object | undefined): string {
   return text ? `?${text}` : '';
 }
 
+/** Ids and other values placed in a path: always one encoded segment, never `/`, `.` or `..`. */
+function seg(value: string): string {
+  if (value === '' || value === '.' || value === '..') throw new ApiError(0, 'VALIDATION_FAILED', 'Invalid path segment');
+  return encodeURIComponent(value);
+}
+
 function createRequester(options: HttpClientOptions) {
   const fetcher = options.fetch ?? globalThis.fetch.bind(globalThis);
   return async function request<T>(method: string, path: string, body?: unknown, headers: Record<string, string> = {}): Promise<T> {
@@ -51,6 +62,8 @@ function createRequester(options: HttpClientOptions) {
           ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
           ...(options.locale ? { 'Accept-Language': options.locale } : {}),
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(options.edge?.secret ? { 'x-yusr-edge-secret': options.edge.secret } : {}),
+          ...(options.edge?.secret && options.edge.clientIp ? { 'x-yusr-client-ip': options.edge.clientIp } : {}),
           ...headers,
         },
         body: body === undefined ? undefined : JSON.stringify(body),
@@ -79,7 +92,7 @@ export function createHttpClient(options: HttpClientOptions): YusrClient {
     listCases: (filters) => request('GET', `/cases${toQuery(filters)}`),
     getCase: async (slug) => {
       try {
-        return await request('GET', `/cases/${encodeURIComponent(slug)}`);
+        return await request('GET', `/cases/${seg(slug)}`);
       } catch (error) {
         if (error instanceof ApiError && error.status === 404) return null;
         throw error;
@@ -87,8 +100,7 @@ export function createHttpClient(options: HttpClientOptions): YusrClient {
     },
     liveDonations: (limit = 12) => request('GET', `/donations/live?limit=${limit}`),
     createDonation: (body, opts) => request('POST', '/donations', body, { 'Idempotency-Key': opts?.idempotencyKey ?? newIdempotencyKey() }),
-    getDonation: (id, receiptToken) =>
-      request('GET', `/donations/${encodeURIComponent(id)}`, undefined, receiptToken ? { 'X-Receipt-Token': receiptToken } : {}),
+    getDonation: (id, receiptToken) => request('GET', `/donations/${seg(id)}`, undefined, receiptToken ? { 'X-Receipt-Token': receiptToken } : {}),
     myDonations: () => request('GET', '/me/donations'),
     myNotifications: () => request('GET', '/me/notifications'),
     presignUpload: (body) => request('POST', '/uploads', body),
@@ -102,27 +114,28 @@ export function createHttpAdminClient(options: HttpClientOptions): AdminClient {
   return {
     overview: () => request('GET', '/admin/overview'),
     cases: (filter) => request('GET', `/admin/cases${toQuery(filter)}`),
-    transitionCase: (caseId, to, reason) => post(`/admin/cases/${caseId}/transitions`, { to, reason }),
-    setPriority: (caseId, priority) => request('PATCH', `/admin/cases/${caseId}/priority`, { priority }),
-    editCase: (caseId, patch) => request('PATCH', `/admin/cases/${caseId}`, patch),
-    assignAuditor: (caseId, auditorId) => post(`/admin/cases/${caseId}/verification`, { auditorId }),
+    transitionCase: (caseId, to, reason) => post(`/admin/cases/${seg(caseId)}/transitions`, { to, reason }),
+    setPriority: (caseId, priority) => request('PATCH', `/admin/cases/${seg(caseId)}/priority`, { priority }),
+    editCase: (caseId, patch) => request('PATCH', `/admin/cases/${seg(caseId)}`, patch),
+    assignAuditor: (caseId, auditorId) => post(`/admin/cases/${seg(caseId)}/verification`, { auditorId }),
     verificationTasks: () => request('GET', '/admin/verification-tasks'),
-    updateChecklist: (taskId, item, checked) => request('PATCH', `/admin/verification-tasks/${taskId}/checklist`, { item, checked }),
-    completeVerification: (taskId, recommendedMinor, notes) => post(`/admin/verification-tasks/${taskId}/complete`, { recommendedMinor, notes }),
+    updateChecklist: (taskId, item, checked) => request('PATCH', `/admin/verification-tasks/${seg(taskId)}/checklist`, { item, checked }),
+    completeVerification: (taskId, recommendedMinor, notes) => post(`/admin/verification-tasks/${seg(taskId)}/complete`, { recommendedMinor, notes }),
     ledger: (query?: LedgerQuery) => request('GET', `/admin/ledger${toQuery(query)}`),
     donations: (filter) => request('GET', `/admin/donations${toQuery(filter)}`),
-    confirmTransfer: (donationId, bankReference, receivedMinor) => post(`/admin/donations/${donationId}/confirm-transfer`, { bankReference, receivedMinor }),
+    confirmTransfer: (donationId, bankReference, receivedMinor) =>
+      post(`/admin/donations/${seg(donationId)}/confirm-transfer`, { bankReference, receivedMinor }),
     refunds: () => request('GET', '/admin/refunds'),
-    requestRefund: (donationId, reason, amountMinor) => post(`/admin/donations/${donationId}/refunds`, { reason, amountMinor }),
-    approveRefund: (refundId) => post(`/admin/refunds/${refundId}/approve`),
+    requestRefund: (donationId, reason, amountMinor) => post(`/admin/donations/${seg(donationId)}/refunds`, { reason, amountMinor }),
+    approveRefund: (refundId) => post(`/admin/refunds/${seg(refundId)}/approve`),
     payouts: () => request('GET', '/admin/payouts'),
     requestPayout: (caseId, lineId) => post('/admin/payouts', { caseId, lineId }),
-    approvePayout: (payoutId) => post(`/admin/payouts/${payoutId}/approve`),
-    markPayoutPaid: (payoutId, bankReference) => post(`/admin/payouts/${payoutId}/mark-paid`, { bankReference }),
+    approvePayout: (payoutId) => post(`/admin/payouts/${seg(payoutId)}/approve`),
+    markPayoutPaid: (payoutId, bankReference) => post(`/admin/payouts/${seg(payoutId)}/mark-paid`, { bankReference }),
     donors: () => request('GET', '/admin/crm/donors'),
     volunteers: () => request('GET', '/admin/crm/volunteers'),
     team: () => request('GET', '/admin/team'),
-    updateRoles: (userId, roles) => request('PUT', `/admin/team/${userId}/roles`, { roles }),
+    updateRoles: (userId, roles) => request('PUT', `/admin/team/${seg(userId)}/roles`, { roles }),
     audit: (limit = 100) => request('GET', `/admin/audit?limit=${limit}`),
   };
 }
@@ -132,7 +145,7 @@ export function createHttpAuthClient(options: HttpClientOptions): AuthClient {
   return {
     requestOtp: (phone, locale) => request('POST', '/auth/otp', { phone, locale: locale ?? options.locale ?? 'ar' }),
     verifyOtp: (input) => request('POST', '/auth/otp/verify', input),
-    signInWithProvider: (provider, input) => request('POST', `/auth/oauth/${provider}`, input),
+    signInWithProvider: (provider, input) => request('POST', `/auth/oauth/${seg(provider)}`, input),
     refresh: (refreshToken) => request('POST', '/auth/refresh', { refreshToken }),
     logout: (refreshToken) => request('POST', '/auth/logout', { refreshToken }),
   };
