@@ -1,13 +1,13 @@
 /**
  * Disbursements with maker-checker control: one financial officer requests a payout
  * against a line of the case's disbursement plan, a different officer approves it,
- * and only then can it be marked paid — which posts the ledger entry and tells the
- * case's donors that their money reached the hospital, school or creditor.
+ * and only then can it be marked paid (by an officer other than the requester) — which
+ * posts the ledger entry and tells the case's donors that their money reached the
+ * hospital, school or creditor. The money goes to the account on the reviewed plan line.
  */
 import { DomainError, buildPayoutPostings, randomCode, type CaseStatus } from '@yusr/core';
 import { primaryRole, requirePermission, type CallContext } from '../common/actor';
 import type { Clock } from '../common/clock';
-import { mask } from '../common/crypto';
 import type { IdGenerator } from '../common/ids';
 import type { Database, Tx } from '../db/ports';
 import type { PayoutRow } from '../db/rows';
@@ -25,7 +25,7 @@ const ACTIVE: readonly PayoutRow['status'][] = ['requested', 'approved', 'paid']
 export class PayoutsService {
   constructor(private readonly deps: PayoutsDeps) {}
 
-  async request(input: { caseId: string; lineId: string; amountMinor?: number; payeeAccount?: string | null }, context: CallContext): Promise<PayoutRow> {
+  async request(input: { caseId: string; lineId: string; amountMinor?: number }, context: CallContext): Promise<PayoutRow> {
     const actor = requirePermission(context.actor, 'finance:payouts');
     if (input.amountMinor !== undefined && (!Number.isInteger(input.amountMinor) || input.amountMinor <= 0)) {
       throw new DomainError('VALIDATION_FAILED', 'amountMinor must be a positive integer', { field: 'amountMinor' });
@@ -42,7 +42,8 @@ export class PayoutsService {
       const againstLine = payouts.filter((row) => row.lineId === line.id && ACTIVE.includes(row.status)).reduce((sum, row) => sum + row.amountMinor, 0);
       // Without an amount, the payout settles what is left of the plan line.
       const amountMinor = input.amountMinor ?? line.amountMinor - againstLine;
-      const account = input.payeeAccount ? mask(input.payeeAccount.replace(/\s+/g, '')) : line.payeeAccountMasked;
+      // Money only goes to the account recorded on the reviewed plan line, never one typed at request time.
+      const account = line.payeeAccountMasked;
       if (!account) throw new DomainError('VALIDATION_FAILED', 'Add the payee bank account to the plan line first', { field: 'payeeAccount' });
       if (amountMinor <= 0 || againstLine + amountMinor > line.amountMinor) {
         throw new DomainError('VALIDATION_FAILED', 'Payout exceeds what the plan allows for this line', {
@@ -68,6 +69,7 @@ export class PayoutsService {
         approvedBy: null,
         approvedAt: null,
         paidAt: null,
+        paidBy: null,
         bankReference: null,
         proofDocumentId: null,
         createdAt: clock.now(),
@@ -94,7 +96,8 @@ export class PayoutsService {
       .filter((row) => row.status === 'requested' || row.status === 'approved')
       .reduce((sum, row) => sum + row.amountMinor, 0);
     let pendingRefunds = 0;
-    for (const refund of await tx.refunds.list({ status: 'approved' })) {
+    const inFlight = [...(await tx.refunds.list({ status: 'approved' })), ...(await tx.refunds.list({ status: 'sending' }))];
+    for (const refund of inFlight) {
       const donation = await tx.donations.byId(refund.donationId);
       if (donation?.caseId === caseId) pendingRefunds += caseDebitOf(donation, refund.amountMinor);
     }
@@ -156,6 +159,7 @@ export class PayoutsService {
       const payout = await tx.payouts.byId(payoutId, 'update');
       if (!payout) throw new DomainError('NOT_FOUND', 'Payout not found');
       if (payout.status !== 'approved') throw new DomainError('VALIDATION_FAILED', `Only approved payouts can be paid (this one is ${payout.status})`);
+      if (payout.requestedBy === actor.id) throw new DomainError('SELF_APPROVAL_FORBIDDEN', 'A different officer must record the transfer of this payout');
       const paidAt = clock.now();
       await tx.ledger.ensureCaseFund(payout.caseId, payout.currency);
       await tx.ledger.post({
@@ -165,7 +169,13 @@ export class PayoutsService {
         postedBy: actor.id,
         lines: buildPayoutPostings(payout.caseId, payout.amountMinor, payout.currency),
       });
-      const patch = { status: 'paid' as const, paidAt, bankReference: input.bankReference.trim(), proofDocumentId: input.proofDocumentId ?? null };
+      const patch = {
+        status: 'paid' as const,
+        paidAt,
+        paidBy: actor.id,
+        bankReference: input.bankReference.trim(),
+        proofDocumentId: input.proofDocumentId ?? null,
+      };
       await tx.payouts.update(payout.id, patch);
       const line = await tx.cases.line(payout.lineId);
       await tx.outbox.enqueue({

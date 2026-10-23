@@ -23,6 +23,12 @@ export interface CheckoutRequest {
 
 export interface CheckoutResult {
   providerRef: string;
+  /**
+   * The provider order this checkout created (Paymob), stored on the payment attempt. When the
+   * gateway reports it, webhooks are matched to the donation through it, never through the
+   * merchant reference in the callback body.
+   */
+  providerOrderRef?: string;
   action: CheckoutAction;
   /** `awaiting_transfer` for flows where the money arrives later (outlet cash, bank transfer). */
   status: 'requires_action' | 'awaiting_transfer';
@@ -43,6 +49,12 @@ export interface PaymentEvent {
   eventId: string;
   /** Our merchant reference (receipt number). */
   reference: string;
+  /**
+   * Set by gateways whose callbacks are confirmed with the provider (Paymob): the donation is the
+   * one whose checkout created this order (`CheckoutResult.providerOrderRef`), and `reference`
+   * is not used to find it.
+   */
+  providerOrderRef?: string;
   providerRef: string | null;
   outcome: PaymentOutcome;
   amountMinor: number;
@@ -70,8 +82,11 @@ export interface RefundResult {
 export interface PaymentGateway {
   readonly provider: PaymentProvider;
   createCheckout(request: CheckoutRequest): Promise<CheckoutResult>;
-  /** Verifies the signature and normalizes the payload. Throws DomainError('INVALID_SIGNATURE'). */
-  parseWebhook(input: WebhookInput): PaymentEvent;
+  /**
+   * Verifies the signature and normalizes the payload. Throws DomainError('INVALID_SIGNATURE').
+   * May confirm the event with the provider first (Paymob), hence the optional promise.
+   */
+  parseWebhook(input: WebhookInput): PaymentEvent | Promise<PaymentEvent>;
   refund(call: RefundCall): Promise<RefundResult>;
 }
 

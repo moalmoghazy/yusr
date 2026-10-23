@@ -332,7 +332,8 @@ describe('operations', () => {
     const approved = await checker.approvePayout(payout.id);
     assert.equal(approved.approvedBy?.name, 'كريم سامي');
     await isApiError(maker.markPayoutPaid(payout.id, ''), 'VALIDATION_FAILED', 422);
-    const paid = await maker.markPayoutPaid(payout.id, 'CIB-TRX-99120');
+    await isApiError(maker.markPayoutPaid(payout.id, 'CIB-TRX-99120'), 'SELF_APPROVAL_FORBIDDEN', 403);
+    const paid = await checker.markPayoutPaid(payout.id, 'CIB-TRX-99120');
     assert.equal(paid.status, 'paid');
 
     const ledger = await maker.ledger({ kind: 'payout', limit: 50 });

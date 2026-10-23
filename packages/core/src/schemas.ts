@@ -213,8 +213,7 @@ export const createPayoutSchema = z.object({
   lineId: z.uuid(),
   /** Part of the line (defaults to what is left of it). */
   amountMinor: z.number().int().positive().optional(),
-  /** Full account or IBAN for this transfer; only a masked copy is stored. */
-  payeeAccount: z.string().trim().min(6).max(64).optional(),
+  // No payee account here: a payout goes to the account on the reviewed plan line.
 });
 
 export const markPayoutPaidSchema = z.object({

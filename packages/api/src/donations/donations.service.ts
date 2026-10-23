@@ -25,6 +25,7 @@ import {
   computeDonationBreakdown,
   formatReceiptNumber,
   hasPermission,
+  isStaff,
   type CaseStatus,
   type CheckoutAction,
   type CheckoutFlow,
@@ -46,7 +47,7 @@ import type { IdGenerator } from '../common/ids';
 import type { Database, Tx } from '../db/ports';
 import type { CaseRow, DonationRow } from '../db/rows';
 import type { FxProvider } from '../payments/fx';
-import type { CheckoutResult, PaymentOutcome, WebhookInput } from '../payments/gateway';
+import type { CheckoutResult, PaymentEvent, PaymentOutcome, WebhookInput } from '../payments/gateway';
 import type { GatewayRegistry } from '../payments/registry';
 
 export interface DonationsConfig {
@@ -96,6 +97,8 @@ interface Settlement {
 
 const SETTLED: readonly DonationStatus[] = ['succeeded', 'refunded', 'partially_refunded'];
 const OPEN: readonly DonationStatus[] = ['pending', 'requires_action', 'awaiting_transfer'];
+/** A bank transfer can be confirmed while it is awaited, or after its window passed (late transfers). */
+const TRANSFER_CONFIRMABLE: readonly DonationStatus[] = ['awaiting_transfer', 'expired'];
 const IDEMPOTENCY_KEY = /^[A-Za-z0-9_-]{16,128}$/;
 
 export class DonationsService {
@@ -107,7 +110,8 @@ export class DonationsService {
     return computeDonationBreakdown({
       ...input,
       caseCurrency,
-      fx: this.deps.fx.current(),
+      // A cross-currency gift locks a rate, so it needs a current table.
+      fx: input.currency === caseCurrency ? this.deps.fx.current() : this.deps.fx.forConversion(),
       feeSchedule: this.deps.config.feeSchedule,
       feePolicy: this.deps.config.feePolicy,
     });
@@ -265,6 +269,7 @@ export class DonationsService {
           donationId: donation.id,
           provider: donation.provider,
           providerRef: null,
+          providerOrderRef: null,
           status: 'failed',
           amountMinor: donation.chargedMinor,
           currency: donation.currency,
@@ -282,6 +287,7 @@ export class DonationsService {
         donationId: donation.id,
         provider: donation.provider,
         providerRef: result.providerRef,
+        providerOrderRef: result.providerOrderRef ?? null,
         status: 'action_required',
         amountMinor: donation.chargedMinor,
         currency: donation.currency,
@@ -317,7 +323,7 @@ export class DonationsService {
   async handleWebhook(provider: PaymentProvider, input: WebhookInput): Promise<WebhookResult> {
     const { db, gateways, clock, ids } = this.deps;
     // Signature first: nothing from an unverified body is stored or trusted.
-    const event = gateways.get(provider).parseWebhook(input);
+    const event = await gateways.get(provider).parseWebhook(input);
     const now = clock.now();
     return db.transaction(async (tx) => {
       const fresh = await tx.webhooks.record({
@@ -332,7 +338,7 @@ export class DonationsService {
       });
       if (!fresh) return { status: 'duplicate' } as const;
 
-      const donation = await tx.donations.byReceipt(event.reference, 'update');
+      const donation = await this.donationFor(tx, provider, event);
       if (!donation) {
         await tx.webhooks.finish(provider, event.eventId, 'unknown reference', now);
         return { status: 'ignored', reason: 'unknown_reference' } as const;
@@ -357,6 +363,13 @@ export class DonationsService {
       await tx.webhooks.finish(provider, event.eventId, null, now);
       return result;
     });
+  }
+
+  /** The donation an event is about: by the provider order stored at checkout when the gateway gives one, else by receipt number. */
+  private async donationFor(tx: Tx, provider: PaymentProvider, event: PaymentEvent): Promise<DonationRow | null> {
+    if (event.providerOrderRef === undefined) return tx.donations.byReceipt(event.reference, 'update');
+    const attempt = await tx.donations.attemptByOrderRef(provider, event.providerOrderRef);
+    return attempt ? tx.donations.byId(attempt.donationId, 'update') : null;
   }
 
   private async apply(tx: Tx, donation: DonationRow, outcome: PaymentOutcome, payment: Settlement, failureCode: string | null): Promise<WebhookResult> {
@@ -529,8 +542,19 @@ export class DonationsService {
     await db.transaction(async (tx) => {
       const donation = await tx.donations.byId(donationId, 'update');
       if (!donation) throw new DomainError('NOT_FOUND', 'Donation not found');
-      if (![...OPEN, 'expired', 'needs_review'].includes(donation.status)) {
+      // Only bank transfers are confirmed by hand. Gateway payments are settled by their verified
+      // webhooks, and a donation parked for review is not settled by a single officer.
+      if (donation.provider !== 'instapay') {
+        throw new DomainError('VALIDATION_FAILED', 'Only bank transfers are confirmed by hand', { method: donation.method });
+      }
+      if (!TRANSFER_CONFIRMABLE.includes(donation.status)) {
         throw new DomainError('VALIDATION_FAILED', `Donation is ${donation.status}, not awaiting a transfer`, { status: donation.status });
+      }
+      // One bank statement line pays one donation (payment_attempts_ref keeps it unique per provider).
+      const bankReference = input.bankReference.trim();
+      const used = await tx.donations.attemptByProviderRef(donation.provider, bankReference);
+      if (used && used.donationId !== donation.id) {
+        throw new DomainError('VALIDATION_FAILED', 'This bank reference was already matched to another donation', { field: 'bankReference' });
       }
       if (input.receivedMinor !== donation.chargedMinor) {
         throw new DomainError('AMOUNT_MISMATCH', 'Received amount differs from the donation', {
@@ -540,13 +564,8 @@ export class DonationsService {
       }
       const result = await this.settle(
         tx,
-        { ...donation, status: donation.status === 'needs_review' ? 'awaiting_transfer' : donation.status },
-        {
-          amountMinor: input.receivedMinor,
-          currency: donation.currency,
-          feeMinor: donation.provider === 'instapay' ? 0 : null,
-          providerRef: input.bankReference,
-        },
+        donation,
+        { amountMinor: input.receivedMinor, currency: donation.currency, feeMinor: 0, providerRef: bankReference },
         actor,
       );
       if (result.status !== 'processed' || result.donationStatus !== 'succeeded') {
@@ -559,7 +578,7 @@ export class DonationsService {
         entityType: 'donation',
         entityId: donation.id,
         before: { status: donation.status },
-        after: { status: 'succeeded', bankReference: input.bankReference },
+        after: { status: 'succeeded', bankReference },
         ip: context.ip ?? null,
         requestId: context.requestId ?? null,
       });
@@ -574,13 +593,18 @@ export class DonationsService {
     const donation = await db.read.donations.byId(donationId);
     const allowed =
       donation &&
-      ((access.actor && (access.actor.id === donation.donorId || hasPermission(access.actor.roles, 'finance:read'))) ||
+      ((access.actor && (access.actor.id === donation.donorId || this.isFinanceReader(access.actor))) ||
         (access.token !== null && safeEqual(this.receiptToken(donation.id), access.token)));
     // Unknown and forbidden look the same, so ids cannot be probed.
     if (!donation || !allowed) throw new DomainError('NOT_FOUND', 'Donation not found');
     const item = await db.read.cases.byId(donation.caseId);
     if (!item) throw new DomainError('NOT_FOUND', 'Case not found');
     return this.toReceipt(donation, item);
+  }
+
+  /** Same rule as requirePermission(actor, 'finance:read'): staff also need a second-factor session. */
+  private isFinanceReader(actor: RequestActor): boolean {
+    return hasPermission(actor.roles, 'finance:read') && (!isStaff(actor.roles) || actor.mfa);
   }
 
   async listForDonor(actor: RequestActor, limit = 50): Promise<DonationReceipt[]> {

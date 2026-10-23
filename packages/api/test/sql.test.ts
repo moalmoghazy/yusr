@@ -260,6 +260,37 @@ describe('PostgreSQL schema', { skip: SKIP }, () => {
     assert.match(again.err, /journal_one_entry_per_donation/);
   });
 
+  it('posts a refund once, keeps the payer apart from the requester and each Paymob order on one attempt (0004)', () => {
+    assert.match(psql(url, `UPDATE payouts SET paid_by = '${ID.financeA}' WHERE id = '${ID.payout}';`).err, /payouts_four_eyes/);
+    assert.ok(psql(url, `UPDATE payouts SET paid_by = '${ID.financeB}' WHERE id = '${ID.payout}';`).ok);
+
+    const refund = '00000000-0000-4000-8000-00000000f001';
+    const sending = psql(
+      url,
+      `INSERT INTO refunds (id, donation_id, amount_minor, reason, status, requested_by, approved_by, provider_ref)
+      VALUES ('${refund}', '${ID.donation}', 1000, 'Donor paid twice', 'sending', '${ID.financeA}', '${ID.financeB}', 'rf_1');`,
+    );
+    assert.ok(sending.ok, sending.err);
+    const post = (entry: string) =>
+      psql(
+        url,
+        `BEGIN;
+        INSERT INTO journal_entries (id, kind, refund_id) VALUES ('${entry}', 'refund', '${refund}');
+        INSERT INTO journal_lines (entry_id, account_code, direction, amount_minor, currency) VALUES
+          ('${entry}', 'liability:case:${ID.case}', 'debit', 1000, 'EGP'),
+          ('${entry}', 'asset:bank:operating', 'credit', 1000, 'EGP');
+        COMMIT;`,
+      );
+    const first = post('00000000-0000-4000-8000-00000000e011');
+    assert.ok(first.ok, first.err);
+    assert.match(post('00000000-0000-4000-8000-00000000e012').err, /journal_one_entry_per_refund/);
+
+    const attempt = `INSERT INTO payment_attempts (donation_id, provider, provider_ref, provider_order_ref, status, amount_minor, currency)
+      VALUES ('${ID.donation}', 'paymob', NULL, '217503754', 'action_required', 128750, 'EGP');`;
+    assert.ok(psql(url, attempt).ok);
+    assert.match(psql(url, attempt).err, /payment_attempts_order_ref/);
+  });
+
   it('matches the Drizzle schema: every table and column in schema.ts exists in the migration', () => {
     const source = readFileSync(SCHEMA_TS, 'utf8');
     const declared = new Map<string, string[]>();

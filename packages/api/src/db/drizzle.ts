@@ -354,6 +354,14 @@ function createTx(x: Executor): Tx & { raw: Executor } {
             .where(and(eq(t.paymentAttempts.provider, provider), eq(t.paymentAttempts.providerRef, providerRef)))
             .limit(1),
         ) as PaymentAttemptRow | null,
+      attemptByOrderRef: async (provider, providerOrderRef) =>
+        first(
+          await x
+            .select()
+            .from(t.paymentAttempts)
+            .where(and(eq(t.paymentAttempts.provider, provider), eq(t.paymentAttempts.providerOrderRef, providerOrderRef)))
+            .limit(1),
+        ) as PaymentAttemptRow | null,
       insertAttempt: async (row) => {
         await x.insert(t.paymentAttempts).values(row);
       },

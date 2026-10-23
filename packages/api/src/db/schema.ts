@@ -65,7 +65,7 @@ export const donationStatus = pgEnum('donation_status', DONATION_STATUSES);
 export const paymentMethod = pgEnum('payment_method', PAYMENT_METHODS);
 export const paymentProvider = pgEnum('payment_provider', PAYMENT_PROVIDERS);
 export const payoutStatus = pgEnum('payout_status', ['requested', 'approved', 'paid', 'rejected']);
-export const refundStatus = pgEnum('refund_status', ['requested', 'approved', 'processed', 'rejected']);
+export const refundStatus = pgEnum('refund_status', ['requested', 'approved', 'sending', 'processed', 'rejected']);
 export const accountType = pgEnum('account_type', ['asset', 'liability', 'equity', 'revenue', 'expense']);
 export const entryKind = pgEnum('entry_kind', ['donation', 'refund', 'payout', 'settlement', 'adjustment', 'platform_fee']);
 export const outboxStatus = pgEnum('outbox_status', ['pending', 'processing', 'sent', 'failed']);
@@ -351,6 +351,8 @@ export const paymentAttempts = pgTable(
       .references(() => donations.id),
     provider: paymentProvider('provider').notNull(),
     providerRef: text('provider_ref'),
+    /** The provider's order for this checkout (Paymob), which its callbacks are matched by. */
+    providerOrderRef: text('provider_order_ref'),
     status: text('status').$type<'created' | 'action_required' | 'captured' | 'failed' | 'refunded'>().notNull(),
     amountMinor: money('amount_minor').notNull(),
     currency: currency('currency').notNull(),
@@ -358,7 +360,12 @@ export const paymentAttempts = pgTable(
     failureCode: text('failure_code'),
     createdAt: created(),
   },
-  (t) => [uniqueIndex('payment_attempts_ref').on(t.provider, t.providerRef)],
+  (t) => [
+    uniqueIndex('payment_attempts_ref').on(t.provider, t.providerRef),
+    uniqueIndex('payment_attempts_order_ref')
+      .on(t.provider, t.providerOrderRef)
+      .where(sql`provider_order_ref IS NOT NULL`),
+  ],
 );
 
 export const webhookEvents = pgTable(
@@ -395,6 +402,8 @@ export const payouts = pgTable('payouts', {
   approvedBy: uuid('approved_by').references(() => users.id),
   approvedAt: at('approved_at'),
   paidAt: at('paid_at'),
+  /** Who recorded the bank transfer; never the officer who requested the payout. */
+  paidBy: uuid('paid_by').references(() => users.id),
   bankReference: text('bank_reference'),
   proofDocumentId: uuid('proof_document_id').references(() => caseDocuments.id),
   createdAt: created(),

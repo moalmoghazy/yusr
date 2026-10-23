@@ -107,6 +107,8 @@ export interface DonationsRepo {
   expirable(before: Date, limit: number): Promise<DonationRow[]>;
   latestAttempt(donationId: Id): Promise<PaymentAttemptRow | null>;
   attemptByProviderRef(provider: PaymentProvider, providerRef: string): Promise<PaymentAttemptRow | null>;
+  /** The attempt whose checkout created this provider order (see PaymentAttemptRow.providerOrderRef). */
+  attemptByOrderRef(provider: PaymentProvider, providerOrderRef: string): Promise<PaymentAttemptRow | null>;
   insertAttempt(row: PaymentAttemptRow): Promise<void>;
   updateAttempt(id: Id, patch: Partial<Omit<PaymentAttemptRow, 'id'>>): Promise<void>;
 }

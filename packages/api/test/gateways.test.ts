@@ -7,7 +7,7 @@ import { majorToMinor, minorToMajorString } from '../src/payments/gateway';
 import { FawryGateway, egyptianMobile } from '../src/payments/gateways/fawry.gateway';
 import { InstapayGateway } from '../src/payments/gateways/instapay.gateway';
 import { MoyasarGateway } from '../src/payments/gateways/moyasar.gateway';
-import { PaymobGateway } from '../src/payments/gateways/paymob.gateway';
+import { PaymobGateway, paymobSignature } from '../src/payments/gateways/paymob.gateway';
 import { StripeGateway, parseStripeSignature } from '../src/payments/gateways/stripe.gateway';
 
 interface Recorded {
@@ -101,8 +101,15 @@ describe('Paymob', () => {
     .update('1287502026-09-26T09:03:11.412094EGPfalsefalse1920364654101truefalsefalsefalsetruefalse217503754302852false2346MasterCardcardtrue')
     .digest('hex');
 
+  /** Paymob's API answering the server-to-server lookup with `stored` (the callback body is never trusted). */
+  const paymobApi = (stored: Record<string, unknown> = transaction) =>
+    fakeFetch((request) =>
+      request.url.includes('/api/acceptance/transactions/') ? stored : { id: 'pi_test_1', client_secret: 'egy_csk_test_abc', intention_order_id: 217_503_754 },
+    );
+  const signed = (obj: Record<string, unknown>, hmac = expectedHmac) => input({ type: 'TRANSACTION', obj }, {}, { hmac });
+
   it('creates an intention and redirects to the unified checkout', async () => {
-    const { impl, calls } = fakeFetch(() => ({ id: 'pi_test_1', client_secret: 'egy_csk_test_abc' }));
+    const { impl, calls } = paymobApi();
     const gateway = new PaymobGateway(config, impl, () => new Date('2026-09-26T09:00:00Z'));
     const result = await gateway.createCheckout(checkout({ method: 'vodafone_cash' }));
     assert.equal(calls[0]?.url, 'https://accept.paymob.com/v1/intention/');
@@ -116,27 +123,68 @@ describe('Paymob', () => {
     assert.equal(body.billing_data.last_name, 'Adel Hassan');
     assert.deepEqual(result, {
       providerRef: 'pi_test_1',
+      providerOrderRef: '217503754',
       status: 'requires_action',
       action: { type: 'redirect', provider: 'paymob', url: 'https://accept.paymob.com/unifiedcheckout/?publicKey=egy_pk_test&clientSecret=egy_csk_test_abc' },
     });
   });
 
-  it('verifies the HMAC-SHA512 of a transaction callback', () => {
-    const gateway = new PaymobGateway(config);
-    const event = gateway.parseWebhook(input({ type: 'TRANSACTION', obj: transaction }, {}, { hmac: expectedHmac }));
-    assert.equal(event.outcome, 'succeeded');
-    assert.equal(event.reference, 'YSR-2026-000123');
-    assert.equal(event.amountMinor, 128_750);
-    assert.equal(event.providerRef, '192036465');
+  it('refuses a checkout whose intention has no order to match callbacks by', async () => {
+    const { impl } = fakeFetch(() => ({ id: 'pi_test_1', client_secret: 'egy_csk_test_abc' }));
+    await assert.rejects(new PaymobGateway(config, impl).createCheckout(checkout()), (error: unknown) => DomainError.is(error, 'PAYMENT_PROVIDER_ERROR'));
   });
 
-  it('rejects a tampered amount or a missing signature', () => {
-    const gateway = new PaymobGateway(config);
-    assert.throws(
-      () => gateway.parseWebhook(input({ type: 'TRANSACTION', obj: { ...transaction, amount_cents: 1 } }, {}, { hmac: expectedHmac })),
-      invalidSignature,
-    );
-    assert.throws(() => gateway.parseWebhook(input({ type: 'TRANSACTION', obj: transaction })), invalidSignature);
+  it('verifies the HMAC-SHA512 of a transaction callback, then reads the transaction back from Paymob', async () => {
+    const { impl, calls } = paymobApi();
+    const event = await new PaymobGateway(config, impl).parseWebhook(signed(transaction));
+    assert.equal(calls[0]?.url, 'https://accept.paymob.com/api/acceptance/transactions/192036465');
+    assert.equal(calls[0]?.method, 'GET');
+    assert.equal(calls[0]?.headers['authorization'], 'Token egy_sk_test');
+    assert.equal(event.outcome, 'succeeded');
+    assert.equal(event.reference, 'YSR-2026-000123');
+    assert.equal(event.providerOrderRef, '217503754');
+    assert.equal(event.amountMinor, 128_750);
+    assert.equal(event.providerRef, '192036465');
+    assert.equal(event.eventId, '192036465:true:false:false:false');
+  });
+
+  it('takes the amount and status from Paymob, not from the callback', async () => {
+    const { impl } = paymobApi({ ...transaction, amount_cents: 100, success: false, pending: true });
+    const event = await new PaymobGateway(config, impl).parseWebhook(signed(transaction));
+    assert.equal(event.amountMinor, 100);
+    assert.equal(event.outcome, 'pending');
+    assert.equal(event.eventId, '192036465:false:true:false:false', 'a later pending → paid callback is a new event');
+  });
+
+  it('rejects a tampered amount or a missing signature', async () => {
+    const { impl, calls } = paymobApi();
+    const gateway = new PaymobGateway(config, impl);
+    await assert.rejects(gateway.parseWebhook(signed({ ...transaction, amount_cents: 1 })), invalidSignature);
+    await assert.rejects(gateway.parseWebhook(input({ type: 'TRANSACTION', obj: transaction })), invalidSignature);
+    assert.equal(calls.length, 0);
+  });
+
+  it('rejects callbacks whose signed digits were shifted between fields', async () => {
+    const { impl, calls } = paymobApi();
+    const gateway = new PaymobGateway(config, impl);
+    const forgeries = [
+      // created_at's first digit moved into amount_cents: 1,287,502 instead of 128,750.
+      { ...transaction, amount_cents: 1_287_502, created_at: '026-09-26T09:03:11.412094' },
+      // integration_id's first digit moved into id: points at another transaction.
+      { ...transaction, id: 1_920_364_654, integration_id: 101 },
+      // is_voided's text swallowed the order id's first digit: points at another order.
+      { ...transaction, is_voided: 'false2', order: { id: 17_503_754, merchant_order_id: 'YSR-2026-000999' } },
+    ];
+    for (const forged of forgeries) {
+      assert.equal(paymobSignature(forged, config.hmacSecret), expectedHmac, 'the separator-less HMAC still matches');
+      await assert.rejects(gateway.parseWebhook(signed(forged)), invalidSignature);
+    }
+    assert.equal(calls.length, 1, 'only the plausible forgery reached Paymob, which disagreed');
+  });
+
+  it('rejects a callback that Paymob does not confirm', async () => {
+    const { impl } = paymobApi({ ...transaction, order: { id: 217_503_999, merchant_order_id: 'YSR-2026-000123' } });
+    await assert.rejects(new PaymobGateway(config, impl).parseWebhook(signed(transaction)), invalidSignature);
   });
 
   it('refunds by transaction id', async () => {

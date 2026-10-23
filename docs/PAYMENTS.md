@@ -61,6 +61,8 @@ sequenceDiagram
   The receipt page shows "still confirming" and re-reads the status for a couple of minutes.
 - **Amounts are locked at creation**: the fee estimate, whether the donor covers it, and the FX
   rate for cross-currency gifts (a USD gift to an EGP case credits the case in EGP at the locked rate).
+  When the rates feed has not refreshed within its allowed age (36 hours by default), cross-currency
+  gifts are refused (`METHOD_NOT_AVAILABLE`) until it does; gifts in the case's currency go on.
 - **Mismatches are held, not guessed.** If the gateway reports a different amount or currency,
   the donation goes to `needs_review` and finance is alerted in Slack.
 - **Expiry.** Open checkouts expire (30 minutes for cards and wallets, 72 hours for Fawry, 48 hours
@@ -70,7 +72,7 @@ sequenceDiagram
 
 | Gateway | Verification |
 |---|---|
-| Paymob | HMAC-SHA512 over the documented transaction fields, `hmac` query parameter |
+| Paymob | HMAC-SHA512 over the documented transaction fields, `hmac` query parameter; then the transaction is read back from Paymob (below) |
 | Fawry | SHA-256 message signature over the notification fields and the secure key |
 | Moyasar | Shared `secret_token` in the payload (constant-time comparison) |
 | Stripe | `Stripe-Signature`: HMAC-SHA256 over `timestamp.body`, any `v1`, 5-minute tolerance |
@@ -80,6 +82,15 @@ sequenceDiagram
 Every comparison is constant-time. Raw request bytes are kept for verification (the API mounts a
 raw body parser on `/v1/webhooks`). Each `(provider, event_id)` is stored once; a replay is
 acknowledged and ignored.
+
+Paymob's HMAC joins the field values without separators, so a signature does not pin where one
+field ends (numbers can slide from `created_at` into `amount_cents`), and the merchant reference is
+not signed. A verified Paymob callback is therefore only a hint: its id, order, integration (one of
+ours) and timestamp are checked, the transaction is fetched from
+`GET /api/acceptance/transactions/{id}` with the secret key, and the amount, currency, status flags
+and order come from that answer. The donation is the one whose checkout created that Paymob order
+(stored on the payment attempt), never the one named by `merchant_order_id`. The event id includes
+the status flags, so a pending transaction that later succeeds is processed again.
 
 ## The ledger
 
@@ -121,11 +132,19 @@ flowchart LR
 - A payout pays **one line of the case's disbursement plan** (a hospital invoice, a court-ordered
   debt, a school's fees) directly to the payee — never cash to the beneficiary. The plan is fixed
   once the case is published.
-- **Maker-checker.** The officer who requests a payout cannot approve it — enforced by the API
-  and by a `CHECK` constraint. Refunds follow the same rule.
+- **Maker-checker.** The officer who requests a payout can neither approve it nor mark it paid —
+  enforced by the API and by a `CHECK` constraint. The transfer goes to the bank account on the plan
+  line; a request cannot name another account. Refunds follow the same rule.
+- **A refund is sent once.** Approving moves it to `sending` under a row lock before the provider is
+  called (most providers ignore idempotency keys), the provider's reference is saved before the
+  ledger entry, and the database posts one refund entry per refund. A refund left in `sending`
+  without a reference (the provider call failed or timed out) is not sent again: check it with the
+  provider first. Approval also re-checks that the donation is still paid (not charged back or
+  under review).
 - **Reconciliation of InstaPay transfers.** Finance matches the statement line and confirms the
   donation with the bank reference and the amount received; the amount must equal what the donor
-  was asked to send, or the API refuses.
+  was asked to send, or the API refuses. Only InstaPay donations that are awaiting their transfer
+  (or expired before it arrived) can be confirmed, and each bank reference matches one donation.
 - Everything above lands in the append-only audit log with the actor, before/after values and
   the request id.
 

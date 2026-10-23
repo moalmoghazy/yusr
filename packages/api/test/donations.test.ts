@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { DomainError, assertBalanced, computeDonationBreakdown, DEMO_FX, type CreateDonationRequest } from '@yusr/core';
-import { CASE_ID, DRAFT_CASE_ID, SAR_CASE_ID, USERS, actorOf, key, setup, webhook } from './support/fixtures';
+import { DonationsService } from '../src/donations/donations.service';
+import { RefreshingFx } from '../src/payments/fx';
+import type { FetchLike, WebhookInput } from '../src/payments/gateway';
+import { PaymobGateway, paymobSignature } from '../src/payments/gateways/paymob.gateway';
+import { GatewayRegistry } from '../src/payments/registry';
+import { CASE_ID, DRAFT_CASE_ID, SAR_CASE_ID, TEST_CONFIG, USERS, actorOf, key, setup, webhook } from './support/fixtures';
 
 const guest = { name: 'Ahmed Salah', email: 'ahmed@example.com', phone: null };
 
@@ -306,11 +311,170 @@ describe('bank transfers and receipts', () => {
     assert.ok(db.auditRows().some((row) => row.action === 'donation.transfer_confirmed' && row.actorId === USERS.financeA.id));
   });
 
+  it('confirms only InstaPay transfers that are awaited or expired, each bank reference once', async () => {
+    const { donations, db, clock } = await setup();
+    const finance = { actor: actorOf(USERS.financeA) };
+    const card = await donations.create(request(), { actor: null, idempotencyKey: key() });
+    await rejects(
+      donations.confirmTransfer(card.donationId, { bankReference: 'CIB-1', receivedMinor: card.breakdown.chargedMinor }, finance),
+      'VALIDATION_FAILED',
+    );
+    await db.transaction((tx) => tx.donations.update(card.donationId, { status: 'needs_review' }));
+    await rejects(
+      donations.confirmTransfer(card.donationId, { bankReference: 'CIB-1', receivedMinor: card.breakdown.chargedMinor }, finance),
+      'VALIDATION_FAILED',
+    );
+    assert.equal(db.journalLines().length, 0);
+
+    const first = await donations.create(request({ method: 'instapay', coverFees: false }), { actor: null, idempotencyKey: key() });
+    const second = await donations.create(request({ method: 'instapay', coverFees: false }), { actor: null, idempotencyKey: key() });
+    await donations.confirmTransfer(first.donationId, { bankReference: 'CIB-500', receivedMinor: 1_250_00 }, finance);
+    await rejects(donations.confirmTransfer(first.donationId, { bankReference: 'CIB-501', receivedMinor: 1_250_00 }, finance), 'VALIDATION_FAILED');
+    await rejects(donations.confirmTransfer(second.donationId, { bankReference: 'CIB-500', receivedMinor: 1_250_00 }, finance), 'VALIDATION_FAILED');
+
+    // A transfer that arrives after the window closed is still matched.
+    clock.advance(49 * 3_600_000);
+    assert.equal(await donations.expireStale(), 1);
+    const late = await donations.confirmTransfer(second.donationId, { bankReference: 'CIB-502', receivedMinor: 1_250_00 }, finance);
+    assert.equal(late.status, 'succeeded');
+  });
+
   it('hides receipts from anyone without the token, the donor account or finance access', async () => {
     const { donations } = await setup();
     const created = await donations.create(request(), { actor: null, idempotencyKey: key() });
     await rejects(donations.receipt(created.donationId, { actor: null, token: 'wrong' }), 'NOT_FOUND');
     await rejects(donations.receipt(created.donationId, { actor: actorOf(USERS.moderator), token: null }), 'NOT_FOUND');
     assert.equal((await donations.receipt(created.donationId, { actor: actorOf(USERS.financeB), token: null })).id, created.donationId);
+    await rejects(donations.receipt(created.donationId, { actor: actorOf(USERS.financeB, false), token: null }), 'NOT_FOUND');
+  });
+});
+
+describe('Paymob callbacks against the real gateway', () => {
+  const config = { secretKey: 'egy_sk_test', publicKey: 'egy_pk_test', hmacSecret: 'paymob-hmac-secret', integrations: { card: 4_101, wallet: 4_102 } };
+  const ORDER = 217_503_754;
+
+  /** Donations wired to a PaymobGateway whose API (intentions and transaction lookups) is faked. */
+  async function paymobSetup() {
+    const context = await setup();
+    const transactions = new Map<string, Record<string, unknown>>();
+    const lookups: string[] = [];
+    const api: FetchLike = async (url) => {
+      const match = /\/api\/acceptance\/transactions\/(\d+)$/.exec(String(url));
+      if (match) lookups.push(match[1]!);
+      const body = match ? transactions.get(match[1]!) : { id: 'pi_1', client_secret: 'csk_1', intention_order_id: ORDER };
+      return new Response(JSON.stringify(body ?? { detail: 'Not found' }), { status: body ? 200 : 404 });
+    };
+    const paymob = new PaymobGateway(config, api);
+    const donations = new DonationsService({
+      db: context.db,
+      gateways: new GatewayRegistry([paymob]),
+      fx: context.fx,
+      clock: context.clock,
+      ids: context.ids,
+      config: TEST_CONFIG,
+    });
+    const created = await donations.create(request(), { actor: null, idempotencyKey: key() });
+    const base = {
+      id: 192_036_465,
+      pending: false,
+      amount_cents: created.breakdown.chargedMinor,
+      success: true,
+      is_auth: false,
+      is_capture: false,
+      is_standalone_payment: true,
+      is_voided: false,
+      is_refunded: false,
+      is_3d_secure: true,
+      integration_id: 4_101,
+      has_parent_transaction: false,
+      error_occured: false,
+      currency: 'EGP',
+      owner: 302_852,
+      created_at: '2026-09-26T09:03:11.412094',
+      order: { id: ORDER, merchant_order_id: created.receiptNumber },
+      source_data: { pan: '2346', type: 'card', sub_type: 'MasterCard' },
+      data: { message: 'Approved' },
+    };
+    const callback = (obj: Record<string, unknown>, hmac = paymobSignature(obj, config.hmacSecret)): WebhookInput => ({
+      rawBody: Buffer.from(JSON.stringify({ type: 'TRANSACTION', obj })),
+      headers: {},
+      query: { hmac },
+    });
+    return { ...context, donations, created, base, transactions, lookups, callback };
+  }
+
+  it('credits only what Paymob confirms, and processes pending then paid callbacks of one transaction', async () => {
+    const { donations, db, created, base, transactions, callback } = await paymobSetup();
+    const pending = { ...base, success: false, pending: true };
+    transactions.set('192036465', pending);
+    assert.deepEqual(await donations.handleWebhook('paymob', callback(pending)), {
+      status: 'processed',
+      donationId: created.donationId,
+      donationStatus: 'requires_action',
+      caseFunded: false,
+    });
+
+    transactions.set('192036465', base);
+    const paid = await donations.handleWebhook('paymob', callback(base));
+    assert.equal(paid.status === 'processed' && paid.donationStatus, 'succeeded');
+    assert.deepEqual(await donations.handleWebhook('paymob', callback(base)), { status: 'duplicate' });
+    assert.equal((await db.read.donations.latestAttempt(created.donationId))?.providerRef, '192036465');
+  });
+
+  it('does not credit anything for a callback whose signed fields were shifted', async () => {
+    const { donations, db, created, base, transactions, lookups, callback } = await paymobSetup();
+    // The donor really paid 1 EGP on another order; the callback for it is genuinely signed.
+    const small = { ...base, id: 192_036_466, amount_cents: 100, order: { id: 217_503_755, merchant_order_id: 'YSR-2026-000999' } };
+    transactions.set('192036466', small);
+    const hmac = paymobSignature(small, config.hmacSecret);
+    // Slide digits between neighbouring fields and point the unsigned merchant reference at our donation.
+    const forged = [
+      { ...small, amount_cents: 1_002, created_at: '026-09-26T09:03:11.412094', order: { id: 217_503_755, merchant_order_id: created.receiptNumber } },
+      { ...small, id: 1_920_364_664, integration_id: 101 },
+      { ...small, is_voided: 'false2', order: { id: 17_503_755, merchant_order_id: created.receiptNumber } },
+    ];
+    for (const obj of forged) {
+      assert.equal(paymobSignature(obj, config.hmacSecret), hmac);
+      await rejects(donations.handleWebhook('paymob', callback(obj, hmac)), 'INVALID_SIGNATURE');
+    }
+    // The genuine callback names another order, so the merchant reference cannot redirect it to us.
+    const relabelled = { ...small, order: { id: 217_503_755, merchant_order_id: created.receiptNumber } };
+    transactions.set('192036466', relabelled);
+    assert.deepEqual(await donations.handleWebhook('paymob', callback(relabelled)), { status: 'ignored', reason: 'unknown_reference' });
+
+    assert.equal((await db.read.donations.byId(created.donationId))?.status, 'requires_action');
+    assert.equal(db.journalLines().length, 0);
+    assert.equal((await db.read.cases.byId(CASE_ID))?.raisedMinor, 0);
+    assert.equal(lookups.length, 2, 'only the last shift looked plausible enough to ask Paymob, which disagreed');
+  });
+
+  it('parks the donation when Paymob reports a different amount than the callback', async () => {
+    const { donations, db, created, base, transactions, callback } = await paymobSetup();
+    transactions.set('192036465', { ...base, amount_cents: 100 });
+    const result = await donations.handleWebhook('paymob', callback(base));
+    assert.equal(result.status === 'processed' && result.donationStatus, 'needs_review');
+    assert.equal((await db.read.donations.byId(created.donationId))?.status, 'needs_review');
+    assert.equal(db.journalLines().length, 0);
+  });
+});
+
+describe('exchange rates', () => {
+  it('refuses cross-currency donations once the rates are older than the allowed age', async () => {
+    const { db, registry, clock, ids } = await setup();
+    let now = Date.parse('2026-09-26T12:00:00Z');
+    const fx = new RefreshingFx(
+      { url: 'https://fx.example/rates', maxAgeHours: 36, fallback: { ...DEMO_FX, asOf: '2026-09-26T00:00:00Z' } },
+      async () => new Response('{}', { status: 503 }),
+      () => now,
+    );
+    const donations = new DonationsService({ db, gateways: registry, fx, clock, ids, config: TEST_CONFIG });
+    const usd = request({ currency: 'USD', amountMinor: 50_00, method: 'card' });
+    assert.equal((await donations.quoteForCase(CASE_ID, usd)).caseCurrency, 'EGP');
+
+    now = Date.parse('2026-09-28T00:00:01Z');
+    await rejects(donations.quoteForCase(CASE_ID, usd), 'METHOD_NOT_AVAILABLE');
+    await rejects(donations.create(usd, { actor: null, idempotencyKey: key() }), 'METHOD_NOT_AVAILABLE');
+    // Gifts in the case's own currency need no rate.
+    assert.equal((await donations.create(request(), { actor: null, idempotencyKey: key() })).status, 'requires_action');
   });
 });

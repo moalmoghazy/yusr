@@ -6,11 +6,12 @@
  * both the in-memory store and PostgreSQL refuse that.
  */
 import { DomainError, buildRefundPostings, type DonationSettlement } from '@yusr/core';
-import { primaryRole, requirePermission, type CallContext } from '../common/actor';
+import { primaryRole, requirePermission, type CallContext, type RequestActor } from '../common/actor';
 import type { Clock } from '../common/clock';
 import type { IdGenerator } from '../common/ids';
 import type { Database } from '../db/ports';
 import type { DonationRow, RefundRow } from '../db/rows';
+import type { RefundCall } from '../payments/gateway';
 import type { GatewayRegistry } from '../payments/registry';
 
 export interface RefundsDeps {
@@ -84,18 +85,32 @@ export class RefundsService {
     });
   }
 
-  /** Approves, sends the refund to the provider, then posts it. Safe to call again if the provider call failed. */
+  /**
+   * Approves, sends the refund to the provider once, then posts it.
+   *
+   * The refund moves requested → sending under its row lock before the provider is called, so two
+   * approvals (double click, two officers, a retry) can never send it twice — most providers ignore
+   * idempotency keys. The provider's reference is saved before the ledger entry is posted; calling
+   * approve again on a refund that has one only finishes the posting. A refund left in `sending`
+   * without a reference (the provider call failed or timed out) is not sent again: finance checks it
+   * with the provider first.
+   */
   async approve(refundId: string, context: CallContext): Promise<RefundRow> {
     const actor = requirePermission(context.actor, 'finance:approve');
-    const { db, gateways, clock } = this.deps;
+    const { db, gateways } = this.deps;
 
-    const { refund, donation, providerRef } = await db.transaction(async (tx) => {
+    const claimed = await db.transaction(async (tx) => {
       const refund = await tx.refunds.byId(refundId, 'update');
       if (!refund) throw new DomainError('NOT_FOUND', 'Refund not found');
-      if (refund.status !== 'requested' && refund.status !== 'approved') throw new DomainError('VALIDATION_FAILED', `Refund is ${refund.status}`);
       if (refund.requestedBy === actor.id) throw new DomainError('SELF_APPROVAL_FORBIDDEN', 'A different officer must approve this refund');
+      if (refund.status === 'sending' && refund.providerRef) return { refund, send: null };
+      if (refund.status !== 'requested') throw new DomainError('VALIDATION_FAILED', `Refund is ${refund.status}`, { status: refund.status });
       const donation = await tx.donations.byId(refund.donationId, 'update');
       if (!donation) throw new DomainError('NOT_FOUND', 'Donation not found');
+      // The donation may have changed since the request (chargeback, provider-side refund, review).
+      if (donation.status !== 'succeeded' && donation.status !== 'partially_refunded') {
+        throw new DomainError('DONATION_NOT_REFUNDABLE', `Donation is ${donation.status}`, { status: donation.status });
+      }
       const attempt = await tx.donations.latestAttempt(donation.id);
       // Check the case still holds the money before asking the provider to return it.
       const caseDebit = caseDebitOf(donation, refund.amountMinor);
@@ -106,41 +121,60 @@ export class RefundsService {
           neededMinor: caseDebit,
         });
       }
-      if (refund.status === 'requested') {
-        await tx.refunds.update(refund.id, { status: 'approved', approvedBy: actor.id });
-        await tx.audit.record({
-          actorId: actor.id,
-          actorRole: primaryRole(actor),
-          action: 'refund.approved',
-          entityType: 'refund',
-          entityId: refund.id,
-          before: { status: 'requested' },
-          after: { status: 'approved' },
-        });
-      }
-      return { refund: { ...refund, status: 'approved' as const, approvedBy: actor.id }, donation, providerRef: attempt?.providerRef ?? donation.receiptNo };
+      await tx.refunds.update(refund.id, { status: 'sending', approvedBy: actor.id });
+      await tx.audit.record({
+        actorId: actor.id,
+        actorRole: primaryRole(actor),
+        action: 'refund.approved',
+        entityType: 'refund',
+        entityId: refund.id,
+        before: { status: 'requested' },
+        after: { status: 'sending' },
+        ip: context.ip ?? null,
+        requestId: context.requestId ?? null,
+      });
+      const call: RefundCall = {
+        providerRef: attempt?.providerRef ?? donation.receiptNo,
+        reference: donation.receiptNo,
+        amountMinor: refund.amountMinor,
+        currency: donation.currency,
+        reason: refund.reason,
+        idempotencyKey: `refund-${refund.id}`,
+      };
+      return { refund: { ...refund, status: 'sending' as const, approvedBy: actor.id }, send: { provider: donation.provider, call } };
     });
 
-    // The provider call happens outside any transaction; its idempotency key makes a retry safe.
-    const result = await gateways.get(donation.provider).refund({
-      providerRef,
-      reference: donation.receiptNo,
-      amountMinor: refund.amountMinor,
-      currency: donation.currency,
-      reason: refund.reason,
-      idempotencyKey: `refund-${refund.id}`,
-    });
+    let refund = claimed.refund;
+    if (claimed.send) {
+      // Outside any transaction: the row stays in `sending`, so nobody else can send it meanwhile.
+      const result = await gateways.get(claimed.send.provider).refund(claimed.send.call);
+      refund = await db.transaction(async (tx) => {
+        const current = await tx.refunds.byId(refund.id, 'update');
+        if (!current || current.status !== 'sending' || current.providerRef) throw new DomainError('VALIDATION_FAILED', 'Refund changed while it was sent');
+        await tx.refunds.update(refund.id, { providerRef: result.providerRef });
+        return { ...current, providerRef: result.providerRef };
+      });
+    }
+    return this.post(refund.id, actor);
+  }
 
+  /** Posts a refund the provider accepted (status `sending` with its reference) and marks it processed. */
+  private async post(refundId: string, actor: RequestActor): Promise<RefundRow> {
+    const { db, clock } = this.deps;
     return db.transaction(async (tx) => {
-      const current = await tx.refunds.byId(refund.id, 'update');
-      if (current?.status === 'processed') return current;
-      const fresh = await tx.donations.byId(donation.id, 'update');
+      const refund = await tx.refunds.byId(refundId, 'update');
+      if (!refund) throw new DomainError('NOT_FOUND', 'Refund not found');
+      if (refund.status === 'processed') return refund;
+      if (refund.status !== 'sending' || !refund.providerRef)
+        throw new DomainError('VALIDATION_FAILED', `Refund is ${refund.status}`, { status: refund.status });
+      const providerRef = refund.providerRef;
+      const fresh = await tx.donations.byId(refund.donationId, 'update');
       if (!fresh) throw new DomainError('NOT_FOUND', 'Donation not found');
       const lines = buildRefundPostings(settlementOf(fresh), refund.amountMinor);
       await tx.ledger.post({ kind: 'refund', refundId: refund.id, memo: fresh.receiptNo, postedBy: actor.id, lines });
 
       const processedAt = clock.now();
-      await tx.refunds.update(refund.id, { status: 'processed', providerRef: result.providerRef, processedAt });
+      await tx.refunds.update(refund.id, { status: 'processed', processedAt });
       const refunded = (await tx.refunds.forDonation(fresh.id))
         .filter((row) => row.status === 'processed' || row.id === refund.id)
         .reduce((sum, row) => sum + row.amountMinor, 0);
@@ -160,10 +194,10 @@ export class RefundsService {
         action: 'refund.processed',
         entityType: 'refund',
         entityId: refund.id,
-        before: { status: 'approved' },
-        after: { status: 'processed', providerRef: result.providerRef },
+        before: { status: 'sending' },
+        after: { status: 'processed', providerRef },
       });
-      return { ...refund, status: 'processed', providerRef: result.providerRef, processedAt };
+      return { ...refund, status: 'processed', processedAt };
     });
   }
 

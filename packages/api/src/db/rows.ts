@@ -217,6 +217,8 @@ export interface PaymentAttemptRow {
   donationId: Id;
   provider: PaymentProvider;
   providerRef: string | null;
+  /** The provider's order for this checkout (Paymob); its callbacks are matched by it (0004). */
+  providerOrderRef: string | null;
   status: AttemptStatus;
   amountMinor: number;
   currency: Currency;
@@ -251,12 +253,15 @@ export interface PayoutRow {
   approvedBy: Id | null;
   approvedAt: Timestamp | null;
   paidAt: Timestamp | null;
+  /** Who recorded the bank transfer; never the requester (0004). */
+  paidBy: Id | null;
   bankReference: string | null;
   proofDocumentId: Id | null;
   createdAt: Timestamp;
 }
 
-export type RefundStatus = 'requested' | 'approved' | 'processed' | 'rejected';
+/** `sending`: approved and handed to the provider; it is never sent again (0004). */
+export type RefundStatus = 'requested' | 'approved' | 'sending' | 'processed' | 'rejected';
 
 export interface RefundRow {
   id: Id;

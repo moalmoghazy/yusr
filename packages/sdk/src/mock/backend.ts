@@ -1356,6 +1356,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
         if (!payout) throw new DomainError('NOT_FOUND');
         if (payout.status !== 'approved') throw new DomainError('VALIDATION_FAILED', 'Payout must be approved first');
         if (bankReference.trim().length < 4) throw new DomainError('VALIDATION_FAILED', 'Bank reference required', { field: 'bankReference' });
+        if (payout.requestedBy.id === actor.id) throw new DomainError('SELF_APPROVAL_FORBIDDEN');
         const at = clock();
         postLedger('payout', buildPayoutPostings(payout.caseId, payout.amountMinor, payout.currency), at, payout.reference);
         const next: Payout = { ...payout, status: 'paid', paidAt: iso(at) };

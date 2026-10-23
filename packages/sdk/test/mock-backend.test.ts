@@ -201,7 +201,8 @@ describe('operations (RBAC + maker-checker)', () => {
     await assert.rejects(backend.admin(heba).approvePayout(payout.id), (e) => DomainError.is(e, 'SELF_APPROVAL_FORBIDDEN'));
     await backend.admin(karim).approvePayout(payout.id);
     await assert.rejects(backend.admin(heba).markPayoutPaid(payout.id, ''), (e) => DomainError.is(e, 'VALIDATION_FAILED'));
-    const paid = await backend.admin(heba).markPayoutPaid(payout.id, 'CIB-TRX-55120');
+    await assert.rejects(backend.admin(heba).markPayoutPaid(payout.id, 'CIB-TRX-55120'), (e) => DomainError.is(e, 'SELF_APPROVAL_FORBIDDEN'));
+    const paid = await backend.admin(karim).markPayoutPaid(payout.id, 'CIB-TRX-55120');
     assert.equal(paid.status, 'paid');
     const detail = backend.read.caseBySlug('open-heart-surgery-cairo')!;
     assert.equal(detail.disbursements[1]!.status, 'paid');

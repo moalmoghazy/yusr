@@ -98,7 +98,7 @@ export interface Payout {
   paidAt: string | null;
 }
 
-export type RefundStatus = 'requested' | 'approved' | 'processed' | 'rejected';
+export type RefundStatus = 'requested' | 'approved' | 'sending' | 'processed' | 'rejected';
 
 export interface Refund {
   id: string;

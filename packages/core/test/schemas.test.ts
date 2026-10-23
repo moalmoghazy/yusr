@@ -73,6 +73,8 @@ describe('request schemas', () => {
   it('validates staff actions', () => {
     assert.ok(createPayoutSchema.safeParse({ caseId: UUID, lineId: UUID }).success);
     assert.ok(!createPayoutSchema.safeParse({ caseId: UUID, lineId: UUID, amountMinor: -5 }).success);
+    // A payout goes to the plan line's account; a typed account is not taken from the request.
+    assert.deepEqual(createPayoutSchema.parse({ caseId: UUID, lineId: UUID, payeeAccount: 'EG380019000500000000263180002' }), { caseId: UUID, lineId: UUID });
     assert.ok(checklistUpdateSchema.safeParse({ item: 'residence', checked: true }).success);
     assert.ok(!checklistUpdateSchema.safeParse({ item: 'vibes', checked: true }).success);
     assert.ok(!editCaseSchema.safeParse({}).success);

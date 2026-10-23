@@ -399,6 +399,14 @@ export class MemoryDatabase implements Database {
   private donationsRepo(): DonationsRepo {
     const s = () => this.state;
     const all = () => [...s().donations.values()];
+    // payment_attempts_ref and payment_attempts_order_ref (0004): one attempt per provider reference.
+    const assertUniqueAttempt = (row: PaymentAttemptRow) => {
+      for (const item of s().attempts.values()) {
+        if (item.id === row.id || item.provider !== row.provider) continue;
+        if (row.providerRef && item.providerRef === row.providerRef) throw new DomainError('VALIDATION_FAILED', 'duplicate provider reference');
+        if (row.providerOrderRef && item.providerOrderRef === row.providerOrderRef) throw new DomainError('VALIDATION_FAILED', 'duplicate provider order');
+      }
+    };
     return {
       byId: async (id) => clone(s().donations.get(id) ?? null),
       byReceipt: async (receiptNo) => clone(all().find((row) => row.receiptNo === receiptNo) ?? null),
@@ -463,13 +471,15 @@ export class MemoryDatabase implements Database {
         clone([...s().attempts.values()].filter((row) => row.donationId === donationId).sort((a, b) => +b.createdAt - +a.createdAt)[0] ?? null),
       attemptByProviderRef: async (provider, providerRef) =>
         clone([...s().attempts.values()].find((row) => row.provider === provider && row.providerRef === providerRef) ?? null),
+      attemptByOrderRef: async (provider, providerOrderRef) =>
+        clone([...s().attempts.values()].find((row) => row.provider === provider && row.providerOrderRef === providerOrderRef) ?? null),
       insertAttempt: async (row) => {
-        if (row.providerRef && [...s().attempts.values()].some((item) => item.provider === row.provider && item.providerRef === row.providerRef)) {
-          throw new DomainError('VALIDATION_FAILED', 'duplicate provider reference');
-        }
+        assertUniqueAttempt(row);
         s().attempts.set(row.id, clone(row));
       },
       updateAttempt: async (id, patch) => {
+        const current = s().attempts.get(id);
+        if (current) assertUniqueAttempt({ ...current, ...patch });
         patchRow(s().attempts, id, patch, 'payment attempt');
       },
     };
@@ -530,7 +540,8 @@ export class MemoryDatabase implements Database {
         const duplicate = [...s().entries.values()].some(
           (row) =>
             (entry.kind === 'donation' && row.kind === 'donation' && row.donationId === entry.donationId) ||
-            (entry.kind === 'payout' && row.kind === 'payout' && row.payoutId === entry.payoutId),
+            (entry.kind === 'payout' && row.kind === 'payout' && row.payoutId === entry.payoutId) ||
+            (entry.kind === 'refund' && row.kind === 'refund' && row.refundId === entry.refundId),
         );
         if (duplicate) throw new DomainError('VALIDATION_FAILED', `a ${entry.kind} entry was already posted for this source`);
         for (const line of entry.lines) {
@@ -593,6 +604,7 @@ export class MemoryDatabase implements Database {
     const s = () => this.state;
     const check = (row: PayoutRow) => {
       if (row.approvedBy && row.approvedBy === row.requestedBy) throw new DomainError('SELF_APPROVAL_FORBIDDEN');
+      if (row.paidBy && row.paidBy === row.requestedBy) throw new DomainError('SELF_APPROVAL_FORBIDDEN');
       if ((row.status === 'approved' || row.status === 'paid') && (!row.approvedBy || !row.approvedAt)) {
         throw new DomainError('VALIDATION_FAILED', 'payout needs an approver');
       }
