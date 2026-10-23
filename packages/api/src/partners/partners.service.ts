@@ -9,8 +9,16 @@
  * hashes in constant time. Every change is audited (without the code or the contact's phone).
  */
 import { randomBytes } from 'node:crypto';
-import { DomainError, generateYusrCode, type Partner, type PartnerCredentials, type PartnerStatus } from '@yusr/core';
-import type { CreatePartnerInput, UpdatePartnerInput } from '@yusr/core/schemas';
+import {
+  DomainError,
+  generateYusrCode,
+  type Partner,
+  type PartnerApplication,
+  type PartnerApplicationStatus,
+  type PartnerCredentials,
+  type PartnerStatus,
+} from '@yusr/core';
+import type { CreatePartnerInput, PartnerApplicationInput, UpdatePartnerInput } from '@yusr/core/schemas';
 import { primaryRole, requirePermission, type CallContext } from '../common/actor';
 import type { FieldCipher } from '../common/cipher';
 import type { Clock } from '../common/clock';
@@ -18,7 +26,7 @@ import { hmacHex, safeEqual } from '../common/crypto';
 import type { IdGenerator } from '../common/ids';
 import type { RateLimiter } from '../common/rate-limit';
 import type { Database, Tx } from '../db/ports';
-import type { PartnerRow } from '../db/rows';
+import type { PartnerApplicationRow, PartnerRow } from '../db/rows';
 
 export interface PartnersConfig {
   /** Server secret for the codes' keyed hash (domain-separated from its other uses). */
@@ -226,6 +234,82 @@ export class PartnersService {
     });
   }
 
+  // ------------------------------------------------------------------ join requests («انضم كجمعية شريكة»)
+  /**
+   * An association asks to join, from the website and without an account. Staff are told (Slack), then
+   * contact it; an approved one is added to the registry after the contract is signed. The contact's
+   * details are kept out of the audit log and the notice.
+   */
+  async apply(input: PartnerApplicationInput, context: CallContext): Promise<{ received: true }> {
+    const { db, clock, ids } = this.deps;
+    const now = clock.now();
+    const row: PartnerApplicationRow = {
+      id: ids(),
+      name: input.name.trim(),
+      registrationNumber: input.registrationNumber,
+      region: input.region,
+      contactName: input.contactName.trim(),
+      contactPhone: input.contactPhone,
+      contactEmail: input.contactEmail?.trim() || null,
+      message: input.message?.trim() || null,
+      status: 'new',
+      handledBy: null,
+      handledAt: null,
+      createdAt: now,
+    };
+    await db.transaction(async (tx) => {
+      await tx.partners.insertApplication(row);
+      await tx.audit.record({
+        actorId: context.actor?.id ?? null,
+        actorRole: context.actor ? primaryRole(context.actor) : null,
+        action: 'partner.applied',
+        entityType: 'partner_application',
+        entityId: row.id,
+        after: { name: row.name, registrationNumber: row.registrationNumber, region: row.region },
+        ip: context.ip ?? null,
+        requestId: context.requestId ?? null,
+      });
+      await tx.outbox.enqueue({
+        type: 'partner.applied',
+        aggregateId: row.id,
+        payload: { applicationId: row.id, name: row.name, registrationNumber: row.registrationNumber, region: row.region },
+      });
+    });
+    return { received: true };
+  }
+
+  async applications(context: CallContext, limit = 100): Promise<PartnerApplication[]> {
+    requirePermission(context.actor, 'partners:manage');
+    const { db } = this.deps;
+    const rows = await db.read.partners.applications(Math.min(Math.max(limit, 1), 200));
+    return Promise.all(rows.map((row) => this.toApplication(db.read, row)));
+  }
+
+  /** Marks a request as contacted, approved or rejected (adding the partner itself is a separate step). */
+  async setApplicationStatus(id: string, status: Exclude<PartnerApplicationStatus, 'new'>, context: CallContext): Promise<PartnerApplication> {
+    const actor = requirePermission(context.actor, 'partners:manage');
+    const { db, clock } = this.deps;
+    return db.transaction(async (tx) => {
+      const current = await tx.partners.applicationById(id, 'update');
+      if (!current) throw new DomainError('NOT_FOUND', 'Application not found');
+      if (current.status !== status) {
+        await tx.partners.updateApplication(id, { status, handledBy: actor.id, handledAt: clock.now() });
+        await tx.audit.record({
+          actorId: actor.id,
+          actorRole: primaryRole(actor),
+          action: 'partner.application_' + status,
+          entityType: 'partner_application',
+          entityId: id,
+          before: { status: current.status },
+          after: { status },
+          ip: context.ip ?? null,
+          requestId: context.requestId ?? null,
+        });
+      }
+      return this.toApplication(tx, (await tx.partners.applicationById(id))!);
+    });
+  }
+
   // ------------------------------------------------------------------ submissions
   /**
    * Checks رقم الإشهار + «كود يُسر» (both already normalized by the shared schema) against the registry.
@@ -251,6 +335,28 @@ export class PartnersService {
       if (!(await tx.partners.byCodeHash(this.codeHash(code)))) return code;
     }
     throw new DomainError('VALIDATION_FAILED', 'Could not issue a unique code; try again');
+  }
+
+  private async toApplication(tx: Tx, row: PartnerApplicationRow): Promise<PartnerApplication> {
+    const [handler, partner] = await Promise.all([
+      row.handledBy ? tx.users.byId(row.handledBy) : null,
+      tx.partners.byRegistrationNumber(row.registrationNumber),
+    ]);
+    return {
+      id: row.id,
+      name: row.name,
+      registrationNumber: row.registrationNumber,
+      region: row.region,
+      contactName: row.contactName,
+      contactPhone: row.contactPhone,
+      contactEmail: row.contactEmail,
+      message: row.message,
+      status: row.status,
+      alreadyPartner: partner !== null,
+      handledBy: row.handledBy ? { id: row.handledBy, name: handler?.displayName ?? '—' } : null,
+      handledAt: row.handledAt?.toISOString() ?? null,
+      createdAt: row.createdAt.toISOString(),
+    };
   }
 
   private async toPartner(tx: Tx, row: PartnerRow, casesCount: number): Promise<Partner> {

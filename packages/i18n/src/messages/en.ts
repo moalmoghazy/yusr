@@ -47,6 +47,7 @@ export const en: Messages = {
     submitCase: 'Submit a case',
     about: 'About us',
     account: 'My giving',
+    whatsapp: 'Chat with us on WhatsApp',
     admin: 'Control hub',
     menu: 'Menu',
     language: 'Language',
@@ -354,8 +355,8 @@ export const en: Messages = {
     paymentsTitle: 'Pay the way that suits you',
     paymentsBody: 'Cards, wallets, Fawry, InstaPay, mada and Apple Pay — in EGP, SAR and USD.',
     ctaTitle: 'An association serving families in need?',
-    ctaBody: 'Submit your cases on Yusr as a partner association, and our team will contact you within 48 hours.',
-    ctaButton: 'Submit a case',
+    ctaBody: 'Join Yusr as a partner association to list your cases on the platform; our team will contact you within 48 hours.',
+    ctaButton: 'Join as a partner association',
   },
   donate: {
     title: 'Your gift to this case',
@@ -466,6 +467,31 @@ export const en: Messages = {
     notificationDisbursed: '{amount} paid to {payee} for “{title}”',
     notificationReceipt: 'Your receipt {number} is ready',
   },
+  join: {
+    title: 'Join Yusr as a partner association',
+    subtitle:
+      'Is your association registered with the Ministry of Social Solidarity and serving families in need? Send a request to join; once we agree, you list your cases on Yusr.',
+    steps: {
+      apply: { title: 'Send the request', body: 'Your association’s details, registration number and contact person.' },
+      call: { title: 'We get in touch', body: 'Our team calls you within 48 hours to get to know you and review the association’s papers.' },
+      contract: { title: 'Sign the contract', body: 'We agree on how we work: field research, and payment straight to the providers.' },
+      code: { title: 'Your Yusr code', body: 'You receive a code for your association to submit cases on the platform at any time.' },
+    },
+    fields: {
+      name: 'Association name',
+      registrationNumber: 'Registration number',
+      registrationNumberHint: 'As on the Ministry of Social Solidarity registration certificate.',
+      region: 'Governorate',
+      contactName: 'Contact person',
+      contactPhone: 'Contact person’s mobile',
+      contactEmail: 'Email (optional)',
+      message: 'About the association (optional)',
+      messagePlaceholder: 'What you work on, how many families you serve, and anything you would like us to know.',
+    },
+    send: 'Send the request',
+    sentTitle: 'We received your request',
+    sentBody: 'Thank you. The Yusr team will contact you within 48 hours on the contact person’s number.',
+  },
   account: {
     signInTitle: 'Sign in to your Yusr account',
     signInBody:
@@ -533,6 +559,7 @@ export const en: Messages = {
     verseSource: '“…like a grain that sprouts seven ears, in every ear a hundred grains.” Qur’an 2:261',
   },
   submit: {
+    notPartnerYet: 'Your association is not a Yusr partner yet?',
     title: 'Submit a case',
     subtitle:
       'Yusr currently accepts cases from partner associations registered with the Ministry of Social Solidarity. We review every request within 48 hours and contact the association’s representative.',
@@ -687,6 +714,27 @@ export const en: Messages = {
       copy: 'Copy',
       copied: 'Copied',
       issuedAt: 'Issued {date}',
+      requests: {
+        title: 'Requests to join',
+        subtitle:
+          'Associations that asked to join from the website’s “Join as a partner association” page. Contact them; after agreeing and signing the contract, add them with “Add an approved association”.',
+        empty: 'No requests to join yet.',
+        newCount: {
+          zero: 'No new requests',
+          one: 'One new request',
+          two: 'Two new requests',
+          few: '{count} new requests',
+          many: '{count} new requests',
+          other: '{count} new requests',
+        },
+        statuses: { new: 'New', contacted: 'Contacted', approved: 'Approved', rejected: 'Rejected' },
+        mark: { contacted: 'Contacted', approved: 'Approve', rejected: 'Reject' },
+        marked: 'Request updated: {status}',
+        alreadyPartner: 'Already a partner',
+        received: 'Received {date}',
+        handledBy: '{name} · {date}',
+        whatsapp: 'WhatsApp',
+      },
       secretNote:
         'The code is secret: donors never see it and it is on no public page. Hand it to the association’s contact directly, and issue a new one if it spreads beyond the association.',
     },

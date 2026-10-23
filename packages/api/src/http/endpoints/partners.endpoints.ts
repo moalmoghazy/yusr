@@ -3,7 +3,14 @@
  * association after approval and contract signature, read and regenerate its «كود يُسر», and suspend or
  * reactivate it. The code appears only here, never on a public endpoint.
  */
-import { createPartnerSchema, partnerStatusSchema, updatePartnerSchema } from '@yusr/core/schemas';
+import {
+  createPartnerSchema,
+  listQuerySchema,
+  partnerApplicationSchema,
+  partnerApplicationStatusSchema,
+  partnerStatusSchema,
+  updatePartnerSchema,
+} from '@yusr/core/schemas';
 import { endpoint } from '../endpoint';
 
 const PARTNERS = 'Operations · Partners';
@@ -73,5 +80,49 @@ export const partnerOperations = [
     permission: 'partners:manage',
     returns: 'Partner',
     handle: ({ services, ctx, params }) => services.partners.regenerateCode(params['id']!, ctx),
+  }),
+  endpoint({
+    id: 'admin.partners.applications',
+    method: 'GET',
+    path: '/admin/partner-applications',
+    version: '1',
+    access: 'staff',
+    tag: PARTNERS,
+    summary: 'Join requests from associations («انضم كجمعية شريكة»), newest first',
+    permission: 'partners:manage',
+    query: listQuerySchema,
+    returns: 'PartnerApplication[]',
+    handle: ({ services, ctx, query }) => services.partners.applications(ctx, query.limit),
+  }),
+  endpoint({
+    id: 'admin.partners.applicationStatus',
+    method: 'POST',
+    path: '/admin/partner-applications/:id/status',
+    version: '1',
+    access: 'staff',
+    tag: PARTNERS,
+    summary: 'Mark a join request as contacted, approved or rejected',
+    permission: 'partners:manage',
+    body: partnerApplicationStatusSchema,
+    returns: 'PartnerApplication',
+    handle: ({ services, ctx, params, body }) => services.partners.setApplicationStatus(params['id']!, body.status, ctx),
+  }),
+];
+
+/** The public side: an association asks to join, without an account. */
+export const partnerApplicationEndpoints = [
+  endpoint({
+    id: 'partners.apply',
+    method: 'POST',
+    path: '/partner-applications',
+    version: '1',
+    access: 'public',
+    tag: 'Submissions',
+    summary: 'An association asks to become a Yusr partner (the team contacts it)',
+    body: partnerApplicationSchema,
+    status: 202,
+    returns: '{ received: true }',
+    rateLimit: { name: 'partners:apply', limit: 5, windowSeconds: 3_600, by: 'ip' },
+    handle: ({ services, ctx, body }) => services.partners.apply(body, ctx),
   }),
 ];

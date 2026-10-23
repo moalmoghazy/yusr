@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { CHECKLIST_ITEMS, SUBMITTER_RELATIONS } from './admin-types';
 import { CONTACT_CHANNELS } from './contact';
 import { DEDICATION_MAX_LENGTH } from './donation';
-import { isYusrCode, normalizeRegistrationNumber, normalizeYusrCode, PARTNER_STATUSES } from './partners';
+import { isYusrCode, normalizeRegistrationNumber, normalizeYusrCode, PARTNER_APPLICATION_STATUSES, PARTNER_STATUSES } from './partners';
 import {
   CASE_CATEGORIES,
   CASE_STATUSES,
@@ -140,6 +140,22 @@ export type UpdatePartnerInput = z.infer<typeof updatePartnerSchema>;
 export const partnerStatusSchema = z.object({
   status: z.enum(PARTNER_STATUSES),
   reason: z.string().trim().max(500).nullish(),
+});
+
+/** An association asking to join (public, no account): who it is and how to reach its contact person. */
+export const partnerApplicationSchema = z.object({
+  name: z.string().trim().min(3).max(120),
+  registrationNumber: registrationNumberSchema,
+  region: regionSchema,
+  contactName: z.string().trim().min(2).max(80),
+  contactPhone: phoneSchema,
+  contactEmail: z.email().max(200).nullish(),
+  message: z.string().trim().max(1000).nullish(),
+});
+export type PartnerApplicationInput = z.infer<typeof partnerApplicationSchema>;
+
+export const partnerApplicationStatusSchema = z.object({
+  status: z.enum(PARTNER_APPLICATION_STATUSES).exclude(['new']),
 });
 
 export const submitCaseSchema = z

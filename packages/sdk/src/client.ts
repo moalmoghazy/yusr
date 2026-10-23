@@ -1,4 +1,4 @@
-import type { CreatePartnerInput, EditCaseInput, UpdatePartnerInput } from '@yusr/core/schemas';
+import type { CreatePartnerInput, EditCaseInput, PartnerApplicationInput, UpdatePartnerInput } from '@yusr/core/schemas';
 import type {
   AdminCase,
   AdminDonation,
@@ -21,6 +21,8 @@ import type {
   OtpChallenge,
   Page,
   Partner,
+  PartnerApplication,
+  PartnerApplicationStatus,
   PartnerCredentials,
   PartnerStatus,
   Payout,
@@ -54,6 +56,8 @@ export interface YusrClient {
    */
   presignUpload(input: { kind: DocumentKind; contentType: string; sizeBytes: number; association?: PartnerCredentials | null }): Promise<UploadTicket>;
   submitCase(request: SubmitCaseRequest): Promise<SubmitCaseResult>;
+  /** An association asks to become a partner («انضم كجمعية شريكة»); the team contacts it. */
+  applyAsPartner(request: PartnerApplicationInput): Promise<{ received: true }>;
 }
 
 export interface LedgerQuery {
@@ -103,6 +107,9 @@ export interface AdminClient {
   setPartnerStatus(partnerId: string, status: PartnerStatus, reason?: string): Promise<Partner>;
   /** A new «كود يُسر»; the old one stops working at once. */
   regeneratePartnerCode(partnerId: string): Promise<Partner>;
+  /** Join requests from associations, newest first (partners:manage). */
+  partnerApplications(limit?: number): Promise<PartnerApplication[]>;
+  setPartnerApplicationStatus(applicationId: string, status: Exclude<PartnerApplicationStatus, 'new'>): Promise<PartnerApplication>;
 }
 
 /** Sign-in and sessions (phone OTP, Google/Apple, rotation, logout). */

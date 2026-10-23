@@ -1278,6 +1278,111 @@
         }
       }
     },
+    "/v1/partner-applications": {
+      "post": {
+        "operationId": "partners.apply",
+        "tags": [
+          "Submissions"
+        ],
+        "summary": "An association asks to become a Yusr partner (the team contacts it)",
+        "description": "Open to guests; a Bearer token is read when sent.\n\nRate limit: 5 per 3600s per IP.",
+        "security": [
+          {},
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 120
+                  },
+                  "registrationNumber": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  },
+                  "region": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$"
+                  },
+                  "contactName": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 80
+                  },
+                  "contactPhone": {
+                    "type": "string",
+                    "pattern": "^\\+[1-9]\\d{7,14}$"
+                  },
+                  "contactEmail": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 200,
+                        "format": "email",
+                        "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "message": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 1000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "name",
+                  "registrationNumber",
+                  "region",
+                  "contactName",
+                  "contactPhone"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "{ received: true }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "{ received: true } (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/auth/otp": {
       "post": {
         "operationId": "auth.requestOtp",
@@ -4375,6 +4480,128 @@
               "application/json": {
                 "schema": {
                   "description": "Partner (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/partner-applications": {
+      "get": {
+        "operationId": "admin.partners.applications",
+        "tags": [
+          "Operations · Partners"
+        ],
+        "summary": "Join requests from associations («انضم كجمعية شريكة»), newest first",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `partners:manage`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "x-permission": "partners:manage",
+        "responses": {
+          "200": {
+            "description": "PartnerApplication[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "PartnerApplication[] (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/partner-applications/{id}/status": {
+      "post": {
+        "operationId": "admin.partners.applicationStatus",
+        "tags": [
+          "Operations · Partners"
+        ],
+        "summary": "Mark a join request as contacted, approved or rejected",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `partners:manage`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "contacted",
+                      "approved",
+                      "rejected"
+                    ]
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "partners:manage",
+        "responses": {
+          "200": {
+            "description": "PartnerApplication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "PartnerApplication (see @yusr/core)"
                 }
               }
             }

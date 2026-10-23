@@ -154,7 +154,7 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
         </ul>
       </section>
 
-      {/* ---------------------------------------------------------------- submit a case */}
+      {/* ---------------------------------------------------------------- associations: join as a partner */}
       <section className="container-page pb-6" aria-labelledby="cta-title">
         <div className="relative overflow-hidden rounded-card bg-primary px-6 py-10 text-primary-foreground md:px-10">
           <div
@@ -168,8 +168,8 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
               </h2>
               <p className="text-primary-foreground/85">{t('landing.ctaBody')}</p>
             </div>
-            <Link href={href(locale, '/submit')} className={buttonClasses({ variant: 'gold', size: 'lg' })}>
-              <Icon name="plus" size={18} />
+            <Link href={href(locale, '/join')} className={buttonClasses({ variant: 'gold', size: 'lg' })}>
+              <Icon name="hand-heart" size={18} />
               {t('landing.ctaButton')}
             </Link>
           </div>

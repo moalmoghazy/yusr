@@ -17,6 +17,7 @@ import {
   type CheckoutAction,
   type Localized,
   type PartnerAssociation,
+  type PartnerApplicationStatus,
   type PartnerStatus,
   type SubmitterRelation,
 } from '@yusr/core';
@@ -168,6 +169,26 @@ export const partners = pgTable('partners', {
   createdAt: created(),
   updatedAt: at('updated_at').notNull().defaultNow(),
 });
+
+/** Join requests from associations (0009_partner_applications.sql). */
+export const partnerApplications = pgTable(
+  'partner_applications',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: text('name').notNull(),
+    registrationNumber: text('registration_number').notNull(),
+    region: text('region').notNull(),
+    contactName: text('contact_name').notNull(),
+    contactPhone: text('contact_phone').notNull(),
+    contactEmail: text('contact_email'),
+    message: text('message'),
+    status: text('status').$type<PartnerApplicationStatus>().notNull().default('new'),
+    handledBy: uuid('handled_by').references(() => users.id),
+    handledAt: at('handled_at'),
+    createdAt: created(),
+  },
+  (t) => [index('partner_applications_inbox_idx').on(t.createdAt)],
+);
 
 export const beneficiaries = pgTable('beneficiaries', {
   id: uuid('id').primaryKey().defaultRandom(),

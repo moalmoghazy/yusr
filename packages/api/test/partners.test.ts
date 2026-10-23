@@ -236,3 +236,44 @@ describe('association submissions with «كود يُسر»', () => {
     await rejects(cases.submit(own, { actor: null }), 'UNAUTHENTICATED');
   });
 });
+
+describe('join requests («انضم كجمعية شريكة»)', () => {
+  const request = {
+    name: 'جمعية النور للتنمية',
+    registrationNumber: '1234/2020',
+    region: 'EG-ALX',
+    contactName: 'أحمد علي',
+    contactPhone: '+201011112222',
+    contactEmail: 'nour@example.org',
+    message: 'نخدم ٣٠٠ أسرة في الإسكندرية',
+  };
+
+  it('takes a request without an account and tells the team, without the contact details in the log', async () => {
+    const { partners, db } = await setupPartners();
+    assert.deepEqual(await partners.apply(request, { actor: null, ip: '203.0.113.9' }), { received: true });
+    const [entry] = await db.read.audit.list({ limit: 1, entityType: 'partner_application' });
+    assert.equal(entry?.action, 'partner.applied');
+    assert.doesNotMatch(JSON.stringify(entry), /201011112222|nour@example/);
+    const events = await db.read.outbox.claim(10, new Date('2100-01-01'));
+    assert.ok(events.some((event) => event.type === 'partner.applied' && !JSON.stringify(event.payload).includes('201011112222')));
+  });
+
+  it('shows requests to content moderators only, and records who handled each', async () => {
+    const { partners } = await setupPartners();
+    await partners.apply(request, { actor: null });
+    await rejects(partners.applications({ actor: actorOf(USERS.auditor) }), 'FORBIDDEN');
+    const [first] = await partners.applications({ actor: moderator });
+    assert.equal(first?.status, 'new');
+    assert.equal(first?.contactPhone, '+201011112222');
+    assert.equal(first?.alreadyPartner, false);
+    await rejects(partners.setApplicationStatus(first!.id, 'contacted', { actor: actorOf(USERS.auditor) }), 'FORBIDDEN');
+    const contacted = await partners.setApplicationStatus(first!.id, 'contacted', { actor: moderator });
+    assert.equal(contacted.status, 'contacted');
+    assert.equal(contacted.handledBy?.id, USERS.moderator.id);
+    assert.ok(contacted.handledAt);
+
+    await partners.create(newPartner({ registrationNumber: '1234/2020' }), { actor: moderator });
+    const [after] = await partners.applications({ actor: moderator });
+    assert.equal(after?.alreadyPartner, true, 'flags a request whose association is already in the registry');
+  });
+});

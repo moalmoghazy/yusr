@@ -46,6 +46,7 @@ import type {
   JournalLineRow,
   NotificationRow,
   OutboxRow,
+  PartnerApplicationRow,
   PartnerRow,
   PaymentAttemptRow,
   PayoutRow,
@@ -82,6 +83,7 @@ interface State {
   refreshTokens: Map<Id, RefreshTokenRow>;
   beneficiaries: Map<Id, BeneficiaryRow>;
   partners: Map<Id, PartnerRow>;
+  partnerApplications: Map<Id, PartnerApplicationRow>;
   cases: Map<Id, CaseRow>;
   transitions: CaseTransitionRow[];
   documents: Map<Id, CaseDocumentRow>;
@@ -127,6 +129,7 @@ function emptyState(): State {
     refreshTokens: new Map(),
     beneficiaries: new Map(),
     partners: new Map(),
+    partnerApplications: new Map(),
     cases: new Map(),
     transitions: [],
     documents: new Map(),
@@ -268,6 +271,20 @@ export class MemoryDatabase implements Database {
         const counts = new Map<Id, number>();
         for (const item of s().cases.values()) if (item.partnerId) counts.set(item.partnerId, (counts.get(item.partnerId) ?? 0) + 1);
         return counts;
+      },
+      applications: async (limit) =>
+        cloneAll([...s().partnerApplications.values()].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, limit)),
+      applicationById: async (id) => clone(s().partnerApplications.get(id) ?? null),
+      insertApplication: async (row) => {
+        if (s().partnerApplications.has(row.id)) throw new DomainError('VALIDATION_FAILED', 'This record already exists');
+        s().partnerApplications.set(row.id, clone(row));
+      },
+      updateApplication: async (id, patch) => {
+        const current = s().partnerApplications.get(id);
+        if (!current) throw new DomainError('NOT_FOUND', `partner application ${id} not found`);
+        // Like partner_applications_handled in 0009.
+        if ((patch.status === 'new') !== (patch.handledAt === null)) throw new DomainError('VALIDATION_FAILED', 'handled requests carry handledAt');
+        s().partnerApplications.set(id, { ...current, ...clone(patch) });
       },
     };
   }

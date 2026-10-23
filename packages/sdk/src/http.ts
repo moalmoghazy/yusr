@@ -105,6 +105,7 @@ export function createHttpClient(options: HttpClientOptions): YusrClient {
     myNotifications: () => request('GET', '/me/notifications'),
     presignUpload: (body) => request('POST', '/uploads', body),
     submitCase: (body) => request('POST', '/cases', body),
+    applyAsPartner: (body) => request('POST', '/partner-applications', body),
   };
 }
 
@@ -144,6 +145,8 @@ export function createHttpAdminClient(options: HttpClientOptions): AdminClient {
     updatePartner: (partnerId, patch) => request('PATCH', `/admin/partners/${seg(partnerId)}`, patch),
     setPartnerStatus: (partnerId, status, reason) => post(`/admin/partners/${seg(partnerId)}/status`, { status, reason }),
     regeneratePartnerCode: (partnerId) => post(`/admin/partners/${seg(partnerId)}/code`),
+    partnerApplications: (limit = 100) => request('GET', `/admin/partner-applications?limit=${limit}`),
+    setPartnerApplicationStatus: (applicationId, status) => post(`/admin/partner-applications/${seg(applicationId)}/status`, { status }),
   };
 }
 

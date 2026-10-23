@@ -34,6 +34,29 @@ export interface Partner {
   updatedAt: string;
 }
 
+/** A request to join from an association (the website's «انضم كجمعية شريكة»), until staff handle it. */
+export const PARTNER_APPLICATION_STATUSES = ['new', 'contacted', 'approved', 'rejected'] as const;
+export type PartnerApplicationStatus = (typeof PARTNER_APPLICATION_STATUSES)[number];
+
+/** A join request as staff with `partners:manage` see it. Contact details are staff only. */
+export interface PartnerApplication {
+  id: string;
+  name: string;
+  registrationNumber: string;
+  region: string;
+  contactName: string;
+  /** E.164. */
+  contactPhone: string;
+  contactEmail: string | null;
+  message: string | null;
+  status: PartnerApplicationStatus;
+  /** Already in the approved registry under this رقم الإشهار. */
+  alreadyPartner: boolean;
+  handledBy: { id: string; name: string } | null;
+  handledAt: string | null;
+  createdAt: string;
+}
+
 /** What a partner's staff type to prove who they are (with their contact person's details). */
 export interface PartnerCredentials {
   registrationNumber: string;

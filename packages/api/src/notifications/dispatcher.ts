@@ -56,6 +56,7 @@ export class Dispatcher {
       'payout.paid': (event) => this.onPayoutPaid(event),
       'refund.processed': (event) => this.onRefund(event),
       'case.submitted': (event) => this.onCaseSubmitted(event),
+      'partner.applied': (event) => this.onPartnerApplied(event),
       'verification.assigned': (event) => this.onVisitAssigned(event),
       'finance.review_needed': (event) => this.onReviewNeeded(event),
     };
@@ -240,6 +241,15 @@ export class Dispatcher {
       Category: String(payload['category']),
       Region: String(payload['region']),
       Open: `${this.deps.links.admin}/cases/${String(payload['caseId'])}`,
+    });
+  }
+
+  private async onPartnerApplied(event: OutboxRow) {
+    const payload = event.payload;
+    await this.deps.slack.post('fieldOps', `New partner request from *${String(payload['name'])}*`, {
+      'Registration number': String(payload['registrationNumber']),
+      Region: String(payload['region']),
+      Open: `${this.deps.links.admin}/partners`,
     });
   }
 

@@ -65,3 +65,20 @@ export async function regeneratePartnerCode(_previous: PartnerActionResult, form
   revalidatePath('/partners');
   return { ok: true, message: t('admin.partners.regenerated'), code };
 }
+
+/** Marks a join request («انضم كجمعية شريكة») as contacted, approved or rejected. */
+export async function setApplicationStatus(_previous: PartnerActionResult, form: FormData): Promise<PartnerActionResult> {
+  const { t } = textFor(await hubLocale());
+  const applicationId = formId(form, 'applicationId');
+  const status = text(form, 'status');
+  if (!applicationId || (status !== 'contacted' && status !== 'approved' && status !== 'rejected')) {
+    return { ok: false, message: t('errors.VALIDATION_FAILED') };
+  }
+  const api = await adminApi();
+  const result = await attempt(
+    () => api.setPartnerApplicationStatus(applicationId, status),
+    t('admin.partners.requests.marked', { status: t(`admin.partners.requests.statuses.${status}`) }),
+  );
+  if (result?.ok) revalidatePath('/partners');
+  return result;
+}

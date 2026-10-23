@@ -44,7 +44,7 @@ export function StarCloseup({ label, replayLabel }: { label: string; replayLabel
       <button
         type="button"
         onClick={replay}
-        className="absolute bottom-5 end-5 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-reduce:hidden"
+        className="absolute inset-x-0 bottom-5 mx-auto inline-flex w-fit items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-reduce:hidden"
       >
         <Icon name="refresh" size={16} />
         {replayLabel}

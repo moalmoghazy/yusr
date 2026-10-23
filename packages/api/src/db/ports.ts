@@ -21,6 +21,7 @@ import type {
   NotificationRow,
   OutboxInput,
   OutboxRow,
+  PartnerApplicationRow,
   PartnerRow,
   PaymentAttemptRow,
   PayoutRow,
@@ -97,6 +98,11 @@ export interface PartnersRepo {
   update(id: Id, patch: Partial<Omit<PartnerRow, 'id' | 'createdBy' | 'createdAt'>>): Promise<void>;
   /** Cases submitted per partner id. */
   caseCounts(): Promise<Map<Id, number>>;
+  /** Join requests from associations, newest first (0009). */
+  applications(limit: number): Promise<PartnerApplicationRow[]>;
+  applicationById(id: Id, lock?: LockMode): Promise<PartnerApplicationRow | null>;
+  insertApplication(row: PartnerApplicationRow): Promise<void>;
+  updateApplication(id: Id, patch: Pick<PartnerApplicationRow, 'status' | 'handledBy' | 'handledAt'>): Promise<void>;
 }
 
 export interface VerificationRepo {

@@ -56,6 +56,8 @@ import {
   type Localized,
   type Page,
   type Partner,
+  type PartnerApplication,
+  type PartnerApplicationStatus,
   type PartnerCredentials,
   type PartnerStatus,
   type PaymentMethod,
@@ -75,7 +77,7 @@ import {
   type VolunteerRow,
 } from '@yusr/core';
 import { canSeeSentMessages, maskRecipient, type ContactChannel, type SentMessage } from '@yusr/core';
-import type { CreatePartnerInput, EditCaseInput, UpdatePartnerInput } from '@yusr/core/schemas';
+import type { CreatePartnerInput, EditCaseInput, PartnerApplicationInput, UpdatePartnerInput } from '@yusr/core/schemas';
 import type { AdminClient, LedgerQuery, YusrClient } from '../client';
 import { DEMO_PARTNER_REGISTRY, DEMO_PARTNERS, demoPartnerFor, SEED_CASES, seedAmounts, type SeedCase } from './cases';
 import { CURRENT_DONOR, DONORS, STAFF, VOLUNTEERS, type SeedDonor } from './people';
@@ -1148,6 +1150,29 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
   // ---------------------------------------------------------------- approved partners («كود يُسر»)
 
   const youssef = STAFF.find((member) => member.id === 'u_youssef') ?? STAFF[0]!;
+  /** Join requests («انضم كجمعية شريكة»), newest last. */
+  const applications: Array<Omit<PartnerApplication, 'alreadyPartner'>> = [];
+  const toApplication = (entry: Omit<PartnerApplication, 'alreadyPartner'>): PartnerApplication => ({
+    ...entry,
+    alreadyPartner: partners.some((partner) => partner.registrationNumber === entry.registrationNumber),
+  });
+  const applyAsPartner = (input: PartnerApplicationInput): { received: true } => {
+    applications.push({
+      id: `application_${String(applications.length + 1).padStart(4, '0')}`,
+      name: input.name.trim(),
+      registrationNumber: normalizeRegistrationNumber(input.registrationNumber),
+      region: input.region,
+      contactName: input.contactName.trim(),
+      contactPhone: input.contactPhone,
+      contactEmail: input.contactEmail?.trim() || null,
+      message: input.message?.trim() || null,
+      status: 'new',
+      handledBy: null,
+      handledAt: null,
+      createdAt: iso(clock()),
+    });
+    return { received: true };
+  };
   const partners: Array<Omit<Partner, 'casesCount'>> = DEMO_PARTNERS.map((partner, index) => {
     const registry = DEMO_PARTNER_REGISTRY.find((entry) => entry.registrationNumber === partner.registrationNumber)!;
     const at = `${registry.contractSignedOn}T10:00:00.000Z`;
@@ -1663,6 +1688,21 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
         logAudit(actorRef, 'partner.code_regenerated', 'partner', partnerId, next.name, { codeIssuedAt: current.codeIssuedAt }, { codeIssuedAt: at });
         return withCount(next);
       },
+      partnerApplications: (limit = 100) => {
+        ensure('partners:manage');
+        return [...applications].reverse().slice(0, limit).map(toApplication);
+      },
+      setPartnerApplicationStatus: (applicationId: string, status: Exclude<PartnerApplicationStatus, 'new'>) => {
+        ensure('partners:manage');
+        const index = applications.findIndex((entry) => entry.id === applicationId);
+        const current = applications[index];
+        if (!current) throw new DomainError('NOT_FOUND', 'Application not found');
+        if (current.status === status) return toApplication(current);
+        const next = { ...current, status, handledBy: { id: actor.id, name: actor.name }, handledAt: iso(clock()) };
+        applications.splice(index, 1, next);
+        logAudit(actorRef, `partner.application_${status}`, 'partner_application', applicationId, next.name, { status: current.status }, { status });
+        return toApplication(next);
+      },
     };
     return api;
   };
@@ -1711,6 +1751,8 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       updatePartner: wrap(sync.updatePartner),
       setPartnerStatus: wrap(sync.setPartnerStatus),
       regeneratePartnerCode: wrap(sync.regeneratePartnerCode),
+      partnerApplications: wrap(sync.partnerApplications),
+      setPartnerApplicationStatus: wrap(sync.setPartnerApplicationStatus),
     };
   };
 
@@ -1926,6 +1968,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
     myNotifications: async () => read.myNotifications(),
     presignUpload: async (input) => presignUpload(input),
     submitCase: async (request) => submitCase(request),
+    applyAsPartner: async (request) => applyAsPartner(request),
   };
 
   return {

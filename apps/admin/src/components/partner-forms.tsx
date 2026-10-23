@@ -1,9 +1,9 @@
 'use client';
 
-import { EGYPT_GOVERNORATES, SAUDI_REGIONS, type Locale, type PartnerStatus } from '@yusr/core';
+import { EGYPT_GOVERNORATES, SAUDI_REGIONS, type Locale, type PartnerApplicationStatus, type PartnerStatus } from '@yusr/core';
 import { buttonClasses, cn, Icon, textFor } from '@yusr/ui';
 import { useActionState, useState } from 'react';
-import { createPartner, regeneratePartnerCode, setPartnerStatus, type PartnerActionResult } from '@/app/(hub)/partners/actions';
+import { createPartner, regeneratePartnerCode, setApplicationStatus, setPartnerStatus, type PartnerActionResult } from '@/app/(hub)/partners/actions';
 
 const control =
   'h-10 w-full rounded-control border border-input bg-card px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40';
@@ -154,6 +154,41 @@ export function RegenerateCodeForm({ locale, partnerId }: { locale: Locale; part
         {t('admin.partners.regenerate')}
       </button>
       {result?.ok && result.code ? <CodeNotice locale={locale} message={result.message} code={result.code} /> : <Result result={result} />}
+    </form>
+  );
+}
+
+const NEXT_STEPS: Record<PartnerApplicationStatus, Array<Exclude<PartnerApplicationStatus, 'new'>>> = {
+  new: ['contacted', 'approved', 'rejected'],
+  contacted: ['approved', 'rejected'],
+  approved: [],
+  rejected: ['contacted'],
+};
+
+/** The next steps for a join request: contacted, then approved or rejected. */
+export function ApplicationStatusForm({ locale, applicationId, status }: { locale: Locale; applicationId: string; status: PartnerApplicationStatus }) {
+  const { t } = textFor(locale);
+  const [result, action, pending] = useActionState<PartnerActionResult, FormData>(setApplicationStatus, null);
+  const steps = NEXT_STEPS[status];
+  if (steps.length === 0) return <Result result={result} />;
+  return (
+    <form action={action} className="flex flex-col items-start gap-1">
+      <input type="hidden" name="applicationId" value={applicationId} />
+      <div className="flex flex-wrap gap-1.5">
+        {steps.map((step) => (
+          <button
+            key={step}
+            type="submit"
+            name="status"
+            value={step}
+            disabled={pending}
+            className={buttonClasses({ variant: step === 'approved' ? 'primary' : step === 'rejected' ? 'outline' : 'soft', size: 'sm' })}
+          >
+            {t(`admin.partners.requests.mark.${step}`)}
+          </button>
+        ))}
+      </div>
+      <Result result={result} />
     </form>
   );
 }

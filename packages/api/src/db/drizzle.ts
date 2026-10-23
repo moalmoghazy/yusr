@@ -290,6 +290,15 @@ function createTx(x: Executor): Tx & { raw: Executor } {
           .groupBy(t.cases.partnerId);
         return new Map(rows.map((row) => [row.partnerId!, row.count]));
       },
+      applications: async (limit) => x.select().from(t.partnerApplications).orderBy(desc(t.partnerApplications.createdAt)).limit(limit),
+      applicationById: async (id, lock) =>
+        first(await locked(x.select().from(t.partnerApplications).where(eq(t.partnerApplications.id, id)).limit(1).$dynamic(), lock)),
+      insertApplication: async (row) => {
+        await x.insert(t.partnerApplications).values(row);
+      },
+      updateApplication: async (id, patch) => {
+        await x.update(t.partnerApplications).set(patch).where(eq(t.partnerApplications.id, id));
+      },
     },
 
     verification: {

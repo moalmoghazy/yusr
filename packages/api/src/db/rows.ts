@@ -16,6 +16,7 @@ import type {
   PayeeType,
   PaymentMethod,
   PartnerAssociation,
+  PartnerApplicationStatus,
   PartnerStatus,
   PaymentProvider,
   Role,
@@ -142,6 +143,22 @@ export interface PartnerRow {
   createdBy: Id;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+}
+
+/** An association's request to join (0009_partner_applications.sql). */
+export interface PartnerApplicationRow {
+  id: Id;
+  name: string;
+  registrationNumber: string;
+  region: string;
+  contactName: string;
+  contactPhone: string;
+  contactEmail: string | null;
+  message: string | null;
+  status: PartnerApplicationStatus;
+  handledBy: Id | null;
+  handledAt: Timestamp | null;
+  createdAt: Timestamp;
 }
 
 export interface BeneficiaryRow {

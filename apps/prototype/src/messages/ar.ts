@@ -130,6 +130,7 @@ export const protoAr = {
         user: 'مستخدم',
         verification: 'زيارة',
         partner: 'جمعية شريكة',
+        partner_application: 'طلب انضمام',
       },
       fields: {
         status: 'الحالة',

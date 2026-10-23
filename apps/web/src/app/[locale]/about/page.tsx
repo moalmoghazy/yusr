@@ -1,5 +1,5 @@
 import { brand } from '@yusr/theme';
-import { Icon, textFor } from '@yusr/ui';
+import { Icon, LogoMark, textFor } from '@yusr/ui';
 import type { Metadata } from 'next';
 import { AnimatedMark } from '@/components/animated-mark';
 import { StarCloseup } from '@/components/star-closeup';
@@ -34,7 +34,7 @@ export default async function AboutPage({ params }: { params: LocaleParams }) {
     <div className="container-page flex flex-col gap-8 py-10">
       <section aria-labelledby="about-title" className="flex flex-col gap-6 py-2 md:py-6">
         <div className="flex max-w-3xl flex-col gap-4">
-          <p className="text-sm font-semibold text-highlight-soft-foreground">{t('about.title')}</p>
+          <LogoMark size={40} />
           <h1 id="about-title" className="font-display text-3xl font-bold leading-[1.4] md:text-4xl">
             {t('about.question')}
           </h1>

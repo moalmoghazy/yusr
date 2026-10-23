@@ -2,6 +2,8 @@ import { textFor } from '@yusr/ui';
 import type { Metadata } from 'next';
 import { DEMO_PARTNER_REGISTRY } from '@yusr/sdk/mock';
 import { SubmitForm } from '@/components/submit-form';
+import Link from 'next/link';
+import { href } from '@/lib/i18n';
 import { pageLocale, type LocaleParams } from '@/lib/page';
 import { site } from '@/lib/site';
 
@@ -24,6 +26,12 @@ export default async function SubmitPage({ params }: { params: LocaleParams }) {
       <header className="mb-8 flex flex-col gap-2">
         <h1 className="font-display text-3xl font-bold md:text-4xl">{t('submit.title')}</h1>
         <p className="text-muted-foreground">{t('submit.subtitle')}</p>
+        <p className="text-sm">
+          {t('submit.notPartnerYet')}{' '}
+          <Link href={href(locale, '/join')} className="font-semibold text-primary hover:underline">
+            {t('landing.ctaButton')}
+          </Link>
+        </p>
       </header>
       {/* A public demo offers a demo partner's registration number and «كود يُسر» (never a real one). */}
       <SubmitForm locale={locale} demoPartner={site.demo ? (DEMO_PARTNER_REGISTRY[0] ?? null) : null} />

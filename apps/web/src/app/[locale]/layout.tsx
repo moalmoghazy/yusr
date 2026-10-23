@@ -9,6 +9,7 @@ import { Suspense, type ReactNode } from 'react';
 import { PageLoading } from '@/components/page-loading';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
+import { WhatsAppButton } from '@/components/whatsapp-button';
 import { currentDonor } from '@/lib/api';
 import { siteUrl } from '@/lib/env';
 import { THEME_COOKIE, themeFrom } from '@/lib/i18n';
@@ -75,6 +76,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
             A real deployment renders pages whole, so missing pages keep their 404 status. */}
         <main id="main">{site.demo ? <Suspense fallback={<PageLoading locale={locale} />}>{children}</Suspense> : children}</main>
         <SiteFooter locale={locale} />
+        {site.whatsapp && <WhatsAppButton number={site.whatsapp} label={t('nav.whatsapp')} />}
       </body>
     </html>
   );
