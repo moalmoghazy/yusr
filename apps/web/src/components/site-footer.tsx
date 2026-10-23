@@ -33,9 +33,15 @@ export function SiteFooter({ locale }: { locale: Locale }) {
         </nav>
         <div className="flex flex-col gap-2 text-sm">
           <h2 className="mb-1 font-bold text-foreground">{t('footer.help')}</h2>
-          <span className="text-muted-foreground">{t('footer.faq')}</span>
-          <span className="text-muted-foreground">{t('footer.contact')}</span>
-          <span className="text-muted-foreground">{t('footer.privacy')}</span>
+          <Link className="text-muted-foreground hover:text-primary" href={href(locale, '/faq')}>
+            {t('footer.faq')}
+          </Link>
+          <Link className="text-muted-foreground hover:text-primary" href={href(locale, '/contact')}>
+            {t('footer.contact')}
+          </Link>
+          <Link className="text-muted-foreground hover:text-primary" href={href(locale, '/privacy')}>
+            {t('footer.privacy')}
+          </Link>
         </div>
       </div>
       <div className="border-t border-border">

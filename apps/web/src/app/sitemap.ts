@@ -29,7 +29,7 @@ async function openCases(): Promise<CaseSummary[]> {
   return cases;
 }
 
-/** Home, catalog, the submission page, the About page and every open case, in both languages (with hreflang alternates). */
+/** Home, catalog, the submission, About, join and help pages, and every open case, in both languages (with hreflang alternates). */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteUrl();
   const entry = (path: string, lastModified?: string): MetadataRoute.Sitemap[number] => ({
@@ -38,5 +38,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     alternates: { languages: Object.fromEntries(LOCALES.map((locale) => [locale, `${base}/${locale}${path}`])) },
   });
   const cases = await openCases();
-  return [entry(''), entry('/cases'), entry('/submit'), entry('/about'), ...cases.map((item) => entry(`/cases/${item.slug}`, item.publishedAt ?? undefined))];
+  return [
+    entry(''),
+    entry('/cases'),
+    entry('/submit'),
+    entry('/about'),
+    entry('/join'),
+    entry('/faq'),
+    entry('/contact'),
+    entry('/privacy'),
+    ...cases.map((item) => entry(`/cases/${item.slug}`, item.publishedAt ?? undefined)),
+  ];
 }

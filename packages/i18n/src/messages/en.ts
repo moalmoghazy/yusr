@@ -492,6 +492,283 @@ export const en: Messages = {
     sentTitle: 'We received your request',
     sentBody: 'Thank you. The Yusr team will contact you within 48 hours on the contact person’s number.',
   },
+  faq: {
+    title: 'Frequently asked questions',
+    subtitle: 'Short answers about giving, how cases are verified, zakat and receipts.',
+    notFound: 'Didn’t find your answer?',
+    contactLink: 'Contact us',
+    groups: {
+      donate: {
+        title: 'Giving',
+        items: {
+          how: {
+            q: 'How do I donate?',
+            a: 'Choose a case, enter the amount you want to give, and pay by card, wallet, InstaPay or Fawry. Your confirmation and receipt arrive as soon as the payment goes through.',
+          },
+          fee: {
+            q: 'Why is a case’s goal higher than what the association asked for?',
+            a: 'Yusr adds a 10% operating fee on top of what the association asks for. It covers reviewing files, marketing, receipts and donor support. The case still receives the full amount the association asked for, and the fee is stated on every case page.',
+          },
+          paymentFees: {
+            q: 'What are payment fees?',
+            a: 'The payment gateway deducts a small fee from each payment. You can choose to add it at checkout so your gift arrives in full.',
+          },
+          guest: {
+            q: 'Do I need an account to donate?',
+            a: 'No. A mobile number or email for your receipt is enough. «My giving» keeps all your gifts and receipts in one place if you want it.',
+          },
+          funded: {
+            q: 'What happens when a case is fully funded?',
+            a: 'The case closes to new gifts automatically, the association pays the service provider within 7 days, and we publish the payment document with personal details hidden and send it to donors. If gifts that arrived at the same moment push it over the goal, the extra goes to a similar case at the same association; we tell the donor, who can ask for it back within 14 days.',
+          },
+        },
+      },
+      trust: {
+        title: 'Trust and verification',
+        items: {
+          verify: {
+            q: 'Who verifies the cases?',
+            a: 'A civil association registered with the Ministry of Social Solidarity investigates each case in the field, then the Yusr team reviews its file and documents before publishing, and we field-check a random sample of cases. The association’s name and registration number are shown on every case page.',
+          },
+          money: {
+            q: 'Where exactly does the money go?',
+            a: 'Donations never pass through Yusr’s account. They reach the association that received them, and the association pays the service provider directly: the hospital, the creditor or the school. No cash is handed to the beneficiary.',
+          },
+          photos: {
+            q: 'Why are there no photos or real names of beneficiaries?',
+            a: 'To protect their dignity. Stories use pseudonyms and illustrated covers, and anything that identifies the family is hidden in published documents. Nobody should have to expose themselves in public to get help.',
+          },
+          report: {
+            q: 'I doubt a case, or a page is pretending to be Yusr. What should I do?',
+            a: 'Message us right away with a link to the case or page. We review every report and pause the case while we check if needed. Yusr only collects donations through its own website and app.',
+          },
+        },
+      },
+      zakat: {
+        title: 'Zakat',
+        items: {
+          eligible: {
+            q: 'Can I give my zakat here?',
+            a: 'Yes, to cases marked «Zakat eligible». The association sets this mark according to its religious reference, and you choose «Zakat» as the gift type at checkout.',
+          },
+          find: {
+            q: 'How do I find zakat-eligible cases?',
+            a: 'On the «Cases» page, turn on the «Zakat eligible» filter to see only those cases.',
+          },
+          ineligible: {
+            q: 'What if I choose «Zakat» for a case that doesn’t accept it?',
+            a: 'Checkout won’t accept it and will ask you to choose «Sadaqah» or another case, so zakat never goes where it isn’t due.',
+          },
+        },
+      },
+      receipts: {
+        title: 'Receipts and refunds',
+        items: {
+          when: {
+            q: 'When do I get my receipt?',
+            a: 'As soon as the payment goes through, by the mobile number or email you entered. If you’re signed in, it’s also in «My giving» at any time.',
+          },
+          whyPartner: {
+            q: 'Why is the receipt from an association and not from Yusr?',
+            a: 'Because the association received the donation under its permit, and Yusr is a technology platform that never holds donated money. A registered association’s receipt is the official record of your gift.',
+          },
+          refund: {
+            q: 'Can I get my donation back?',
+            a: 'A donation is final once confirmed, unless you were charged twice or the wrong amount, or the case was cancelled before any payout. In those cases, ask within 14 days of giving; we take your request and follow it up with the association until the money is returned to the same payment method.',
+          },
+          canceled: {
+            q: 'What if a case is cancelled after I gave?',
+            a: 'We tell you and let you choose between a refund or moving your gift to a similar case at the same association. If you don’t choose within 14 days, we move it to a similar case and tell you which.',
+          },
+        },
+      },
+      partners: {
+        title: 'Associations and asking for help',
+        items: {
+          individual: {
+            q: 'I need help. Can I submit my own case?',
+            a: 'We don’t take cases from individuals directly. Contact a civil association in your governorate; if it is one of our partners, it can list your case on Yusr after investigating it.',
+          },
+          join: {
+            q: 'How does our association join Yusr?',
+            a: 'Send a request from the «Join as a partner association» page. We contact you to review your papers. We ask that the association is registered, has at least two years of activity, audited financial statements and a bank account in its own name.',
+          },
+          cost: {
+            q: 'What does it cost the association?',
+            a: 'No subscription and no upfront fees. The 10% operating fee is added on top of the case amount and paid by donors, so the association receives everything it asked for.',
+          },
+        },
+      },
+      account: {
+        title: 'Account and data',
+        items: {
+          signIn: {
+            q: 'How do I sign in?',
+            a: 'From «Sign in» at the top of the page, with your mobile number and a code we text you. There is no password.',
+          },
+          anonymous: {
+            q: 'Will people see my name?',
+            a: 'You can choose «Give anonymously», and you’ll appear as «Anonymous donor». Your number and email never appear on any public page either way.',
+          },
+          data: {
+            q: 'What do you do with my data?',
+            a: 'We use it only to process your gift and send your receipt and updates. We never sell it, and the association only gets what it needs to issue your receipt. The details are in our privacy policy.',
+          },
+        },
+      },
+    },
+  },
+  contact: {
+    title: 'Contact us',
+    subtitle: 'The Yusr team answers donors and associations. WhatsApp is the fastest way to reach us.',
+    channels: {
+      whatsapp: { title: 'WhatsApp', body: 'Chat directly with our support team.', action: 'Start a chat' },
+      phone: { title: 'Phone', body: 'During working hours.', action: 'Call us' },
+      email: { title: 'Email', body: 'For requests that need attachments or follow-up.', action: 'Email us' },
+    },
+    hours: { title: 'Working hours', body: 'Sunday to Thursday, 9 am to 5 pm Cairo time.' },
+    response: {
+      title: 'When will we reply?',
+      body: 'A first reply within 4 working hours, and most requests are solved within two working days. Refund requests go to the association holding the money within 24 hours.',
+    },
+    topicsTitle: 'Before you write to us',
+    topics: {
+      donation: { title: 'A question about a gift', body: 'Include your receipt number so we can answer faster. All your receipts are in «My giving».' },
+      refund: { title: 'A refund request', body: 'Within 14 days of giving, with your receipt number and the reason.' },
+      partner: {
+        title: 'An association that wants to join',
+        body: 'Send a request to join and our team will call you.',
+        link: 'Join as a partner association',
+      },
+      help: {
+        title: 'Need help for yourself or your family?',
+        body: 'We don’t take cases from individuals directly. Contact a civil association in your governorate; if it is one of our partners, it can list your case after investigating it.',
+      },
+      report: {
+        title: 'Reporting a suspicious case or impersonation',
+        body: 'Message us right away with a link to the case or page. We review every report and pause the case while we check if needed.',
+      },
+    },
+    safety: 'Never write your card number or a verification code in a message. The Yusr team will never ask you for them.',
+    faqLink: 'Read the FAQ',
+  },
+  privacy: {
+    title: 'Privacy policy',
+    updated: 'Last updated: {date}',
+    intro:
+      'We respect your privacy as we respect the dignity of the people we serve. This page explains what data we collect and why, who we share it with, and your rights, under Egypt’s Personal Data Protection Law No. 151 of 2020.',
+    sections: {
+      who: {
+        title: 'Who we are and who is responsible for your data',
+        points: {
+          yusr: 'Yusr is a technology platform that lists cases from registered partner associations. We are responsible for the donor and visitor data we need to run the platform, send receipts and stay in touch.',
+          partner:
+            'The partner association is responsible for beneficiaries’ data and case files, which we process on its behalf and on its instructions. The association receives only the parts of your data it needs to issue your receipt and its official reports.',
+        },
+      },
+      collect: {
+        title: 'What we collect',
+        points: {
+          donate:
+            'When you give: your name if you enter it, your mobile number or email for the receipt, the amount, the case and the gift type, and whether to show your name. You enter card details on the payment gateway’s page, and they never reach us.',
+          account: 'When you sign in to «My giving»: your mobile number and name. We don’t use passwords; you sign in with a one-time code.',
+          auto: 'Automatically: IP address, device and browser type, to protect the platform from fraud and abuse.',
+          beneficiaries:
+            'From associations, about beneficiaries: case details and documents, and the national ID encrypted, with the beneficiary’s written consent collected by the association.',
+          join: 'From associations asking to join: the association’s details and its contact person, used only to contact them.',
+        },
+      },
+      use: {
+        title: 'Why we use it',
+        points: {
+          donation:
+            'To process your gift, send your confirmation and receipt, and tell you about case updates and the payment document; you can turn updates off.',
+          safety: 'To fight fraud and money laundering, and meet our legal obligations.',
+          improve: 'To improve the platform, using aggregated data that doesn’t identify you.',
+          marketing: 'For marketing messages only with your explicit consent, which you can withdraw at any time.',
+        },
+      },
+      sensitive: {
+        title: 'Beneficiaries’ and children’s data',
+        points: {
+          consent:
+            'Beneficiaries’ health, financial and legal data, and children’s data, are sensitive. We process them only with explicit written consent (a guardian’s consent for minors), and only as much as reviewing the case requires.',
+          never:
+            'We never publish them or use them in marketing: stories use pseudonyms and no photos, and published documents have identifying details hidden.',
+        },
+      },
+      share: {
+        title: 'Who we share data with',
+        points: {
+          partner:
+            'The association that owns the case: only what it needs for your receipt and its official reports. It may not send you marketing without your consent.',
+          gateway: 'The payment gateway: the transaction details.',
+          providers: 'Service providers (hosting, messaging and email): under contracts that bind them to confidentiality and security.',
+          authorities: 'Official authorities: when legally required, or within the fundraising reports the association files.',
+          noSale: 'We never sell or rent data to anyone.',
+        },
+      },
+      public: {
+        title: 'What the public sees',
+        points: {
+          contact: 'Your number and email never appear on any public page.',
+          name: 'Your name appears in a case’s list of donors unless you choose «Give anonymously», in which case it shows «Anonymous donor».',
+        },
+      },
+      cookies: {
+        title: 'Cookies',
+        points: {
+          essential: 'For now we use only essential cookies: to remember your language, keep you signed in to «My giving», and secure payments.',
+          ads: 'We don’t use advertising cookies. If we add analytics cookies, we will ask for your consent first.',
+        },
+      },
+      transfer: {
+        title: 'Transfers outside Egypt',
+        points: {
+          cloud:
+            'Data may be hosted by cloud providers whose servers are outside Egypt. We transfer it only as Law 151 of 2020 and its regulations allow, with equivalent contractual and technical safeguards.',
+        },
+      },
+      retention: {
+        title: 'How long we keep data',
+        points: {
+          donations: 'Donation records and receipts: for the period tax and civil-association laws require, then deleted or anonymised.',
+          cases:
+            'Case files: returned to the association or deleted after the case closes and its payment document is published; a redacted summary stays in the public record.',
+          account: 'Account data: until you ask us to close the account, then deleted within 30 days, except what the law requires us to keep.',
+        },
+      },
+      security: {
+        title: 'Security',
+        points: {
+          controls:
+            'We encrypt data in transit and at rest, encrypt national IDs separately, require two-factor sign-in for staff, give each staff member only the access their work needs, and log every access in a tamper-proof record.',
+        },
+      },
+      rights: {
+        title: 'Your rights',
+        points: {
+          list: 'You can ask to see, correct or delete your data, restrict or object to its processing, withdraw consent to marketing, and get a copy of it. We reply within the period the law sets.',
+          complaint:
+            'You can also complain to the Personal Data Protection Centre. Requests from beneficiaries are passed to the responsible association, and we help it carry them out.',
+        },
+      },
+      breach: {
+        title: 'If data is breached',
+        points: {
+          notify:
+            'We notify the Personal Data Protection Centre and affected people within the legal deadlines, and the responsible association immediately if beneficiaries’ data is affected.',
+        },
+      },
+      changes: {
+        title: 'Changes and contact',
+        points: {
+          notice: 'We announce any material change to this policy 14 days before it takes effect.',
+          contact: 'For any question or request about your data, email our data protection officer at {email}.',
+        },
+      },
+    },
+  },
   account: {
     signInTitle: 'Sign in to your Yusr account',
     signInBody:
