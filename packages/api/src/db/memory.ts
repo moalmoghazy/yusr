@@ -431,6 +431,13 @@ export class MemoryDatabase implements Database {
         if (all().some((item) => item.idempotencyKey === row.idempotencyKey)) throw new DomainError('IDEMPOTENCY_CONFLICT', 'duplicate idempotency key');
         if (all().some((item) => item.receiptNo === row.receiptNo)) throw new DomainError('VALIDATION_FAILED', 'duplicate receipt number');
         if (!row.donorId && !row.guestContact) throw new DomainError('VALIDATION_FAILED', 'donation needs a donor or guest contact');
+        // donations_contact_for_channel (0007): the chosen channel needs its contact.
+        if (row.contactChannel === 'whatsapp' && !/^\+[1-9]\d{7,14}$/.test(row.guestContact?.phone ?? '')) {
+          throw new DomainError('VALIDATION_FAILED', 'a WhatsApp preference needs a WhatsApp number');
+        }
+        if (row.contactChannel === 'email' && !/.@./.test(row.guestContact?.email ?? '')) {
+          throw new DomainError('VALIDATION_FAILED', 'an email preference needs an email address');
+        }
         s().donations.set(row.id, clone(row));
       },
       update: async (id, patch) => {
@@ -467,13 +474,16 @@ export class MemoryDatabase implements Database {
         ),
       contactsForCase: async (caseId) => {
         const seen = new Set<string>();
-        const result: Array<Pick<DonationRow, 'donorId' | 'guestContact' | 'locale' | 'id'>> = [];
-        for (const row of all()) {
+        const result: Array<Pick<DonationRow, 'donorId' | 'guestContact' | 'contactChannel' | 'locale' | 'id'>> = [];
+        // Each donor's latest gift: its channel and contact are the most recent preference.
+        for (const row of [...all()].sort((a, b) => +b.createdAt - +a.createdAt)) {
           if (row.caseId !== caseId || !['succeeded', 'partially_refunded'].includes(row.status)) continue;
           const who = row.donorId ?? row.guestContact?.email ?? row.guestContact?.phone ?? row.id;
           if (seen.has(who)) continue;
           seen.add(who);
-          result.push(clone({ id: row.id, donorId: row.donorId, guestContact: row.guestContact, locale: row.locale }));
+          result.push(
+            clone({ id: row.id, donorId: row.donorId, guestContact: row.guestContact, contactChannel: row.contactChannel ?? null, locale: row.locale }),
+          );
         }
         return result;
       },

@@ -25,3 +25,11 @@ export function apiEdge(incoming: { get(name: string): string | null }): { secre
   const clientIp = incoming.get('x-real-ip')?.trim() || incoming.get('x-forwarded-for')?.split(',')[0]?.trim() || null;
   return { secret, clientIp };
 }
+
+/**
+ * The API runs on demo data: the public demo (NEXT_PUBLIC_DEMO, the demo banner) or `pnpm dev:demo`
+ * (YUSR_STORAGE=memory). Demo-only pages such as «الرسائل المرسلة» show then; the API re-checks.
+ */
+export function onDemoData(): boolean {
+  return process.env['NEXT_PUBLIC_DEMO'] === 'true' || process.env['YUSR_STORAGE'] === 'memory';
+}

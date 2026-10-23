@@ -20,6 +20,7 @@ import type {
   Role,
   SubmitterRelation,
 } from '@yusr/core';
+import type { ContactChannel } from '@yusr/core';
 
 export type Id = string;
 export type Timestamp = Date;
@@ -186,7 +187,10 @@ export interface DonationRow {
   id: Id;
   caseId: Id;
   donorId: Id | null;
+  /** A guest's receipt contact, or the WhatsApp number / email a donor chose for messages. */
   guestContact: GuestContact | null;
+  /** «طريقة التواصل المفضلة» (0007): where messages about this gift go; null = before it was asked. */
+  contactChannel: ContactChannel | null;
   idempotencyKey: string;
   requestHash: string;
   type: DonationType;

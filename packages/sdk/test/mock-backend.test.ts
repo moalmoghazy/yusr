@@ -286,3 +286,48 @@ describe('case submission', () => {
     );
   });
 });
+
+describe('preferred contact channel (mock)', () => {
+  it('keeps the channel, records the receipt and the case-closed message, and shows them to the right staff', async () => {
+    const { backend } = make();
+    const target = backend.read.adminCases().find((item) => item.status === 'published' && item.currency === 'EGP')!;
+    const give = (amountMinor: number, contactChannel: 'whatsapp' | 'email', donor: { phone?: string; email?: string }) => {
+      const created = backend.createDonation(
+        {
+          caseId: target.id,
+          amountMinor,
+          currency: 'EGP',
+          method: 'card',
+          coverFees: true,
+          anonymous: false,
+          type: 'sadaqah',
+          donor,
+          contactChannel,
+          locale: 'ar',
+        },
+        { userId: 'u_test' },
+      );
+      return backend.completePayment(created.donationId, 'success');
+    };
+    assert.throws(
+      () => give(100_00, 'whatsapp', { email: 'x@example.com' }),
+      (e) => DomainError.is(e, 'VALIDATION_FAILED'),
+    );
+    const first = give(100_00, 'whatsapp', { phone: '+201005556667' });
+    assert.equal(first.contactChannel, 'whatsapp');
+    assert.ok(!first.donorContact?.includes('5556667'));
+    const left = target.goalMinor - backend.read.adminCases().find((item) => item.id === target.id)!.raisedMinor;
+    give(left, 'email', { email: 'mona@example.com' });
+    assert.equal(backend.read.adminCases().find((item) => item.id === target.id)!.status, 'funded');
+
+    await backend.admin(heba).transitionCase(target.id, 'closed');
+    const messages = await backend.admin(sara).sentMessages();
+    const closed = messages.filter((message) => message.template === 'case_closed' && message.caseId === target.id);
+    assert.deepEqual(closed.map((message) => message.channel).sort(), ['email', 'whatsapp']);
+    assert.ok(closed.every((message) => message.text.includes('اكتملت وتم الصرف للجهات')));
+    assert.ok(messages.some((message) => message.template === 'receipt' && message.to === '+20••••••6667'));
+    assert.ok(!JSON.stringify(messages).includes('mona@example.com'));
+    assert.equal((await backend.admin(youssef).sentMessages()).length, messages.length);
+    await assert.rejects(backend.admin(heba).sentMessages(), (e) => DomainError.is(e, 'FORBIDDEN'));
+  });
+});

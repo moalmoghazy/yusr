@@ -137,6 +137,7 @@ export function createHttpAdminClient(options: HttpClientOptions): AdminClient {
     team: () => request('GET', '/admin/team'),
     updateRoles: (userId, roles) => request('PUT', `/admin/team/${seg(userId)}/roles`, { roles }),
     audit: (limit = 100) => request('GET', `/admin/audit?limit=${limit}`),
+    sentMessages: (limit = 100) => request('GET', `/admin/demo/messages?limit=${limit}`),
   };
 }
 

@@ -1,8 +1,9 @@
-import type { Permission } from '@yusr/core';
+import { canSeeSentMessages, type Permission } from '@yusr/core';
 import { buttonClasses, Icon, Logo, textFor, type IconName } from '@yusr/ui';
 import type { ReactNode } from 'react';
 import { signOut, switchLocale } from '@/app/actions';
 import { HubNav } from '@/components/hub-nav';
+import { onDemoData } from '@/lib/env';
 import { hubLocale } from '@/lib/i18n';
 import { currentStaff } from '@/lib/session';
 
@@ -29,6 +30,8 @@ export default async function HubLayout({ children }: { children: ReactNode }) {
     icon: section.icon,
     label: t(`admin.nav.${section.key}`),
   }));
+  // «الرسائل المرسلة»: demo data only, for super admins and content moderators.
+  if (onDemoData() && canSeeSentMessages(staff.claims.roles)) items.push({ href: '/messages', icon: 'send', label: t('admin.messages.nav') });
   const roles = staff.claims.roles.filter((role) => role !== 'donor');
 
   return (

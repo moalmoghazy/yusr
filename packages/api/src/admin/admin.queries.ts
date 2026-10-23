@@ -252,11 +252,14 @@ export class AdminQueries {
     const item = await db.read.cases.byId(row.caseId);
     if (!item) return null;
     const donor: UserRow | null = row.donorId ? await db.read.users.byId(row.donorId) : null;
-    const contact = donor?.email ?? donor?.phone ?? row.guestContact?.email ?? row.guestContact?.phone ?? null;
+    // The contact the donor chose for this gift first, then their account's.
+    const chosen = row.contactChannel === 'whatsapp' ? row.guestContact?.phone : row.contactChannel === 'email' ? row.guestContact?.email : null;
+    const contact = chosen ?? donor?.email ?? donor?.phone ?? row.guestContact?.email ?? row.guestContact?.phone ?? null;
     return {
       ...donations.toReceipt(row, item),
       donorName: donor?.displayName ?? row.guestContact?.name ?? null,
       donorContact: contact ? mask(contact, 4) : null,
+      contactChannel: row.contactChannel ?? null,
       caseReference: item.reference,
       channel: row.channel === 'mobile' ? 'mobile' : 'web',
     };

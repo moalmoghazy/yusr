@@ -24,6 +24,7 @@ import type {
   PlatformStats,
   Refund,
   Role,
+  SentMessage,
   DocumentKind,
   SubmitCaseRequest,
   SignInProvider,
@@ -83,6 +84,8 @@ export interface AdminClient {
   team(): Promise<TeamMember[]>;
   updateRoles(userId: string, roles: Role[]): Promise<TeamMember>;
   audit(limit?: number): Promise<AuditEntry[]>;
+  /** Demo data only («الرسائل المرسلة»): what the platform sent or would have sent, recipients masked. Super admins and content moderators. */
+  sentMessages(limit?: number): Promise<SentMessage[]>;
 }
 
 /** Sign-in and sessions (phone OTP, Google/Apple, rotation, logout). */

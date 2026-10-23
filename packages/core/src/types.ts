@@ -2,6 +2,7 @@
  * Shared domain vocabulary and API contract types.
  * These are the shapes the API returns and the web / admin / mobile apps consume.
  */
+import type { ContactChannel } from './contact';
 
 export const LOCALES = ['ar', 'en'] as const;
 export type Locale = (typeof LOCALES)[number];
@@ -215,6 +216,11 @@ export interface CreateDonationRequest {
   dedication?: string | null;
   /** Guest checkout contact for the receipt (optional when signed in). */
   donor?: DonorContact | null;
+  /**
+   * «طريقة التواصل المفضلة»: every message about this gift goes there. The matching contact
+   * (donor.phone for WhatsApp, donor.email for email) is then required.
+   */
+  contactChannel?: ContactChannel | null;
   locale: Locale;
   returnUrl?: string | null;
 }

@@ -19,6 +19,7 @@ async function setupWorker(channels: Channels = new LogChannels(() => undefined)
     baserow: new BaserowClient(null),
     analytics: new Analytics(null),
     links: { web: 'https://yusr.example', admin: 'https://admin.yusr.example' },
+    receiptLink: (donationId, locale) => context.donations.receiptLink(donationId, locale),
     clock: () => context.clock.now(),
   });
   const worker = new OutboxWorker(context.db, dispatcher, context.donations, context.clock, { error: () => undefined });

@@ -95,6 +95,8 @@ export function useDonationDraft(item: CaseSummary, options: DonationDraftOption
               phone: guestContact.includes('@') ? null : guestContact.trim() || null,
             }
           : null,
+        // The prototype's single contact field: an address means email, anything else a WhatsApp number.
+        contactChannel: guest && guestContact.trim() ? (guestContact.includes('@') ? 'email' : 'whatsapp') : null,
         locale: options.locale,
       },
       { userId: guest ? null : CURRENT_DONOR.id, displayName, region: CURRENT_DONOR.region, channel: options.channel },

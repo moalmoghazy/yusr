@@ -87,6 +87,22 @@ export const templates = {
         };
   },
 
+  /** The case is closed: everything was paid out. The receipt link opens the donor's own receipt (it carries its token). */
+  closed(locale: Locale, data: { caseTitle: Localized; receiptLink: string; transparencyLink: string }): Rendered {
+    const title = data.caseTitle[locale] || data.caseTitle.ar;
+    return locale === 'ar'
+      ? {
+          subject: 'اكتملت الحالة التي ساهمت فيها',
+          text: `الحالة التي ساهمت فيها «${title}» اكتملت وتم الصرف للجهات، والأمر قُضي بفضل الله. جزاك الله خيرًا.\nهذا إيصالك:\n${data.receiptLink}\nإيصالات الصرف ومستنداته في تبويب الشفافية:\n${data.transparencyLink}`,
+          short: `اكتملت «${title}» وتم الصرف للجهات بفضل الله. شكرًا لعطائك.`,
+        }
+      : {
+          subject: 'A case you supported is complete',
+          text: `The case you supported, “${title}”, is complete: everything has been paid out to the institutions, by the grace of God. Thank you.\nHere is your receipt:\n${data.receiptLink}\nThe payment receipts and documents are on the transparency tab:\n${data.transparencyLink}`,
+          short: `“${title}” is complete and fully paid out. Thank you for giving.`,
+        };
+  },
+
   refunded(locale: Locale, data: { receiptNo: string; amountMinor: number; currency: Currency }): Rendered {
     const amount = money(locale, data.amountMinor, data.currency);
     return locale === 'ar'
