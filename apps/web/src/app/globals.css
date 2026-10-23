@@ -199,6 +199,166 @@
   }
 }
 
+/* The floating WhatsApp button's label: a glowing gold line runs around its pill (whatsapp-button.tsx). */
+@property --wa-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.wa-label {
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--highlight) 45%, transparent),
+    0 0 14px color-mix(in oklab, var(--highlight) 35%, transparent),
+    0 4px 12px rgb(0 0 0 / 0.12);
+}
+
+.wa-label::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  padding: 2px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--wa-angle),
+    transparent 0 55%,
+    color-mix(in oklab, var(--highlight) 60%, transparent) 70%,
+    var(--highlight) 82%,
+    #fff3cf 86%,
+    var(--highlight) 90%,
+    transparent 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  filter: drop-shadow(0 0 3px var(--highlight)) drop-shadow(0 0 6px color-mix(in oklab, var(--highlight) 60%, transparent));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wa-label::before {
+    animation: wa-orbit 2.6s linear infinite;
+  }
+}
+
+@keyframes wa-orbit {
+  to {
+    --wa-angle: 360deg;
+  }
+}
+
+/* Case covers: the Yusr mark is drawn, turns into the category's motif (its golden ḍamma flies to a spot
+   on it and stays as a gold accent), then the motif turns back into the mark. One 9s loop; each cover
+   starts at its own point (--morph-delay). Without motion only the motif shows (case-cover.tsx). */
+@media (prefers-reduced-motion: no-preference) {
+  .cover-morph-mark,
+  .cover-morph-mark path,
+  .cover-morph-icon,
+  .cover-morph-icon > *,
+  .cover-morph-drop {
+    animation-duration: 9s;
+    animation-iteration-count: infinite;
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+    animation-delay: var(--morph-delay, 0s);
+  }
+  .cover-morph-mark {
+    animation-name: cover-mark-fade;
+  }
+  .cover-morph-mark path {
+    stroke-dasharray: 1 1.02;
+    animation-name: cover-mark-draw;
+  }
+  .cover-morph-icon {
+    animation-name: cover-icon-fade;
+  }
+  .cover-morph-icon > * {
+    stroke-dasharray: 1 1.02;
+    animation-name: cover-icon-draw;
+  }
+  .cover-morph-drop {
+    animation-name: cover-drop;
+  }
+}
+
+@keyframes cover-mark-fade {
+  0%,
+  40%,
+  100% {
+    opacity: 0;
+  }
+  4%,
+  32% {
+    opacity: 1;
+  }
+}
+
+@keyframes cover-mark-draw {
+  0%,
+  2% {
+    stroke-dashoffset: 1;
+  }
+  14%,
+  28% {
+    stroke-dashoffset: 0;
+  }
+  40%,
+  100% {
+    stroke-dashoffset: -1;
+  }
+}
+
+@keyframes cover-icon-fade {
+  0%,
+  32%,
+  94%,
+  100% {
+    opacity: 0;
+  }
+  36%,
+  86% {
+    opacity: 1;
+  }
+}
+
+@keyframes cover-icon-draw {
+  0%,
+  32% {
+    stroke-dashoffset: 1;
+  }
+  50%,
+  80% {
+    stroke-dashoffset: 0;
+  }
+  94%,
+  100% {
+    stroke-dashoffset: -1;
+  }
+}
+
+@keyframes cover-drop {
+  0%,
+  8% {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+  15%,
+  30% {
+    opacity: 1;
+    transform: none;
+  }
+  44%,
+  82% {
+    opacity: 1;
+    transform: translate(var(--drop-x), var(--drop-y)) scale(0.34);
+  }
+  92%,
+  100% {
+    opacity: 0;
+    transform: translate(var(--drop-x), var(--drop-y)) scale(0.2);
+  }
+}
+
 /* ------------------------------------------------------------------ The animated mark (/identity) */
 /* The bowl is written, the dots of ي appear, the golden ḍamma falls into place; see animated-mark.tsx. */
 .ym-stage {
