@@ -91,7 +91,9 @@ export default async function FinancePage() {
                 {payout.status === 'requested' && canApprove && (
                   <ApprovePayoutForm locale={locale} payoutId={payout.id} ownRequest={payout.requestedBy.id === staff.claims.sub} />
                 )}
-                {payout.status === 'approved' && canPay && <MarkPaidForm locale={locale} payoutId={payout.id} />}
+                {payout.status === 'approved' && canPay && (
+                  <MarkPaidForm locale={locale} payoutId={payout.id} ownRequest={payout.requestedBy.id === staff.claims.sub} />
+                )}
               </div>
             </li>
           ))}

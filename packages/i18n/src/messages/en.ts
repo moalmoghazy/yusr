@@ -560,7 +560,6 @@ export const en: Messages = {
       storyMin: 'Write at least {count} characters',
     },
     uploading: 'Uploading documents…',
-    possibleDuplicate: 'Another request has the same national ID; the team will review it first.',
     docsHint: 'Documents are uploaded encrypted and nothing is published until personal data is redacted.',
     docsRequired: 'Required: national ID + proof of cost (medical report, promissory note, price quote…).',
     upload: 'Upload a file',

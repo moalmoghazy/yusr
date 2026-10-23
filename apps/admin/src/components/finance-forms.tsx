@@ -83,7 +83,7 @@ export function ApprovePayoutForm({ locale, payoutId, ownRequest }: { locale: Lo
   );
 }
 
-export function MarkPaidForm({ locale, payoutId }: { locale: Locale; payoutId: string }) {
+export function MarkPaidForm({ locale, payoutId, ownRequest }: { locale: Locale; payoutId: string; ownRequest: boolean }) {
   const { t } = textFor(locale);
   const [result, action, pending] = useActionState<ActionResult, FormData>(markPayoutPaid, null);
   return (
@@ -99,10 +99,11 @@ export function MarkPaidForm({ locale, payoutId }: { locale: Locale; payoutId: s
         dir="ltr"
         className={cn(input, 'w-40 font-mono')}
       />
-      <button type="submit" disabled={pending} className={buttonClasses({ variant: 'soft', size: 'sm' })}>
+      <button type="submit" disabled={pending || ownRequest} className={buttonClasses({ variant: 'soft', size: 'sm' })}>
         <Icon name="landmark" size={15} />
         {t('admin.finance.markPaid')}
       </button>
+      {ownRequest && <span className="text-xs text-muted-foreground">{t('admin.finance.makerChecker')}</span>}
       <Result result={result} />
     </form>
   );
