@@ -59,6 +59,7 @@ export function caseRow(overrides: Partial<CaseRow> & { id: string }): CaseRow {
     submittedBy: USERS.volunteer.id,
     submitterRelation: 'volunteer',
     association: null,
+    partnerId: null,
     title: { ar: 'عملية قلب مفتوح لطفل', en: 'Open-heart surgery for a child' },
     summary: { ar: 'ملخص', en: 'Summary' },
     shareText: null,

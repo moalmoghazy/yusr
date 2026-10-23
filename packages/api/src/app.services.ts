@@ -24,6 +24,7 @@ import { DocumentsService } from './documents/documents.service';
 import { DevStorage, type ObjectStorage } from './documents/storage';
 import { DEFAULT_CHECKOUT_WINDOWS, DonationsService } from './donations/donations.service';
 import { PayoutsService } from './finance/payouts.service';
+import { PartnersService } from './partners/partners.service';
 import { RefundsService } from './finance/refunds.service';
 import { BaserowClient } from './integrations/baserow';
 import { Analytics } from './integrations/posthog';
@@ -64,6 +65,7 @@ export interface Services {
   auth: AuthService;
   me: MeQueries;
   cases: CasesService;
+  partners: PartnersService;
   verification: VerificationService;
   donations: DonationsService;
   payouts: PayoutsService;
@@ -81,7 +83,7 @@ export interface Services {
 async function createDatabase(config: AppConfig, clock: Clock, cipher: FieldCipher): Promise<{ db: Database; close: () => Promise<void> }> {
   if (config.storage === 'memory') {
     const db = new MemoryDatabase(() => clock.now());
-    await db.seed((tx) => seedDemo(tx, { now: clock.now(), cipher }).then(() => undefined));
+    await db.seed((tx) => seedDemo(tx, { now: clock.now(), cipher, codePepper: config.crypto.nationalIdPepper }).then(() => undefined));
     return { db, close: async () => undefined };
   }
   const [{ Pool }, { drizzle }, { DrizzleDatabase }, { schema }] = await Promise.all([
@@ -186,7 +188,9 @@ export async function createServices(config: AppConfig, options: { clock?: Clock
       refreshTtlDays: config.auth.refreshTtlDays,
     },
   });
-  const cases = new CasesService({ db, cipher, clock, ids, config: { nationalIdPepper: config.crypto.nationalIdPepper } });
+  // The codes' keyed hash reuses the national-ID pepper, domain-separated ("yusr-code:" prefix).
+  const partners = new PartnersService({ db, cipher, clock, ids, limiter, config: { codePepper: config.crypto.nationalIdPepper } });
+  const cases = new CasesService({ db, cipher, clock, ids, partners, config: { nationalIdPepper: config.crypto.nationalIdPepper } });
   const verification = new VerificationService({ db, cases, clock, ids });
   const webHost = new URL(config.urls.web).host;
   const donations = new DonationsService({
@@ -207,7 +211,7 @@ export async function createServices(config: AppConfig, options: { clock?: Clock
   });
   const payouts = new PayoutsService({ db, clock, ids });
   const refunds = new RefundsService({ db, gateways, clock, ids });
-  const documents = new DocumentsService({ db, storage, limiter, clock, ids });
+  const documents = new DocumentsService({ db, storage, limiter, clock, ids, partners });
   const admin = new AdminQueries({ db, cases, donations, fx, clock });
   const team = new TeamService(db, clock);
   const me = new MeQueries({ db, clock, chatwootHmacToken: config.ops.chatwootHmacToken });
@@ -241,6 +245,7 @@ export async function createServices(config: AppConfig, options: { clock?: Clock
     auth,
     me,
     cases,
+    partners,
     verification,
     donations,
     payouts,

@@ -22,7 +22,10 @@ import {
   computeDonationBreakdown,
   convertMinor,
   formatReceiptNumber,
+  generateYusrCode,
   isPubliclyVisible,
+  normalizeRegistrationNumber,
+  normalizeYusrCode,
   permissionsFor,
   queryCases,
   toMinor,
@@ -52,6 +55,9 @@ import {
   type LiveDonation,
   type Localized,
   type Page,
+  type Partner,
+  type PartnerCredentials,
+  type PartnerStatus,
   type PaymentMethod,
   type Payout,
   type Permission,
@@ -69,9 +75,9 @@ import {
   type VolunteerRow,
 } from '@yusr/core';
 import { canSeeSentMessages, maskRecipient, type ContactChannel, type SentMessage } from '@yusr/core';
-import type { EditCaseInput } from '@yusr/core/schemas';
+import type { CreatePartnerInput, EditCaseInput, UpdatePartnerInput } from '@yusr/core/schemas';
 import type { AdminClient, LedgerQuery, YusrClient } from '../client';
-import { demoPartnerFor, SEED_CASES, seedAmounts, type SeedCase } from './cases';
+import { DEMO_PARTNER_REGISTRY, DEMO_PARTNERS, demoPartnerFor, SEED_CASES, seedAmounts, type SeedCase } from './cases';
 import { CURRENT_DONOR, DONORS, STAFF, VOLUNTEERS, type SeedDonor } from './people';
 import { createRandom, type Random } from './random';
 
@@ -148,7 +154,7 @@ export interface MockBackend {
   admin(actor: Actor): AdminClient;
   createDonation(request: CreateDonationRequest, context?: CreateContext): CreateDonationResponse;
   completePayment(donationId: string, outcome: 'success' | 'failure'): AdminDonation;
-  presignUpload(input: { kind: DocumentKind; contentType: string; sizeBytes: number }): UploadTicket;
+  presignUpload(input: { kind: DocumentKind; contentType: string; sizeBytes: number; association?: PartnerCredentials | null }): UploadTicket;
   submitCase(request: SubmitCaseRequest): SubmitCaseResult;
   simulate: {
     tick(): AdminDonation | null;
@@ -177,7 +183,7 @@ interface State {
   sent: SentMessage[];
   /** Each gift's chosen channel and contact, kept apart from the records the read API returns. */
   contacts: Map<string, { channel: ContactChannel; to: string; locale: 'ar' | 'en' }>;
-  seq: Record<'donation' | 'ledger' | 'txn' | 'payout' | 'refund' | 'audit' | 'task' | 'notification' | 'receipt' | 'case' | 'upload', number>;
+  seq: Record<'donation' | 'ledger' | 'txn' | 'payout' | 'refund' | 'audit' | 'task' | 'notification' | 'receipt' | 'case' | 'upload' | 'partner', number>;
 }
 
 const iso = (ms: number) => new Date(ms).toISOString();
@@ -259,7 +265,20 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
     notifications: [],
     sent: [],
     contacts: new Map(),
-    seq: { donation: 0, ledger: 0, txn: 0, payout: 0, refund: 0, audit: 0, task: 0, notification: 0, receipt: 4_180, case: 10_500, upload: 0 },
+    seq: {
+      donation: 0,
+      ledger: 0,
+      txn: 0,
+      payout: 0,
+      refund: 0,
+      audit: 0,
+      task: 0,
+      notification: 0,
+      receipt: 4_180,
+      case: 10_500,
+      upload: 0,
+      partner: DEMO_PARTNERS.length,
+    },
   };
 
   const nextId = (kind: keyof State['seq'], prefix: string) => {
@@ -1125,6 +1144,60 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
 
   const read = createReadApi(state, clock, cached);
 
+  // ---------------------------------------------------------------- approved partners («كود يُسر»)
+
+  const youssef = STAFF.find((member) => member.id === 'u_youssef') ?? STAFF[0]!;
+  const partners: Array<Omit<Partner, 'casesCount'>> = DEMO_PARTNERS.map((partner, index) => {
+    const registry = DEMO_PARTNER_REGISTRY.find((entry) => entry.registrationNumber === partner.registrationNumber)!;
+    const at = `${registry.contractSignedOn}T10:00:00.000Z`;
+    return {
+      id: `partner_${String(index + 1).padStart(4, '0')}`,
+      name: partner.name,
+      registrationNumber: partner.registrationNumber,
+      region: registry.region,
+      contractSignedOn: registry.contractSignedOn,
+      contactName: partner.contactName,
+      contactPhone: partner.contactPhone,
+      status: 'active',
+      yusrCode: registry.yusrCode,
+      codeIssuedAt: at,
+      createdBy: { id: youssef.id, name: youssef.name.ar },
+      createdAt: at,
+      updatedAt: at,
+    };
+  });
+  const partnerCases = (registrationNumber: string) =>
+    [...state.cases.values()].filter((item) => item.submittedBy.association?.registrationNumber === registrationNumber).length;
+  const withCount = (partner: Omit<Partner, 'casesCount'>): Partner => ({ ...partner, casesCount: partnerCases(partner.registrationNumber) });
+  const mustPartner = (id: string) => {
+    const partner = partners.find((entry) => entry.id === id);
+    if (!partner) throw new DomainError('NOT_FOUND', 'Partner not found');
+    return partner;
+  };
+  const randomBytes = (count: number): Uint8Array => {
+    const bytes = new Uint8Array(count);
+    if (globalThis.crypto?.getRandomValues) return globalThis.crypto.getRandomValues(bytes);
+    return bytes.map(() => Math.floor(rnd.next() * 256));
+  };
+  const newCode = () => {
+    let code = generateYusrCode(randomBytes);
+    while (partners.some((partner) => partner.yusrCode === code)) code = generateYusrCode(randomBytes);
+    return code;
+  };
+  /** Same answer for an unknown number, a wrong code and a suspended partner (like the API). */
+  const verifyPartner = (credentials: PartnerCredentials | null | undefined) => {
+    const registrationNumber = normalizeRegistrationNumber(credentials?.registrationNumber ?? '');
+    const code = normalizeYusrCode(credentials?.yusrCode ?? '');
+    const partner = partners.find((entry) => entry.registrationNumber === registrationNumber);
+    if (!partner || partner.yusrCode !== code || partner.status !== 'active') {
+      throw new DomainError('VALIDATION_FAILED', 'The registration number and Yusr code do not match an active partner', {
+        field: 'association.yusrCode',
+        reason: 'partner_not_verified',
+      });
+    }
+    return partner;
+  };
+
   // ---------------------------------------------------------------- admin (RBAC-enforced)
 
   const adminFor = (actor: Actor) => {
@@ -1495,6 +1568,88 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
         if (!canSeeSentMessages(actor.roles)) throw new DomainError('FORBIDDEN', 'The demo outbox is for super admins and content moderators');
         return [...state.sent].reverse().slice(0, limit);
       },
+      partners: () => {
+        ensure('partners:manage');
+        return [...partners].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)).map(withCount);
+      },
+      createPartner: (input: CreatePartnerInput) => {
+        ensure('partners:manage');
+        const registrationNumber = normalizeRegistrationNumber(input.registrationNumber);
+        if (partners.some((entry) => entry.registrationNumber === registrationNumber)) {
+          throw new DomainError('VALIDATION_FAILED', 'A partner with this registration number already exists', { field: 'registrationNumber' });
+        }
+        const at = iso(clock());
+        state.seq.partner += 1;
+        const partner: Omit<Partner, 'casesCount'> = {
+          id: `partner_${String(state.seq.partner).padStart(4, '0')}`,
+          name: input.name.trim(),
+          registrationNumber,
+          region: input.region,
+          contractSignedOn: input.contractSignedOn,
+          contactName: input.contactName.trim(),
+          contactPhone: input.contactPhone,
+          status: 'active',
+          yusrCode: newCode(),
+          codeIssuedAt: at,
+          createdBy: { id: actor.id, name: actor.name },
+          createdAt: at,
+          updatedAt: at,
+        };
+        partners.push(partner);
+        logAudit(actorRef, 'partner.created', 'partner', partner.id, partner.name, null, {
+          name: partner.name,
+          registrationNumber,
+          region: partner.region,
+          contractSignedOn: partner.contractSignedOn,
+          codeIssued: true,
+        });
+        return withCount(partner);
+      },
+      updatePartner: (partnerId: string, patch: UpdatePartnerInput) => {
+        ensure('partners:manage');
+        const current = mustPartner(partnerId);
+        const registrationNumber = patch.registrationNumber ? normalizeRegistrationNumber(patch.registrationNumber) : current.registrationNumber;
+        if (partners.some((entry) => entry.id !== partnerId && entry.registrationNumber === registrationNumber)) {
+          throw new DomainError('VALIDATION_FAILED', 'A partner with this registration number already exists', { field: 'registrationNumber' });
+        }
+        const next = { ...current, ...patch, registrationNumber, updatedAt: iso(clock()) };
+        partners.splice(partners.indexOf(current), 1, next);
+        // Its cases show the registry's name and number.
+        for (const item of state.cases.values()) {
+          const association = item.submittedBy.association;
+          if (association?.registrationNumber !== current.registrationNumber) continue;
+          const renamed = { ...association, name: next.name, registrationNumber };
+          putCase({ ...item, partner: { name: next.name, registrationNumber }, submittedBy: { ...item.submittedBy, name: next.name, association: renamed } });
+        }
+        logAudit(actorRef, 'partner.updated', 'partner', partnerId, next.name, null, { fields: Object.keys(patch) });
+        return withCount(next);
+      },
+      setPartnerStatus: (partnerId: string, status: PartnerStatus, reason?: string) => {
+        ensure('partners:manage');
+        const current = mustPartner(partnerId);
+        if (current.status === status) return withCount(current);
+        const next = { ...current, status, updatedAt: iso(clock()) };
+        partners.splice(partners.indexOf(current), 1, next);
+        logAudit(
+          actorRef,
+          status === 'suspended' ? 'partner.suspended' : 'partner.reactivated',
+          'partner',
+          partnerId,
+          next.name,
+          { status: current.status },
+          { status, ...(reason?.trim() ? { reason: reason.trim() } : {}) },
+        );
+        return withCount(next);
+      },
+      regeneratePartnerCode: (partnerId: string) => {
+        ensure('partners:manage');
+        const current = mustPartner(partnerId);
+        const at = iso(clock());
+        const next = { ...current, yusrCode: newCode(), codeIssuedAt: at, updatedAt: at };
+        partners.splice(partners.indexOf(current), 1, next);
+        logAudit(actorRef, 'partner.code_regenerated', 'partner', partnerId, next.name, { codeIssuedAt: current.codeIssuedAt }, { codeIssuedAt: at });
+        return withCount(next);
+      },
     };
     return api;
   };
@@ -1537,6 +1692,11 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       updateRoles: wrap(sync.updateRoles),
       audit: wrap(sync.audit),
       sentMessages: wrap(sync.sentMessages),
+      partners: wrap(sync.partners),
+      createPartner: wrap(sync.createPartner),
+      updatePartner: wrap(sync.updatePartner),
+      setPartnerStatus: wrap(sync.setPartnerStatus),
+      regeneratePartnerCode: wrap(sync.regeneratePartnerCode),
     };
   };
 
@@ -1552,15 +1712,20 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
   const uploads = new Set<string>();
   const nationalIds = new Set<string>();
 
-  /** Same rules as POST /uploads: PDFs and photos up to 20 MB, a 10-minute link, keys scoped to the uploader. */
-  const presignUpload = (input: { kind: DocumentKind; contentType: string; sizeBytes: number }): UploadTicket => {
+  /**
+   * Same rules as POST /uploads: PDFs and photos up to 20 MB, a 10-minute link, keys scoped to the uploader
+   * (a partner uploading with its رقم الإشهار and «كود يُسر» gets its own prefix).
+   */
+  const presignUpload = (input: { kind: DocumentKind; contentType: string; sizeBytes: number; association?: PartnerCredentials | null }): UploadTicket => {
+    const partner = input.association ? verifyPartner(input.association) : null;
     const extension = UPLOAD_TYPES[input.contentType];
     if (!extension) throw new DomainError('VALIDATION_FAILED', 'Upload a PDF or a photo', { field: 'contentType' });
     if (!Number.isInteger(input.sizeBytes) || input.sizeBytes <= 0 || input.sizeBytes > 20 * 1024 * 1024) {
       throw new DomainError('VALIDATION_FAILED', 'Files are limited to 20 MB', { field: 'sizeBytes' });
     }
     state.seq.upload += 1;
-    const key = `uploads/${ME}/${String(state.seq.upload).padStart(6, '0')}-${input.kind}.${extension}`;
+    const owner = partner ? `partner-${partner.id}` : ME;
+    const key = `uploads/${owner}/${String(state.seq.upload).padStart(6, '0')}-${input.kind}.${extension}`;
     uploads.add(key);
     return {
       key,
@@ -1578,8 +1743,23 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
 
   const submitCase = (request: SubmitCaseRequest): SubmitCaseResult => {
     if (request.consent !== true) throw new DomainError('VALIDATION_FAILED', 'Consent is required', { field: 'consent' });
+    // An association's case always passes the registry check; its public name and number come from the registry.
+    if (request.submitterRelation === 'association' && !request.association) {
+      throw new DomainError('VALIDATION_FAILED', 'A partner association’s submission needs its details', { field: 'association' });
+    }
+    const partner = request.submitterRelation === 'association' ? verifyPartner(request.association) : null;
+    const association =
+      partner && request.association
+        ? {
+            name: partner.name,
+            registrationNumber: partner.registrationNumber,
+            contactName: request.association.contactName,
+            contactPhone: request.association.contactPhone,
+          }
+        : null;
     for (const document of request.documents) {
-      if (!uploads.has(document.storageKey)) throw new DomainError('FORBIDDEN', 'Documents must be uploaded by the submitter');
+      const own = document.storageKey.startsWith(partner ? `uploads/partner-${partner.id}/` : `uploads/${ME}/`);
+      if (!uploads.has(document.storageKey) || !own) throw new DomainError('FORBIDDEN', 'Documents must be uploaded by the submitter');
     }
     const title = pick(request.title);
     const storyText = pick(request.story);
@@ -1601,10 +1781,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       title: text,
       summary: { ar: storyText.ar.slice(0, 140), en: storyText.en.slice(0, 140) },
       shareText: null,
-      partner:
-        request.submitterRelation === 'association' && request.association
-          ? { name: request.association.name, registrationNumber: request.association.registrationNumber }
-          : null,
+      partner: association ? { name: association.name, registrationNumber: association.registrationNumber } : null,
       region: request.region,
       currency: request.currency,
       goalMinor: caseAmountsFor(request.goalMinor).goalMinor,
@@ -1635,9 +1812,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
         {
           kind: 'submitted',
           at: iso(at),
-          actor: request.association
-            ? { ar: request.association.name, en: request.association.name }
-            : { ar: CURRENT_DONOR.name.ar, en: CURRENT_DONOR.name.en },
+          actor: association ? { ar: association.name, en: association.name } : { ar: CURRENT_DONOR.name.ar, en: CURRENT_DONOR.name.en },
         },
         { kind: 'review_started', at: iso(at + 1_000), actor: CONTENT_TEAM },
       ],
@@ -1645,14 +1820,14 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       updates: [],
       recentDonations: [],
       submittedBy: {
-        name: request.association?.name ?? CURRENT_DONOR.name.ar,
+        name: association?.name ?? CURRENT_DONOR.name.ar,
         relation: request.submitterRelation,
-        association: request.submitterRelation === 'association' ? (request.association ?? null) : null,
+        association,
       },
       auditor: null,
       history: [
-        { from: null, to: 'draft', at: iso(at), actorName: CURRENT_DONOR.name.ar, reason: null },
-        { from: 'draft', to: 'under_review', at: iso(at + 1_000), actorName: CURRENT_DONOR.name.ar, reason: null },
+        { from: null, to: 'draft', at: iso(at), actorName: association?.name ?? CURRENT_DONOR.name.ar, reason: null },
+        { from: 'draft', to: 'under_review', at: iso(at + 1_000), actorName: association?.name ?? CURRENT_DONOR.name.ar, reason: null },
       ],
       updatedAt: iso(at),
     };

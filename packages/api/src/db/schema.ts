@@ -17,6 +17,7 @@ import {
   type CheckoutAction,
   type Localized,
   type PartnerAssociation,
+  type PartnerStatus,
   type SubmitterRelation,
 } from '@yusr/core';
 import type { ContactChannel } from '@yusr/core';
@@ -25,6 +26,7 @@ import {
   bigint,
   boolean,
   customType,
+  date,
   index,
   integer,
   jsonb,
@@ -143,6 +145,30 @@ export const volunteerProfiles = pgTable('volunteer_profiles', {
 });
 
 // ------------------------------------------------------------------ cases
+/** The approved-partner registry (0006_partner_registry.sql): associations Yusr signed a contract with. */
+export const partners = pgTable('partners', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  /** رقم الإشهار, normalized (ASCII digits, no spaces). */
+  registrationNumber: text('registration_number').notNull().unique(),
+  region: text('region').notNull(),
+  contractSignedOn: date('contract_signed_on', { mode: 'string' }).notNull(),
+  contactName: text('contact_name').notNull(),
+  contactPhone: text('contact_phone').notNull(),
+  status: text('status').$type<PartnerStatus>().notNull().default('active'),
+  suspendedAt: at('suspended_at'),
+  /** HMAC of «كود يُسر»: compared in constant time, unique. */
+  codeHash: text('code_hash').notNull().unique(),
+  /** «كود يُسر», AES-256-GCM, so staff can read it again to hand it over. */
+  codeCipher: bytea('code_cipher').notNull(),
+  codeIssuedAt: at('code_issued_at').notNull().defaultNow(),
+  createdBy: uuid('created_by')
+    .notNull()
+    .references(() => users.id),
+  createdAt: created(),
+  updatedAt: at('updated_at').notNull().defaultNow(),
+});
+
 export const beneficiaries = pgTable('beneficiaries', {
   id: uuid('id').primaryKey().defaultRandom(),
   pseudonym: jsonb('pseudonym').$type<Localized>().notNull(),
@@ -168,12 +194,13 @@ export const cases = pgTable(
     beneficiaryId: uuid('beneficiary_id')
       .notNull()
       .references(() => beneficiaries.id),
-    submittedBy: uuid('submitted_by')
-      .notNull()
-      .references(() => users.id),
+    /** Null when a partner submitted with its «كود يُسر» and no account (0006). */
+    submittedBy: uuid('submitted_by').references(() => users.id),
     submitterRelation: text('submitter_relation').$type<SubmitterRelation>().notNull(),
     /** The partner association that submitted the case (0002_partner_association.sql); null for individuals. */
     association: jsonb('association').$type<PartnerAssociation>(),
+    /** The registry entry behind an association case (0006); its name and number fill `association`. */
+    partnerId: uuid('partner_id').references(() => partners.id),
     title: jsonb('title').$type<Localized>().notNull(),
     summary: jsonb('summary').$type<Localized>().notNull(),
     /** «نص المشاركة»: the case's own line for social sharing (0001_case_share_text.sql); null = composed. */
@@ -203,7 +230,7 @@ export const cases = pgTable(
       sql`yusr_normalize(coalesce(title ->> 'ar', '') || ' ' || coalesce(title ->> 'en', '') || ' ' || coalesce(summary ->> 'ar', '') || ' ' || coalesce(summary ->> 'en', '') || ' ' || reference)`,
     ),
   },
-  (t) => [index('cases_catalog_idx').on(t.status, t.category, t.region, t.priority)],
+  (t) => [index('cases_catalog_idx').on(t.status, t.category, t.region, t.priority), index('cases_partner_idx').on(t.partnerId)],
 );
 
 export const caseDocuments = pgTable(
@@ -218,9 +245,8 @@ export const caseDocuments = pgTable(
     redactedKey: text('redacted_key'),
     sha256: text('sha256').notNull(),
     pages: smallint('pages').notNull().default(1),
-    uploadedBy: uuid('uploaded_by')
-      .notNull()
-      .references(() => users.id),
+    /** Null when a partner uploaded with its «كود يُسر» and no account (0006). */
+    uploadedBy: uuid('uploaded_by').references(() => users.id),
     redactedBy: uuid('redacted_by').references(() => users.id),
     createdAt: created(),
   },
@@ -521,6 +547,7 @@ export const schema = {
   authIdentities,
   refreshTokens,
   volunteerProfiles,
+  partners,
   beneficiaries,
   cases,
   caseDocuments,

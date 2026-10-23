@@ -36,6 +36,8 @@ import { hmacHex, mask } from '../common/crypto';
 import type { IdGenerator } from '../common/ids';
 import type { Database, Tx } from '../db/ports';
 import type { CaseRow } from '../db/rows';
+import { uploadPrefix } from '../documents/documents.service';
+import type { PartnersService } from '../partners/partners.service';
 import { toCaseSummary } from './mappers';
 
 export interface CasesConfig {
@@ -49,6 +51,8 @@ export interface CasesDeps {
   clock: Clock;
   ids: IdGenerator;
   config: CasesConfig;
+  /** The approved-partner registry: association submissions are checked against it. */
+  partners: PartnersService;
 }
 
 /** A validated POST /cases body (submitCaseSchema in @yusr/core/schemas). */
@@ -118,7 +122,7 @@ export class CasesService {
     if (!item) throw new DomainError('NOT_FOUND', 'Case not found');
     const [detail, submitter, auditor, transitions] = await Promise.all([
       this.assemble(item, true),
-      db.read.users.byId(item.submittedBy),
+      item.submittedBy ? db.read.users.byId(item.submittedBy) : Promise.resolve(null),
       item.auditorId ? db.read.users.byId(item.auditorId) : Promise.resolve(null),
       db.read.cases.transitions(item.id),
     ]);
@@ -134,7 +138,12 @@ export class CasesService {
         from: change.fromStatus,
         to: change.toStatus,
         at: change.createdAt.toISOString(),
-        actorName: change.actorId ? (names.get(change.actorId) ?? '—') : 'system',
+        // A partner that submitted with its code has no account: its submission is shown under its name.
+        actorName: change.actorId
+          ? (names.get(change.actorId) ?? '—')
+          : change.fromStatus === 'draft' && item.partnerId && item.association
+            ? item.association.name
+            : 'system',
         reason: change.reason,
       })),
       updatedAt: item.updatedAt.toISOString(),
@@ -231,12 +240,23 @@ export class CasesService {
    * Slack): telling the submitter would let anyone test whether a national ID is in the database.
    */
   async submit(input: SubmissionInput, context: CallContext): Promise<Pick<CaseRow, 'id' | 'reference' | 'status'>> {
-    const actor = context.actor;
-    if (!actor) throw new DomainError('UNAUTHENTICATED', 'Sign in to submit a case');
     if (input.consent !== true) throw new DomainError('VALIDATION_FAILED', 'Consent is required', { field: 'consent' });
     if (input.isUrgent && !input.deadline) throw new DomainError('VALIDATION_FAILED', 'Urgent cases need a deadline', { field: 'deadline' });
+    // An association's case always passes the registry check (رقم الإشهار + «كود يُسر»), signed in or not;
+    // anyone else must be signed in.
+    const association = input.submitterRelation === 'association' ? input.association : null;
+    if (input.submitterRelation === 'association' && !association) {
+      throw new DomainError('VALIDATION_FAILED', 'A partner association’s submission needs its details', { field: 'association' });
+    }
+    const partner = association ? await this.deps.partners.verify(association, context) : null;
+    const actor = context.actor;
+    if (!partner && !actor) throw new DomainError('UNAUTHENTICATED', 'Sign in to submit a case');
+    // Documents must come from this submitter's own uploads (the partner's prefix, or the person's).
+    const prefixes = [partner ? uploadPrefix({ partnerId: partner.id }) : null, actor ? uploadPrefix({ actorId: actor.id }) : null].filter(
+      (prefix): prefix is string => prefix !== null,
+    );
     for (const document of input.documents) {
-      if (!document.storageKey.startsWith(`uploads/${actor.id}/`)) {
+      if (!prefixes.some((prefix) => document.storageKey.startsWith(prefix)) || document.storageKey.includes('..')) {
         throw new DomainError('FORBIDDEN', 'Documents must be uploaded by the submitter', { storageKey: document.storageKey });
       }
     }
@@ -269,9 +289,19 @@ export class CasesService {
         category: input.category,
         status: 'under_review',
         beneficiaryId,
-        submittedBy: actor.id,
+        submittedBy: actor?.id ?? null,
         submitterRelation: input.submitterRelation,
-        association: input.submitterRelation === 'association' ? (input.association ?? null) : null,
+        // The public name and number come from the registry, never from what was typed.
+        association:
+          partner && association
+            ? {
+                name: partner.name,
+                registrationNumber: partner.registrationNumber,
+                contactName: association.contactName,
+                contactPhone: association.contactPhone,
+              }
+            : null,
+        partnerId: partner?.id ?? null,
         title,
         summary: { ar: story.ar.slice(0, 180), en: story.en.slice(0, 180) },
         shareText: null,
@@ -297,7 +327,7 @@ export class CasesService {
         updatedAt: now,
       });
       await tx.cases.update(id, { slug: slugify(input.title.en ?? '', created.reference) });
-      await tx.cases.insertTransition({ caseId: id, fromStatus: 'draft', toStatus: 'under_review', actorId: actor.id, reason: null });
+      await tx.cases.insertTransition({ caseId: id, fromStatus: 'draft', toStatus: 'under_review', actorId: actor?.id ?? null, reason: null });
       for (const document of input.documents) {
         await tx.cases.insertDocument({
           id: ids(),
@@ -307,18 +337,24 @@ export class CasesService {
           redactedKey: null,
           sha256: document.sha256,
           pages: 1,
-          uploadedBy: actor.id,
+          uploadedBy: actor?.id ?? null,
           redactedBy: null,
           createdAt: now,
         });
       }
       await tx.audit.record({
-        actorId: actor.id,
-        actorRole: primaryRole(actor),
+        actorId: actor?.id ?? null,
+        actorRole: actor ? primaryRole(actor) : null,
         action: 'case.submitted',
         entityType: 'case',
         entityId: id,
-        after: { reference: created.reference, category: input.category, goalMinor: input.goalMinor, possibleDuplicate: Boolean(existing) },
+        after: {
+          reference: created.reference,
+          category: input.category,
+          goalMinor: input.goalMinor,
+          possibleDuplicate: Boolean(existing),
+          ...(partner ? { partnerId: partner.id } : {}),
+        },
         ip: context.ip ?? null,
         requestId: context.requestId ?? null,
       });

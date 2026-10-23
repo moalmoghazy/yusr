@@ -129,6 +129,7 @@ export const protoAr = {
         refund: 'استرداد',
         user: 'مستخدم',
         verification: 'زيارة',
+        partner: 'جمعية شريكة',
       },
       fields: {
         status: 'الحالة',

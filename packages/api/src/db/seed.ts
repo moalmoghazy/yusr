@@ -22,8 +22,9 @@ import {
   type PaymentMethod,
   type Role,
 } from '@yusr/core';
-import { demoPartnerFor, DONORS, SEED_CASES, seedAmounts, STAFF, VOLUNTEERS, type SeedCase } from '@yusr/sdk/mock';
+import { DEMO_PARTNER_REGISTRY, DEMO_PARTNERS, demoPartnerFor, DONORS, SEED_CASES, seedAmounts, STAFF, VOLUNTEERS, type SeedCase } from '@yusr/sdk/mock';
 import type { FieldCipher } from '../common/cipher';
+import { yusrCodeHash } from '../partners/partners.service';
 import type { Tx } from './ports';
 import type { CaseRow, DonationRow, UserRow } from './rows';
 
@@ -109,8 +110,12 @@ export interface SeedSummary {
   payouts: number;
 }
 
-export async function seedDemo(tx: Tx, options: { now: Date; cipher: FieldCipher }): Promise<SeedSummary> {
-  const { now, cipher } = options;
+/**
+ * `codePepper` is the server secret the API hashes «كود يُسر» with (PartnersService), so the demo
+ * partners' fixed codes (DEMO_PARTNER_REGISTRY) work on the submission form.
+ */
+export async function seedDemo(tx: Tx, options: { now: Date; cipher: FieldCipher; codePepper: string }): Promise<SeedSummary> {
+  const { now, cipher, codePepper } = options;
   const ago = (days: number) => new Date(now.getTime() - days * DAY);
   const summary: SeedSummary = { users: 0, cases: 0, donations: 0, payouts: 0 };
   const staffId = (id: string) => stableId(`staff:${id}`);
@@ -168,6 +173,32 @@ export async function seedDemo(tx: Tx, options: { now: Date; cipher: FieldCipher
     summary.users += 1;
   }
 
+  // ------------------------------------------------------------------ approved partners
+  const partnerIds = new Map<string, string>();
+  for (const partner of DEMO_PARTNERS) {
+    const registry = DEMO_PARTNER_REGISTRY.find((entry) => entry.registrationNumber === partner.registrationNumber)!;
+    const id = stableId(`partner:${partner.registrationNumber}`);
+    partnerIds.set(partner.registrationNumber, id);
+    const at = new Date(`${registry.contractSignedOn}T10:00:00Z`);
+    await tx.partners.insert({
+      id,
+      name: partner.name,
+      registrationNumber: partner.registrationNumber,
+      region: registry.region,
+      contractSignedOn: registry.contractSignedOn,
+      contactName: partner.contactName,
+      contactPhone: partner.contactPhone,
+      status: 'active',
+      suspendedAt: null,
+      codeHash: yusrCodeHash(codePepper, registry.yusrCode),
+      codeCipher: cipher.encrypt(registry.yusrCode, `partner-code:${id}`),
+      codeIssuedAt: at,
+      createdBy: staffId('u_youssef'),
+      createdAt: at,
+      updatedAt: at,
+    });
+  }
+
   // ------------------------------------------------------------------ cases
   const receiptYear = now.getUTCFullYear();
   for (const [index, seed] of SEED_CASES.entries()) {
@@ -207,6 +238,7 @@ export async function seedDemo(tx: Tx, options: { now: Date; cipher: FieldCipher
       submittedBy,
       submitterRelation: 'association',
       association: demoPartnerFor(seed.slug),
+      partnerId: partnerIds.get(demoPartnerFor(seed.slug).registrationNumber)!,
       title: seed.title,
       summary: seed.summary,
       shareText: seed.shareText ?? null,
@@ -551,7 +583,7 @@ export async function main(): Promise<void> {
   const cipher = new FieldCipher(config.crypto.dataKeyBase64);
   let result: SeedSummary | undefined;
   await db.seed(async (tx) => {
-    result = await seedDemo(tx, { now: new Date(), cipher });
+    result = await seedDemo(tx, { now: new Date(), cipher, codePepper: config.crypto.nationalIdPepper });
   });
   console.log(`seed: ${result?.users} users, ${result?.cases} cases, ${result?.donations} donations, ${result?.payouts} payouts`);
   await pool.end();

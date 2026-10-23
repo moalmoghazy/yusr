@@ -43,11 +43,17 @@ describe('request schemas', () => {
     assert.ok(!submitCaseSchema.safeParse({ ...submission, documents: [] }).success);
   });
 
-  it('takes a partner association’s details with its submission, and requires them', () => {
-    const association = { name: 'جمعية الخير لتنمية المجتمع', registrationNumber: '1234/2019', contactName: 'سعاد محمود', contactPhone: '+201001234567' };
-    assert.ok(submitCaseSchema.safeParse({ ...submission, submitterRelation: 'association', association }).success);
+  it('takes a partner association’s رقم الإشهار, «كود يُسر» and contact with its submission, and requires them', () => {
+    const association = { registrationNumber: ' ١٢٣٤ /2019 ', yusrCode: 'ysr 7k2m-9qxa', contactName: 'سعاد محمود', contactPhone: '+201001234567' };
+    const parsed = submitCaseSchema.safeParse({ ...submission, submitterRelation: 'association', association });
+    assert.ok(parsed.success);
+    assert.equal(parsed.data.association?.registrationNumber, '1234/2019', 'Arabic-Indic digits and spaces are normalized');
+    assert.equal(parsed.data.association?.yusrCode, 'YSR-7K2M9QXA', 'the code is normalized to its canonical form');
     assert.ok(!submitCaseSchema.safeParse({ ...submission, submitterRelation: 'association' }).success, 'the association’s details are required');
     assert.ok(!submitCaseSchema.safeParse({ ...submission, submitterRelation: 'association', association: { ...association, contactPhone: '0100' } }).success);
+    assert.ok(!submitCaseSchema.safeParse({ ...submission, submitterRelation: 'association', association: { ...association, yusrCode: 'YSR-0O1IL' } }).success);
+    const { yusrCode: _code, ...withoutCode } = association;
+    assert.ok(!submitCaseSchema.safeParse({ ...submission, submitterRelation: 'association', association: withoutCode }).success, 'the code is required');
   });
 
   it('applies donation defaults and rejects unknown methods', () => {

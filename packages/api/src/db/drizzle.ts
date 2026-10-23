@@ -264,6 +264,33 @@ function createTx(x: Executor): Tx & { raw: Executor } {
       },
     },
 
+    // ------------------------------------------------------------------ approved partners
+    partners: {
+      byId: async (id, lock) => first(await locked(x.select().from(t.partners).where(eq(t.partners.id, id)).limit(1).$dynamic(), lock)),
+      byRegistrationNumber: async (registrationNumber) =>
+        first(await x.select().from(t.partners).where(eq(t.partners.registrationNumber, registrationNumber)).limit(1)),
+      byCodeHash: async (codeHash) => first(await x.select().from(t.partners).where(eq(t.partners.codeHash, codeHash)).limit(1)),
+      list: async () => x.select().from(t.partners).orderBy(desc(t.partners.createdAt)),
+      insert: async (row) => {
+        await x.insert(t.partners).values(row);
+      },
+      update: async (id, patch) => {
+        // partners_sync_cases (0006) renames the partner on its cases in the same statement.
+        await x
+          .update(t.partners)
+          .set({ ...patch, updatedAt: new Date() })
+          .where(eq(t.partners.id, id));
+      },
+      caseCounts: async () => {
+        const rows = await x
+          .select({ partnerId: t.cases.partnerId, count: sql<number>`count(*)::int` })
+          .from(t.cases)
+          .where(sql`${t.cases.partnerId} IS NOT NULL`)
+          .groupBy(t.cases.partnerId);
+        return new Map(rows.map((row) => [row.partnerId!, row.count]));
+      },
+    },
+
     verification: {
       byId: async (id, lock) => first(await locked(x.select().from(t.verificationTasks).where(eq(t.verificationTasks.id, id)).limit(1).$dynamic(), lock)),
       openForCase: async (caseId) =>

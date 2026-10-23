@@ -40,6 +40,9 @@
     },
     {
       "name": "Operations · People"
+    },
+    {
+      "name": "Operations · Partners"
     }
   ],
   "paths": {
@@ -429,8 +432,9 @@
           "Submissions"
         ],
         "summary": "Submit a case for review",
-        "description": "Starts the pipeline under_review → field_verified → published. A repeat national ID is flagged for reviewers, never rejected.\n\nRequires a signed-in session.\n\nRate limit: 10 per 86400s per user.",
+        "description": "Starts the pipeline under_review → field_verified → published. A repeat national ID is flagged for reviewers, never rejected. An association’s case (submitterRelation `association`) always carries its رقم الإشهار and «كود يُسر», checked against the approved-partner registry (a session is not needed); its documents must have been uploaded with the same credentials. Other submissions need a session.\n\nOpen to guests; a Bearer token is read when sent.\n\nRate limit: 10 per 86400s per IP.",
         "security": [
+          {},
           {
             "bearer": []
           }
@@ -467,14 +471,14 @@
                       {
                         "type": "object",
                         "properties": {
-                          "name": {
-                            "type": "string",
-                            "minLength": 3,
-                            "maxLength": 120
-                          },
                           "registrationNumber": {
                             "type": "string",
                             "minLength": 1,
+                            "maxLength": 40
+                          },
+                          "yusrCode": {
+                            "type": "string",
+                            "minLength": 4,
                             "maxLength": 40
                           },
                           "contactName": {
@@ -488,8 +492,8 @@
                           }
                         },
                         "required": [
-                          "name",
                           "registrationNumber",
+                          "yusrCode",
                           "contactName",
                           "contactPhone"
                         ]
@@ -1162,8 +1166,9 @@
           "Submissions"
         ],
         "summary": "A 10-minute upload link into private storage (step 1 of submitting a document)",
-        "description": "PUT the file to the returned URL with the returned headers, then reference its key when submitting the case.\n\nRequires a signed-in session.",
+        "description": "PUT the file to the returned URL with the returned headers, then reference its key when submitting the case. A partner association sends `association` (رقم الإشهار and «كود يُسر») instead of signing in; anyone else needs a session.\n\nOpen to guests; a Bearer token is read when sent.\n\nRate limit: 60 per 3600s per IP.",
         "security": [
+          {},
           {
             "bearer": []
           }
@@ -1204,6 +1209,32 @@
                     "type": "integer",
                     "exclusiveMinimum": 0,
                     "maximum": 20971520
+                  },
+                  "association": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "registrationNumber": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 40
+                          },
+                          "yusrCode": {
+                            "type": "string",
+                            "minLength": 4,
+                            "maxLength": 40
+                          }
+                        },
+                        "required": [
+                          "registrationNumber",
+                          "yusrCode"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -3929,6 +3960,347 @@
               "application/json": {
                 "schema": {
                   "description": "AuditEntry[] (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/partners": {
+      "get": {
+        "operationId": "admin.partners.list",
+        "tags": [
+          "Operations · Partners"
+        ],
+        "summary": "Approved partner associations, with their status and «كود يُسر»",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `partners:manage`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "x-permission": "partners:manage",
+        "responses": {
+          "200": {
+            "description": "Partner[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Partner[] (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "admin.partners.create",
+        "tags": [
+          "Operations · Partners"
+        ],
+        "summary": "Add an association to the approved list (after contract signature) and issue its «كود يُسر»",
+        "description": "رقم الإشهار is unique in the registry. The contract date cannot be in the future.\n\nRequires a staff session with two-factor authentication.\n\nPermission: `partners:manage`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 120
+                  },
+                  "registrationNumber": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  },
+                  "region": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$"
+                  },
+                  "contractSignedOn": {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                  },
+                  "contactName": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 80
+                  },
+                  "contactPhone": {
+                    "type": "string",
+                    "pattern": "^\\+[1-9]\\d{7,14}$"
+                  }
+                },
+                "required": [
+                  "name",
+                  "registrationNumber",
+                  "region",
+                  "contractSignedOn",
+                  "contactName",
+                  "contactPhone"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "partners:manage",
+        "responses": {
+          "201": {
+            "description": "Partner",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Partner (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/partners/{id}": {
+      "patch": {
+        "operationId": "admin.partners.update",
+        "tags": [
+          "Operations · Partners"
+        ],
+        "summary": "Correct a partner’s details (its cases show the new name and number)",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `partners:manage`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 120
+                  },
+                  "registrationNumber": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  },
+                  "region": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$"
+                  },
+                  "contractSignedOn": {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                  },
+                  "contactName": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 80
+                  },
+                  "contactPhone": {
+                    "type": "string",
+                    "pattern": "^\\+[1-9]\\d{7,14}$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "partners:manage",
+        "responses": {
+          "200": {
+            "description": "Partner",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Partner (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/partners/{id}/status": {
+      "post": {
+        "operationId": "admin.partners.status",
+        "tags": [
+          "Operations · Partners"
+        ],
+        "summary": "Suspend a partner (its code stops working at once) or reactivate it",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `partners:manage`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "active",
+                      "suspended"
+                    ]
+                  },
+                  "reason": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 500
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "partners:manage",
+        "responses": {
+          "200": {
+            "description": "Partner",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Partner (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/partners/{id}/code": {
+      "post": {
+        "operationId": "admin.partners.regenerateCode",
+        "tags": [
+          "Operations · Partners"
+        ],
+        "summary": "Issue a new «كود يُسر»; the old one stops working at once",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `partners:manage`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-permission": "partners:manage",
+        "responses": {
+          "200": {
+            "description": "Partner",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Partner (see @yusr/core)"
                 }
               }
             }

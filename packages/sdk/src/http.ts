@@ -138,6 +138,11 @@ export function createHttpAdminClient(options: HttpClientOptions): AdminClient {
     updateRoles: (userId, roles) => request('PUT', `/admin/team/${seg(userId)}/roles`, { roles }),
     audit: (limit = 100) => request('GET', `/admin/audit?limit=${limit}`),
     sentMessages: (limit = 100) => request('GET', `/admin/demo/messages?limit=${limit}`),
+    partners: () => request('GET', '/admin/partners'),
+    createPartner: (input) => post('/admin/partners', input),
+    updatePartner: (partnerId, patch) => request('PATCH', `/admin/partners/${seg(partnerId)}`, patch),
+    setPartnerStatus: (partnerId, status, reason) => post(`/admin/partners/${seg(partnerId)}/status`, { status, reason }),
+    regeneratePartnerCode: (partnerId) => post(`/admin/partners/${seg(partnerId)}/code`),
   };
 }
 

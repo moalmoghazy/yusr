@@ -1,7 +1,9 @@
 import { textFor } from '@yusr/ui';
 import type { Metadata } from 'next';
+import { DEMO_PARTNER_REGISTRY } from '@yusr/sdk/mock';
 import { SubmitForm } from '@/components/submit-form';
 import { pageLocale, type LocaleParams } from '@/lib/page';
+import { site } from '@/lib/site';
 
 export async function generateMetadata({ params }: { params: LocaleParams }): Promise<Metadata> {
   const locale = await pageLocale(params);
@@ -23,7 +25,8 @@ export default async function SubmitPage({ params }: { params: LocaleParams }) {
         <h1 className="font-display text-3xl font-bold md:text-4xl">{t('submit.title')}</h1>
         <p className="text-muted-foreground">{t('submit.subtitle')}</p>
       </header>
-      <SubmitForm locale={locale} />
+      {/* A public demo offers a demo partner's registration number and «كود يُسر» (never a real one). */}
+      <SubmitForm locale={locale} demoPartner={site.demo ? (DEMO_PARTNER_REGISTRY[0] ?? null) : null} />
     </div>
   );
 }

@@ -7,9 +7,12 @@ import { CasesService } from '../src/cases/cases.service';
 import { FieldCipher } from '../src/common/cipher';
 import { ManualClock } from '../src/common/clock';
 import { sequentialIds } from '../src/common/ids';
+import { MemoryKv } from '../src/common/kv';
+import { RateLimiter } from '../src/common/rate-limit';
 import { MemoryDatabase } from '../src/db/memory';
 import { seedDemo, stableId } from '../src/db/seed';
 import { DEFAULT_CHECKOUT_WINDOWS, DonationsService } from '../src/donations/donations.service';
+import { PartnersService } from '../src/partners/partners.service';
 import { StaticFx } from '../src/payments/fx';
 import { GatewayRegistry } from '../src/payments/registry';
 
@@ -19,10 +22,11 @@ async function seeded() {
   const cipher = new FieldCipher(FieldCipher.randomKey());
   let summary = { users: 0, cases: 0, donations: 0, payouts: 0 };
   await db.seed(async (tx) => {
-    summary = await seedDemo(tx, { now: clock.now(), cipher });
+    summary = await seedDemo(tx, { now: clock.now(), cipher, codePepper: 'pepper' });
   });
   const ids = sequentialIds();
-  const cases = new CasesService({ db, cipher, clock, ids, config: { nationalIdPepper: 'pepper' } });
+  const partners = new PartnersService({ db, cipher, clock, ids, limiter: new RateLimiter(new MemoryKv(clock)), config: { codePepper: 'pepper' } });
+  const cases = new CasesService({ db, cipher, clock, ids, partners, config: { nationalIdPepper: 'pepper' } });
   const donations = new DonationsService({
     db,
     gateways: new GatewayRegistry([]),

@@ -7,12 +7,15 @@ import { describe, it } from 'node:test';
 import type { CreateDonationRequest } from '@yusr/core';
 import { CasesService } from '../src/cases/cases.service';
 import { FieldCipher } from '../src/common/cipher';
+import { MemoryKv } from '../src/common/kv';
+import { RateLimiter } from '../src/common/rate-limit';
 import { Analytics } from '../src/integrations/posthog';
 import { BaserowClient } from '../src/integrations/baserow';
 import { SlackNotifier } from '../src/integrations/slack';
 import { DemoChannels, HttpChannels, LogChannels } from '../src/notifications/channels';
 import { Dispatcher } from '../src/notifications/dispatcher';
 import { OutboxWorker } from '../src/notifications/outbox.worker';
+import { PartnersService } from '../src/partners/partners.service';
 import type { FetchLike } from '../src/payments/gateway';
 import { CASE_ID, USERS, actorOf, key, setup, webhook } from './support/fixtures';
 
@@ -32,13 +35,10 @@ async function setupFlow() {
     clock: () => context.clock.now(),
   });
   const worker = new OutboxWorker(context.db, dispatcher, context.donations, context.clock, { error: () => undefined });
-  const cases = new CasesService({
-    db: context.db,
-    cipher: new FieldCipher(FieldCipher.randomKey()),
-    clock: context.clock,
-    ids: context.ids,
-    config: { nationalIdPepper: 'pepper' },
-  });
+  const cipher = new FieldCipher(FieldCipher.randomKey());
+  const limiter = new RateLimiter(new MemoryKv(context.clock));
+  const partners = new PartnersService({ db: context.db, cipher, clock: context.clock, ids: context.ids, limiter, config: { codePepper: 'code-pepper' } });
+  const cases = new CasesService({ db: context.db, cipher, clock: context.clock, ids: context.ids, partners, config: { nationalIdPepper: 'pepper' } });
   return { ...context, channels, worker, cases };
 }
 
