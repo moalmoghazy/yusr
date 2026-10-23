@@ -26,3 +26,6 @@ android/
 Thumbs.db
 *.log
 .idea/
+
+# Temporary worktrees made by coding assistants
+.claude/worktrees/
