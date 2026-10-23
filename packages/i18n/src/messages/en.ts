@@ -47,7 +47,7 @@ export const en: Messages = {
     submitCase: 'Submit a case',
     about: 'About us',
     account: 'My giving',
-    whatsapp: 'Chat with us on WhatsApp',
+    whatsapp: 'Chat with Yusr customer service',
     admin: 'Control hub',
     menu: 'Menu',
     language: 'Language',
@@ -355,7 +355,7 @@ export const en: Messages = {
     paymentsTitle: 'Pay the way that suits you',
     paymentsBody: 'Cards, wallets, Fawry, InstaPay, mada and Apple Pay — in EGP, SAR and USD.',
     ctaTitle: 'An association serving families in need?',
-    ctaBody: 'Join Yusr as a partner association to list your cases on the platform; our team will contact you within 48 hours.',
+    ctaBody: 'Join Yusr as a partner charity, and our team will contact you within 48 hours.',
     ctaButton: 'Join as a partner association',
   },
   donate: {

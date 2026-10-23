@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import { AnimatedMark } from '@/components/animated-mark';
 import { StarCloseup } from '@/components/star-closeup';
 import type { IconName } from '@yusr/ui';
+import { QuestionMark } from '@/components/question-mark';
 import { pageLocale, type LocaleParams } from '@/lib/page';
 
 export async function generateMetadata({ params }: { params: LocaleParams }): Promise<Metadata> {
@@ -33,13 +34,18 @@ export default async function AboutPage({ params }: { params: LocaleParams }) {
   return (
     <div className="container-page flex flex-col gap-8 py-10">
       <section aria-labelledby="about-title" className="flex flex-col gap-6 py-2 md:py-6">
-        <div className="flex max-w-3xl flex-col gap-4">
-          <LogoMark size={40} />
-          <h1 id="about-title" className="font-display text-3xl font-bold leading-[1.4] md:text-4xl">
-            {t('about.question')}
-          </h1>
-          <p className="font-display text-xl font-bold leading-[1.7] text-primary md:text-2xl">{t('about.lead')}</p>
-          <p className="text-[1.05rem] leading-[1.9] text-muted-foreground">{t('about.body')}</p>
+        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,1fr)_auto]">
+          <div className="flex max-w-3xl flex-col gap-4">
+            <LogoMark size={40} />
+            <h1 id="about-title" className="font-display text-3xl font-bold leading-[1.4] md:text-4xl">
+              {t('about.question')}
+            </h1>
+            <p className="font-display text-xl font-bold leading-[1.7] text-primary md:text-2xl">{t('about.lead')}</p>
+            <p className="text-[1.05rem] leading-[1.9] text-muted-foreground">{t('about.body')}</p>
+          </div>
+          <div className="hidden justify-center lg:flex">
+            <QuestionMark rtl={locale === 'ar'} />
+          </div>
         </div>
         <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {VALUES.map(({ key, icon }) => (
