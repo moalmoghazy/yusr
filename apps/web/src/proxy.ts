@@ -1,4 +1,15 @@
+import { createHttpAuthClient } from '@yusr/sdk';
 import { NextResponse, type NextRequest } from 'next/server';
+import {
+  clearedDonorCookies,
+  DONOR_ACCESS_COOKIE,
+  DONOR_REFRESH_COOKIE,
+  donorSessionCookies,
+  isFresh,
+  readDonorClaims,
+  type CookieWrite,
+} from './lib/donor-session';
+import { apiEdge, apiTimeoutMs, apiUrl } from './lib/env';
 import { DEFAULT_LOCALE, isLocale, LOCALE_COOKIE } from './lib/i18n';
 
 /**
@@ -6,11 +17,13 @@ import { DEFAULT_LOCALE, isLocale, LOCALE_COOKIE } from './lib/i18n';
  *
  * 1. Locale: paths without /ar or /en are redirected to the visitor's language — the one they
  *    chose before (cookie), else the best match in Accept-Language, else Arabic.
- * 2. Content-Security-Policy with a per-request nonce. Next.js reads the nonce from the request
+ * 2. A signed-in donor's access token about to expire is rotated here, and only here (rotation is
+ *    single-use, so prefetches, which could race, skip the proxy). Pages then always see a valid one.
+ * 3. Content-Security-Policy with a per-request nonce. Next.js reads the nonce from the request
  *    header and puts it on its own scripts; 'strict-dynamic' lets those load their chunks.
  *    Nothing else can run script on the page — the platform handles money, so no exceptions.
  */
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const segment = pathname.split('/')[1];
   if (!isLocale(segment)) {
@@ -20,6 +33,13 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  const writes = await refreshDonor(request);
+  // Let this very render see the rotated token, not only the next request.
+  for (const write of writes) {
+    if (write.value) request.cookies.set(write.name, write.value);
+    else request.cookies.delete(write.name);
+  }
+
   const nonce = btoa(crypto.randomUUID());
   const policy = contentSecurityPolicy(nonce);
   const headers = new Headers(request.headers);
@@ -27,7 +47,20 @@ export function proxy(request: NextRequest) {
   headers.set('content-security-policy', policy);
   const response = NextResponse.next({ request: { headers } });
   response.headers.set('content-security-policy', policy);
+  for (const write of writes) response.cookies.set(write.name, write.value, write.options);
   return response;
+}
+
+async function refreshDonor(request: NextRequest): Promise<CookieWrite[]> {
+  const refreshToken = request.cookies.get(DONOR_REFRESH_COOKIE)?.value;
+  if (!refreshToken || isFresh(readDonorClaims(request.cookies.get(DONOR_ACCESS_COOKIE)?.value))) return [];
+  try {
+    const edge = apiEdge(request.headers);
+    const auth = createHttpAuthClient({ baseUrl: apiUrl(), timeoutMs: apiTimeoutMs(), ...(edge ? { edge } : {}) });
+    return donorSessionCookies(await auth.refresh(refreshToken));
+  } catch {
+    return clearedDonorCookies();
+  }
 }
 
 export const config = {

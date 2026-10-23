@@ -6,7 +6,8 @@ import { LocaleSwitch } from './locale-switch';
 import { NavLink } from './nav-link';
 import { ThemeSwitch } from './theme-switch';
 
-export function SiteHeader({ locale, theme }: { locale: Locale; theme: ThemePreference }) {
+/** `donor`: the signed-in donor's name, or null; the account link reads «عطائي» or «تسجيل الدخول». */
+export function SiteHeader({ locale, theme, donor }: { locale: Locale; theme: ThemePreference; donor: { name: string } | null }) {
   const { t } = textFor(locale);
   const links = [
     { href: href(locale), label: t('nav.home'), exact: true },
@@ -32,6 +33,14 @@ export function SiteHeader({ locale, theme }: { locale: Locale; theme: ThemePref
         <div className="flex items-center gap-1.5">
           <ThemeSwitch initial={theme} labels={{ title: t('nav.theme'), system: t('nav.system'), light: t('nav.light'), dark: t('nav.dark') }} />
           <LocaleSwitch locale={locale} label={t('nav.switchLanguage')} />
+          <Link
+            href={href(locale, '/account')}
+            aria-label={donor ? t('nav.account') : t('common.signIn')}
+            className={buttonClasses({ variant: 'outline', size: 'sm', className: 'max-sm:size-9 max-sm:px-0' })}
+          >
+            <Icon name="user" size={16} />
+            <span className="max-sm:sr-only">{donor ? t('nav.account') : t('common.signIn')}</span>
+          </Link>
           <Link href={href(locale, '/cases')} className={buttonClasses({ size: 'sm', className: 'max-sm:hidden' })}>
             <Icon name="heart" size={16} />
             {t('common.donateNow')}

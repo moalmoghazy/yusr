@@ -466,6 +466,16 @@ export const en: Messages = {
     notificationDisbursed: '{amount} paid to {payee} for “{title}”',
     notificationReceipt: 'Your receipt {number} is ready',
   },
+  account: {
+    signInTitle: 'Sign in to your Yusr account',
+    signInBody:
+      'With your mobile number only, no password. You will find all your donations and their receipts here, and every gift you make while signed in is added automatically.',
+    name: 'Your name (optional)',
+    nameHint: 'We greet you with it in your account; the first sign-in is enough.',
+    signOut: 'Sign out',
+    viewReceipt: 'Receipt',
+    guestNote: 'Donations made before you signed in do not show here; their receipts stay available from the link you received.',
+  },
   share: {
     title: 'Share this case',
     lead: 'One share can reach the person who completes the funding.',

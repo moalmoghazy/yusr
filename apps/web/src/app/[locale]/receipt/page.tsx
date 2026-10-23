@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { PrintButton, ReceiptRefresh } from '@/components/receipt-client';
 import { ShareCase } from '@/components/share-case';
-import { catalog, live } from '@/lib/api';
+import { catalog, currentDonor, live } from '@/lib/api';
 import { href } from '@/lib/i18n';
 import { requestOrigin } from '@/lib/origin';
 import { one, pageLocale, type LocaleParams } from '@/lib/page';
@@ -35,7 +35,7 @@ const OUTCOME_ICON: Record<Outcome, IconName> = { done: 'check', waiting: 'clock
 /**
  * The receipt a gateway returns the donor to (`/ar/receipt?donation=…&token=…`). The token is an
  * HMAC of the donation id, so a guest sees their own receipt without an account and nobody can
- * enumerate others'. Never cached, never indexed.
+ * enumerate others'. A signed-in donor opens their own from «عطائي» without it. Never cached, never indexed.
  */
 export default async function ReceiptPage({
   params,
@@ -48,7 +48,8 @@ export default async function ReceiptPage({
   const query = await searchParams;
   const id = one(query['donation']);
   const token = one(query['token']);
-  if (!id || !token) notFound();
+  // Without a token only the signed-in donor (from «عطائي») can open their own receipt; the API decides.
+  if (!id || (!token && !(await currentDonor()))) notFound();
 
   let receipt: DonationReceipt;
   try {

@@ -9,6 +9,7 @@ import { Suspense, type ReactNode } from 'react';
 import { PageLoading } from '@/components/page-loading';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
+import { currentDonor } from '@/lib/api';
 import { siteUrl } from '@/lib/env';
 import { THEME_COOKIE, themeFrom } from '@/lib/i18n';
 import { OG_IMAGE } from '@/lib/og';
@@ -69,7 +70,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
           {t('a11y.skipToContent')}
         </a>
         {site.demo && <DemoBanner locale={locale} />}
-        <SiteHeader locale={locale} theme={theme} />
+        <SiteHeader locale={locale} theme={theme} donor={await currentDonor()} />
         {/* In a public demo, stream a loading state at once while the (possibly sleeping) API wakes up.
             A real deployment renders pages whole, so missing pages keep their 404 status. */}
         <main id="main">{site.demo ? <Suspense fallback={<PageLoading locale={locale} />}>{children}</Suspense> : children}</main>
