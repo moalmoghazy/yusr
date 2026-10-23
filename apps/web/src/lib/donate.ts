@@ -6,6 +6,7 @@ import {
   toE164,
   toMinor,
   type CheckoutAction,
+  type ContactChannel,
   type CreateDonationResponse,
   type Currency,
   type DomainErrorCode,
@@ -43,9 +44,13 @@ export async function startDonation(_previous: DonateState, form: FormData): Pro
   const amount = parseAmountInput(text(form.get('amount')) ?? '');
   if (!currency || amount === null) return { status: 'error', code: 'VALIDATION_FAILED', fields: ['amountMinor'] };
 
-  const email = text(form.get('email'));
-  const phone = toE164(text(form.get('phone')), currency === 'SAR' ? 'SA' : currency === 'EGP' ? 'EG' : null);
-  if (!email && !phone) return { status: 'error', code: 'VALIDATION_FAILED', fields: ['donor'] };
+  // «اختر طريقة التواصل المفضلة»: one field, read as a WhatsApp number (Egypt by default) or an email.
+  const contactChannel: ContactChannel = form.get('contactChannel') === 'email' ? 'email' : 'whatsapp';
+  const contact = text(form.get('contact'));
+  const email = contactChannel === 'email' ? contact : null;
+  const phone = contactChannel === 'whatsapp' ? toE164(contact, currency === 'SAR' ? 'SA' : 'EG') : null;
+  const contactField = `contact.${contactChannel}`;
+  if (!email && !phone) return { status: 'error', code: 'VALIDATION_FAILED', fields: [contactField] };
 
   const parsed = createDonationSchema.safeParse({
     caseId: text(form.get('caseId')),
@@ -57,10 +62,18 @@ export async function startDonation(_previous: DonateState, form: FormData): Pro
     type: text(form.get('type')) ?? 'sadaqah',
     dedication: text(form.get('dedication')),
     donor: { name: text(form.get('name')), email, phone },
+    contactChannel,
     locale,
   });
   if (!parsed.success) {
-    return { status: 'error', code: 'VALIDATION_FAILED', fields: [...new Set(parsed.error.issues.map((issue) => String(issue.path[0] ?? '')))] };
+    const fields = parsed.error.issues.map((issue) =>
+      issue.path[0] === 'donor' && issue.path[1] !== 'name'
+        ? contactField
+        : issue.path.slice(0, 2).join('.') === 'donor.name'
+          ? 'name'
+          : String(issue.path[0] ?? ''),
+    );
+    return { status: 'error', code: 'VALIDATION_FAILED', fields: [...new Set(fields)] };
   }
 
   const idempotencyKey = text(form.get('idempotencyKey'));

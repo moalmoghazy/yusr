@@ -105,7 +105,8 @@ export interface DonationsRepo {
   forDonor(donorId: Id, limit: number): Promise<DonationRow[]>;
   recentForCase(caseId: Id, limit: number): Promise<DonationRow[]>;
   /** Everyone who gave to a case successfully (one row per donor or guest contact), for impact updates. */
-  contactsForCase(caseId: Id): Promise<Array<Pick<DonationRow, 'donorId' | 'guestContact' | 'locale' | 'id'>>>;
+  /** One row per donor (their latest gift), for the case-wide messages: funded, disbursed, closed. */
+  contactsForCase(caseId: Id): Promise<Array<Pick<DonationRow, 'donorId' | 'guestContact' | 'contactChannel' | 'locale' | 'id'>>>;
   list(filter: { status?: DonationRow['status']; limit: number }): Promise<DonationRow[]>;
   /** Stale checkouts whose window has passed (pending, requires_action, awaiting_transfer). */
   expirable(before: Date, limit: number): Promise<DonationRow[]>;

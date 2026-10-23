@@ -1,4 +1,5 @@
 /** Contract types for the operations dashboard (API ↔ admin app). */
+import type { ContactChannel } from './contact';
 import type { Direction } from './ledger';
 import type { Permission } from './rbac';
 import type { CaseCategory, CaseDetail, CaseStatus, Currency, DocumentKind, DonationReceipt, Localized, PayeeType, PaymentMethod, Role } from './types';
@@ -72,6 +73,8 @@ export interface LedgerLine {
 export interface AdminDonation extends DonationReceipt {
   donorName: string | null;
   donorContact: string | null;
+  /** The donor's preferred channel for messages; null for gifts made before it was asked. */
+  contactChannel: ContactChannel | null;
   caseReference: string;
   channel: 'web' | 'mobile';
 }

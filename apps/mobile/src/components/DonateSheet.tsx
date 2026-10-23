@@ -1,4 +1,5 @@
 import {
+  CONTACT_CHANNELS,
   CURRENCY_META,
   DONATION_TYPES,
   feeRuleFor,
@@ -9,6 +10,7 @@ import {
   toE164,
   toMinor,
   type CaseSummary,
+  type ContactChannel,
   type CreateDonationRequest,
   type CreateDonationResponse,
   type DonationType,
@@ -78,8 +80,10 @@ function DonateForm({ target, onClose }: { target: DonateTarget; onClose: () => 
   const [coverFees, setCoverFees] = useState(true);
   const [anonymous, setAnonymous] = useState(false);
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  // «اختر طريقة التواصل المفضلة»: one field, a WhatsApp number (Egypt by default) or an email.
+  const [contactChannel, setContactChannel] = useState<ContactChannel>('whatsapp');
+  const [contact, setContact] = useState('');
+  const [contactInvalid, setContactInvalid] = useState(false);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [offline, setOffline] = useState<Offline | null>(null);
@@ -105,10 +109,12 @@ function DonateForm({ target, onClose }: { target: DonateTarget; onClose: () => 
       setProblem(t('donate.minAmount', { amount: f.money(meta.minDonationMinor, currency, { fractionDigits: 0 }) }));
       return;
     }
-    const contactEmail = email.trim() || null;
-    const contactPhone = toE164(phone.trim() || null, currency === 'SAR' ? 'SA' : currency === 'EGP' ? 'EG' : null);
-    if (!contactEmail && !contactPhone) {
-      setProblem(t('donate.contactRequired'));
+    const contactEmail = contactChannel === 'email' ? contact.trim() || null : null;
+    const contactPhone = contactChannel === 'whatsapp' ? toE164(contact.trim() || null, currency === 'SAR' ? 'SA' : 'EG') : null;
+    const valid = contactChannel === 'email' ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail ?? '') : /^\+[1-9]\d{7,14}$/.test(contactPhone ?? '');
+    setContactInvalid(!valid);
+    if (!valid) {
+      setProblem(t(`donate.contact.${contactChannel}Required`));
       return;
     }
     const request: CreateDonationRequest = {
@@ -121,6 +127,7 @@ function DonateForm({ target, onClose }: { target: DonateTarget; onClose: () => 
       type,
       dedication: null,
       donor: { name: name.trim() || null, email: contactEmail, phone: contactPhone },
+      contactChannel,
       locale,
       returnUrl: RETURN_URL,
     };
@@ -301,26 +308,67 @@ function DonateForm({ target, onClose }: { target: DonateTarget; onClose: () => 
           <SwitchRow value={anonymous} onValueChange={setAnonymous} label={t('donate.anonymous')} hint={t('donate.anonymousHint')} />
         </View>
 
-        <Section title={t('donate.guestTitle')} hint={t('donate.guestHint')}>
-          <Field label={`${t('donate.name')} (${t('common.optional')})`} value={name} onChangeText={setName} autoComplete="name" textContentType="name" />
+        <Section title={t('donate.contact.title')} hint={t('donate.contact.hint')}>
+          <View role="radiogroup" accessibilityLabel={t('donate.contact.title')} style={[styles.segment, { backgroundColor: theme.colors.muted }]}>
+            {CONTACT_CHANNELS.map((option) => {
+              const selected = option === contactChannel;
+              return (
+                <Pressable
+                  key={option}
+                  role="radio"
+                  accessibilityState={{ checked: selected }}
+                  onPress={() => {
+                    setContactChannel(option);
+                    setContact('');
+                    setContactInvalid(false);
+                  }}
+                  style={[styles.segmentItem, styles.segmentRow, selected && { backgroundColor: theme.colors.card }]}
+                >
+                  <Icon name={option === 'whatsapp' ? 'message' : 'mail'} size={16} color={selected ? theme.colors.primary : theme.colors.mutedForeground} />
+                  <Text variant="label" weight={selected ? 'bold' : 'medium'} color={selected ? theme.colors.primary : undefined}>
+                    {t(`donate.contact.${option}`)}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          {contactChannel === 'whatsapp' ? (
+            <Field
+              key="whatsapp"
+              label={t('donate.contact.whatsappNumber')}
+              value={contact}
+              onChangeText={setContact}
+              placeholder={t('donate.contact.whatsappPlaceholder')}
+              keyboardType="phone-pad"
+              autoComplete="tel"
+              textContentType="telephoneNumber"
+              invalid={contactInvalid}
+              ltr
+            />
+          ) : (
+            <Field
+              key="email"
+              label={t('donate.contact.emailAddress')}
+              value={contact}
+              onChangeText={setContact}
+              placeholder={t('donate.contact.emailPlaceholder')}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+              textContentType="emailAddress"
+              invalid={contactInvalid}
+              ltr
+            />
+          )}
+          <Text variant="caption" muted>
+            {contactChannel === 'whatsapp' ? t('donate.contact.whatsappHint') : t('donate.contact.private')}
+          </Text>
           <Field
-            label={t('donate.email')}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoComplete="email"
-            textContentType="emailAddress"
-            ltr
-          />
-          <Field
-            label={t('donate.phone')}
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-            autoComplete="tel"
-            textContentType="telephoneNumber"
-            ltr
+            label={`${t('donate.contact.name')} (${t('common.optional')})`}
+            value={name}
+            onChangeText={setName}
+            autoComplete="name"
+            textContentType="name"
           />
         </Section>
 
@@ -568,6 +616,7 @@ const styles = StyleSheet.create({
   field: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, paddingHorizontal: 14 },
   segment: { flexDirection: 'row', padding: 4, borderRadius: 12, gap: 4 },
   segmentItem: { flex: 1, height: 40, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  segmentRow: { flexDirection: 'row', gap: 6 },
   option: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderWidth: 1 },
   radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   radioDot: { width: 10, height: 10, borderRadius: 5 },

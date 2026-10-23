@@ -193,7 +193,7 @@ describe('development channels', () => {
     const lines: string[] = [];
     const channels = new LogChannels((line) => lines.push(line), { keep: 3 });
     await channels.sendOtp('+201001234567', '482913', 'en');
-    await channels.email('mona@example.com', 'Your receipt');
+    await channels.email('mona@example.com', 'Your receipt', 'Thank you.');
     assert.equal(lines.join('\n').includes('482913'), false, 'no code in the log');
     assert.equal(lines.join('\n').includes('+201001234567'), false, 'no phone number in the log');
     assert.match(lines[0]!, /^\[sms\] → •+4567: Yusr code: •{6}\./);

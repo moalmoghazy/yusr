@@ -4,6 +4,7 @@
  */
 import { z } from 'zod';
 import { CHECKLIST_ITEMS, SUBMITTER_RELATIONS } from './admin-types';
+import { CONTACT_CHANNELS } from './contact';
 import { DEDICATION_MAX_LENGTH } from './donation';
 import {
   CASE_CATEGORIES,
@@ -32,7 +33,7 @@ const booleanish = z.preprocess((value) => value === true || value === 'true' ||
 export const localeSchema = z.enum(LOCALES);
 export const currencySchema = z.enum(CURRENCIES);
 
-export const createDonationSchema = z.object({
+const donationFields = z.object({
   caseId: z.uuid(),
   amountMinor: z.number().int().positive().max(1_000_000_000),
   currency: currencySchema,
@@ -48,8 +49,19 @@ export const createDonationSchema = z.object({
       phone: phoneSchema.nullish(),
     })
     .nullish(),
+  /** «طريقة التواصل المفضلة»: the contact for the chosen channel is required (WhatsApp → donor.phone, email → donor.email). */
+  contactChannel: z.enum(CONTACT_CHANNELS).nullish(),
   locale: localeSchema.default('ar'),
   returnUrl: z.url().nullish(),
+});
+
+export const createDonationSchema = donationFields.superRefine((input, context) => {
+  if (input.contactChannel === 'whatsapp' && !input.donor?.phone) {
+    context.addIssue({ code: 'custom', path: ['donor', 'phone'], message: 'Add the WhatsApp number to send messages to' });
+  }
+  if (input.contactChannel === 'email' && !input.donor?.email) {
+    context.addIssue({ code: 'custom', path: ['donor', 'email'], message: 'Add the email address to send messages to' });
+  }
 });
 export type CreateDonationInput = z.infer<typeof createDonationSchema>;
 
@@ -246,7 +258,7 @@ export const updateRolesSchema = z.object({ roles: z.array(z.enum(ROLES)).min(1)
 export const presignRedactedSchema = presignUploadSchema.omit({ kind: true });
 export const confirmRedactedSchema = z.object({ key: z.string().min(8).max(300) });
 
-export const quoteDonationSchema = createDonationSchema.pick({ caseId: true, amountMinor: true, currency: true, method: true, coverFees: true });
+export const quoteDonationSchema = donationFields.pick({ caseId: true, amountMinor: true, currency: true, method: true, coverFees: true });
 
 // ------------------------------------------------------------------ query strings
 const limit = (max: number, fallback: number) => z.coerce.number().int().min(1).max(max).default(fallback);
@@ -261,3 +273,5 @@ export const ledgerQuerySchema = z.object({
 });
 export const adminDonationsQuerySchema = z.object({ status: z.enum(DONATION_STATUSES).optional() });
 export const auditQuerySchema = z.object({ limit: limit(500, 100) });
+/** The demo outbox («الرسائل المرسلة»): the most recent messages the platform sent or would have sent. */
+export const sentMessagesQuerySchema = z.object({ limit: limit(200, 100) });

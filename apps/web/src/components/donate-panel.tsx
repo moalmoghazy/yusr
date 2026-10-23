@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  CONTACT_CHANNELS,
   CURRENCY_META,
   DEDICATION_MAX_LENGTH,
   DONATION_TYPES,
@@ -10,6 +11,7 @@ import {
   parseAmountInput,
   resolveProvider,
   toMinor,
+  type ContactChannel,
   type Currency,
   type Locale,
   type PaymentMethod,
@@ -43,7 +45,8 @@ export interface DonatePanelProps {
 
 /**
  * The donate form. Everything a donor decides is here, in the order they decide it: amount,
- * intention (sadaqah / zakat), payment method, fees, name on the wall, receipt contact.
+ * intention (sadaqah / zakat), payment method, fees, name on the wall, and how we contact them
+ * («اختر طريقة التواصل المفضلة»: WhatsApp or email, one field).
  * It posts to a server action, so it works before JavaScript loads; with JavaScript it shows
  * the fee and total live and keeps the donor on the page for errors and offline payments.
  */
@@ -62,6 +65,7 @@ export function DonatePanel({ locale, caseId, currency, zakatEligible, initialAm
   const [amount, setAmount] = useState(() => digits(initialMajor));
   const [method, setMethod] = useState<PaymentMethod>(methods[0]!);
   const [coverFees, setCoverFees] = useState(true);
+  const [contactChannel, setContactChannel] = useState<ContactChannel>('whatsapp');
   const [key, setKey] = useState(attemptKey);
   const [state, submit, pending] = useActionState<DonateState, FormData>(startDonation, { status: 'idle' });
   const ids = useId();
@@ -81,6 +85,7 @@ export function DonatePanel({ locale, caseId, currency, zakatEligible, initialAm
   const tooHigh = amountMinor !== null && amountMinor > left;
   const tooLow = amountMinor !== null && amountMinor < meta.minDonationMinor && amountMinor !== left;
   const invalid = (field: string) => state.status === 'error' && state.fields.includes(field);
+  const contactInvalid = state.status === 'error' && state.fields.some((field) => field.startsWith('contact.') || field.startsWith('donor'));
 
   if (state.status === 'offline') return <OfflineInstructions locale={locale} state={state} />;
 
@@ -214,29 +219,66 @@ export function DonatePanel({ locale, caseId, currency, zakatEligible, initialAm
         </label>
       </div>
 
-      {/* ---------------------------------------------------------- receipt contact */}
-      <fieldset className="flex min-w-0 flex-col gap-2.5 rounded-control border border-border p-4">
-        <legend className="px-1 text-sm font-bold">{t('donate.guestTitle')}</legend>
-        <p className="text-xs text-muted-foreground">{t('donate.guestHint')}</p>
-        {(
-          [
-            ['name', t('donate.name'), 'text', 'name'],
-            ['email', t('donate.email'), 'email', 'email'],
-            ['phone', t('donate.phone'), 'tel', 'tel'],
-          ] as const
-        ).map(([name, label, type, autoComplete]) => (
-          <label key={name} className="flex flex-col gap-1">
-            <span className="text-xs font-semibold">{label}</span>
-            <input
-              name={name}
-              type={type}
-              autoComplete={autoComplete}
-              dir={name === 'name' ? 'auto' : 'ltr'}
-              aria-invalid={(name !== 'name' && invalid('donor')) || invalid(name) || undefined}
-              className="h-11 rounded-control border border-input bg-card px-3 outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40 aria-[invalid]:border-destructive"
-            />
-          </label>
-        ))}
+      {/* ---------------------------------------------------------- preferred contact */}
+      <fieldset className="flex min-w-0 flex-col gap-3 rounded-control border border-border p-4">
+        <legend className="px-1 text-sm font-bold">{t('donate.contact.title')}</legend>
+        <p className="text-xs text-muted-foreground">{t('donate.contact.hint')}</p>
+        <div className="grid grid-cols-2 gap-1 rounded-control bg-muted p-1">
+          {CONTACT_CHANNELS.map((option) => (
+            <label key={option} className="relative">
+              <input
+                type="radio"
+                name="contactChannel"
+                value={option}
+                checked={contactChannel === option}
+                onChange={() => setContactChannel(option)}
+                className="peer sr-only"
+              />
+              <span className="flex cursor-pointer items-center justify-center gap-2 rounded-[calc(var(--y-radius-control)-4px)] py-2 text-sm font-semibold text-muted-foreground transition-colors peer-checked:bg-card peer-checked:text-foreground peer-checked:shadow-sm peer-focus-visible:ring-[3px] peer-focus-visible:ring-ring/50">
+                <Icon name={option === 'whatsapp' ? 'message' : 'mail'} size={16} />
+                {t(`donate.contact.${option}`)}
+              </span>
+            </label>
+          ))}
+        </div>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs font-semibold">{contactChannel === 'whatsapp' ? t('donate.contact.whatsappNumber') : t('donate.contact.emailAddress')}</span>
+          <input
+            key={contactChannel}
+            name="contact"
+            type={contactChannel === 'whatsapp' ? 'tel' : 'email'}
+            inputMode={contactChannel === 'whatsapp' ? 'tel' : 'email'}
+            autoComplete={contactChannel === 'whatsapp' ? 'tel' : 'email'}
+            placeholder={contactChannel === 'whatsapp' ? t('donate.contact.whatsappPlaceholder') : t('donate.contact.emailPlaceholder')}
+            required
+            dir="ltr"
+            aria-invalid={contactInvalid || undefined}
+            aria-describedby={`${ids}-contact-hint`}
+            className="h-11 rounded-control border border-input bg-card px-3 text-start outline-none placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40 aria-[invalid]:border-destructive"
+          />
+          <span id={`${ids}-contact-hint`} className="text-xs text-muted-foreground">
+            {contactChannel === 'whatsapp' ? t('donate.contact.whatsappHint') : t('donate.contact.private')}
+          </span>
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs font-semibold">
+            {t('donate.contact.name')} <span className="font-normal text-muted-foreground">({t('common.optional')})</span>
+          </span>
+          <input
+            name="name"
+            type="text"
+            autoComplete="name"
+            dir="auto"
+            aria-invalid={invalid('name') || undefined}
+            className="h-11 rounded-control border border-input bg-card px-3 outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40 aria-[invalid]:border-destructive"
+          />
+        </label>
+        {contactChannel === 'whatsapp' && (
+          <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
+            <Icon name="shield-check" size={14} className="mt-0.5 shrink-0" />
+            {t('donate.contact.private')}
+          </p>
+        )}
       </fieldset>
 
       {/* ---------------------------------------------------------- summary + pay */}
@@ -262,7 +304,7 @@ export function DonatePanel({ locale, caseId, currency, zakatEligible, initialAm
       {state.status === 'error' && !(state.code === 'AMOUNT_ABOVE_REMAINING' && tooHigh) && (
         <p id={`${ids}-error`} role="alert" className="flex items-start gap-2 rounded-control bg-destructive-soft p-3 text-sm text-destructive-soft-foreground">
           <Icon name="alert" size={18} className="mt-0.5" />
-          {state.fields.includes('donor') ? t('donate.contactRequired') : t(`errors.${state.code}`)}
+          {contactInvalid ? t(`donate.contact.${contactChannel}Required`) : t(`errors.${state.code}`)}
         </p>
       )}
 

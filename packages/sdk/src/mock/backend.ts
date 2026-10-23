@@ -68,6 +68,7 @@ import {
   type VerificationTask,
   type VolunteerRow,
 } from '@yusr/core';
+import { canSeeSentMessages, maskRecipient, type ContactChannel, type SentMessage } from '@yusr/core';
 import type { EditCaseInput } from '@yusr/core/schemas';
 import type { AdminClient, LedgerQuery, YusrClient } from '../client';
 import { demoPartnerFor, SEED_CASES, seedAmounts, type SeedCase } from './cases';
@@ -172,6 +173,10 @@ interface State {
   tasks: VerificationTask[];
   team: TeamMember[];
   notifications: DonorNotification[];
+  /** The demo outbox («الرسائل المرسلة»): messages the platform would have sent, recipients masked. */
+  sent: SentMessage[];
+  /** Each gift's chosen channel and contact, kept apart from the records the read API returns. */
+  contacts: Map<string, { channel: ContactChannel; to: string; locale: 'ar' | 'en' }>;
   seq: Record<'donation' | 'ledger' | 'txn' | 'payout' | 'refund' | 'audit' | 'task' | 'notification' | 'receipt' | 'case' | 'upload', number>;
 }
 
@@ -252,6 +257,8 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
     tasks: [],
     team: [],
     notifications: [],
+    sent: [],
+    contacts: new Map(),
     seq: { donation: 0, ledger: 0, txn: 0, payout: 0, refund: 0, audit: 0, task: 0, notification: 0, receipt: 4_180, case: 10_500, upload: 0 },
   };
 
@@ -315,6 +322,49 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
 
   const notifyMe = (notification: Omit<DonorNotification, 'id' | 'read'>) => {
     state.notifications.push({ ...notification, id: nextId('notification', 'ntf'), read: false });
+  };
+
+  /** What the API's dispatcher would send to the donor's chosen channel (receipt, case closed). */
+  const sendToDonor = (record: DonationRecord, template: 'receipt' | 'case_closed', at: number) => {
+    const contact = state.contacts.get(record.id);
+    if (!contact) return;
+    const ar = contact.locale === 'ar';
+    const title = record.caseTitle[contact.locale] || record.caseTitle.ar;
+    const receipt = `/${contact.locale}/receipt?donation=${record.id}&token=•••`;
+    const transparency = `/${contact.locale}/cases/${record.caseSlug}?tab=transparency`;
+    const message =
+      template === 'receipt'
+        ? ar
+          ? {
+              subject: `إيصال تبرعك ${record.receiptNumber}`,
+              text: `شكرًا لك. وصل تبرعك إلى حالة «${title}».\nرقم الإيصال: ${record.receiptNumber}\n${transparency}`,
+            }
+          : {
+              subject: `Your donation receipt ${record.receiptNumber}`,
+              text: `Thank you. Your gift reached “${title}”.\nReceipt no. ${record.receiptNumber}\n${transparency}`,
+            }
+        : ar
+          ? {
+              subject: 'اكتملت الحالة التي ساهمت فيها',
+              text: `الحالة التي ساهمت فيها «${title}» اكتملت وتم الصرف للجهات، والأمر قُضي بفضل الله. جزاك الله خيرًا.\nهذا إيصالك:\n${receipt}\n${transparency}`,
+            }
+          : {
+              subject: 'A case you supported is complete',
+              text: `The case you supported, “${title}”, is complete: everything has been paid out, by the grace of God. Thank you.\nHere is your receipt:\n${receipt}\n${transparency}`,
+            };
+    state.sent.push({
+      id: `msg_${state.sent.length + 1}`,
+      at: iso(at),
+      channel: contact.channel,
+      to: maskRecipient(contact.to),
+      subject: contact.channel === 'email' ? message.subject : null,
+      text: message.text,
+      template,
+      donationId: record.id,
+      caseId: record.caseId,
+      delivery: 'logged',
+      error: null,
+    });
   };
 
   const donatedByMe = (caseId: string) =>
@@ -410,6 +460,18 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
     const { action, status } = actionFor({ id, method: request.method, provider: breakdown.provider, receiptNumber }, at);
 
     const donorName = request.donor?.name?.trim() || null;
+    // «طريقة التواصل المفضلة»: the contact for the chosen channel is required, as on the API.
+    const chosenContact =
+      request.contactChannel === 'whatsapp'
+        ? request.donor?.phone?.trim() || null
+        : request.contactChannel === 'email'
+          ? request.donor?.email?.trim() || null
+          : null;
+    if (request.contactChannel && !chosenContact) {
+      throw new DomainError('VALIDATION_FAILED', 'Add the contact for the chosen channel', {
+        field: request.contactChannel === 'whatsapp' ? 'donor.phone' : 'donor.email',
+      });
+    }
     const publicName: Localized | null = request.anonymous ? null : (context.displayName ?? (donorName ? { ar: donorName, en: donorName } : null));
 
     const record: DonationRecord = {
@@ -434,7 +496,8 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       createdAt: iso(at),
       succeededAt: null,
       donorName: donorName ?? (context.displayName ? context.displayName.ar : null),
-      donorContact: maskContact(request.donor?.email ?? request.donor?.phone ?? null),
+      donorContact: maskContact(chosenContact ?? request.donor?.email ?? request.donor?.phone ?? null),
+      contactChannel: chosenContact ? (request.contactChannel ?? null) : null,
       channel: context.channel ?? 'web',
       userId,
       donorId: context.donorId ?? userId,
@@ -444,6 +507,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       action,
     };
     state.donations.push(record);
+    if (chosenContact && request.contactChannel) state.contacts.set(id, { channel: request.contactChannel, to: chosenContact, locale: request.locale });
     emit({ type: 'donation.created', donation: record });
     return {
       donationId: id,
@@ -495,6 +559,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
     putCase(next);
 
     if (!seeding) {
+      sendToDonor(record, 'receipt', at);
       if (record.userId === ME) {
         notifyMe({
           at: iso(at),
@@ -1088,6 +1153,17 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       };
       putCase(next);
       logAudit(actorRef, `case.${to}`, 'case', item.id, item.reference, { status: item.status }, { status: to, ...(reason ? { reason } : {}) }, at);
+      // «اكتملت الحالة»: every donor of a funded case that closes hears it once, on their chosen channel.
+      if (to === 'closed' && item.status === 'funded') {
+        const told = new Set<string>();
+        const gifts = state.donations.filter((donation) => donation.caseId === item.id && donation.status === 'succeeded' && state.contacts.has(donation.id));
+        for (const donation of gifts.reverse()) {
+          const who = state.contacts.get(donation.id)!.to;
+          if (told.has(who)) continue;
+          told.add(who);
+          sendToDonor(donation, 'case_closed', at);
+        }
+      }
       emit({ type: 'case.updated', caseId });
       return next;
     };
@@ -1415,6 +1491,10 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
         ensure('audit:read');
         return read.audit(limit);
       },
+      sentMessages: (limit = 100): SentMessage[] => {
+        if (!canSeeSentMessages(actor.roles)) throw new DomainError('FORBIDDEN', 'The demo outbox is for super admins and content moderators');
+        return [...state.sent].reverse().slice(0, limit);
+      },
     };
     return api;
   };
@@ -1456,6 +1536,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       team: wrap(sync.team),
       updateRoles: wrap(sync.updateRoles),
       audit: wrap(sync.audit),
+      sentMessages: wrap(sync.sentMessages),
     };
   };
 

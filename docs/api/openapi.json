@@ -1030,6 +1030,20 @@
                       }
                     ]
                   },
+                  "contactChannel": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "whatsapp",
+                          "email"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "locale": {
                     "default": "ar",
                     "type": "string",

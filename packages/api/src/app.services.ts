@@ -28,7 +28,7 @@ import { RefundsService } from './finance/refunds.service';
 import { BaserowClient } from './integrations/baserow';
 import { Analytics } from './integrations/posthog';
 import { SlackNotifier } from './integrations/slack';
-import { HttpChannels, LogChannels, type Channels } from './notifications/channels';
+import { DemoChannels, HttpChannels, LogChannels, type Channels } from './notifications/channels';
 import { Dispatcher } from './notifications/dispatcher';
 import { OutboxWorker } from './notifications/outbox.worker';
 import { RefreshingFx, StaticFx, type FxProvider } from './payments/fx';
@@ -53,6 +53,11 @@ export interface Services {
   /** Set when no object storage is configured: the API serves /dev-storage itself. */
   devStorage: DevStorage | null;
   channels: Channels & OtpSender;
+  /**
+   * On demo data (YUSR_STORAGE=memory: `pnpm dev:demo` and the public demo) every message is also kept
+   * for the hub's «الرسائل المرسلة» page; null on a real deployment.
+   */
+  demoOutbox: DemoChannels | null;
   fx: FxProvider;
   gateways: GatewayRegistry;
   simulators: ReadonlyMap<string, SimulatedGateway>;
@@ -140,14 +145,19 @@ export async function createServices(config: AppConfig, options: { clock?: Clock
   ]);
   const limiter = new RateLimiter(kv);
   const messaging = config.messaging;
-  const channels: Channels & OtpSender =
+  const http =
     messaging.email || messaging.sms || messaging.whatsapp
       ? new HttpChannels({
           email: messaging.email ?? undefined,
           sms: messaging.sms ?? undefined,
           whatsapp: messaging.whatsapp ?? undefined,
         })
-      : new LogChannels(options.log, { reveal: config.nodeEnv !== 'production' && !config.demo });
+      : null;
+  // Demo data keeps a record of every message and still uses a real provider when one is set up
+  // (free test accounts: docs/GUIDE.ar.md); a real deployment sends through the providers only.
+  const log = new LogChannels(options.log, { reveal: config.nodeEnv !== 'production' && !config.demo, now: () => clock.now() });
+  const demoOutbox = config.storage === 'memory' ? new DemoChannels(log, http, options.log ?? ((line) => console.error(line))) : null;
+  const channels: Channels & OtpSender = demoOutbox ?? http ?? log;
   const fx: FxProvider = config.payments.fxFeedUrl ? new RefreshingFx({ url: config.payments.fxFeedUrl }) : new StaticFx();
   if (fx instanceof RefreshingFx) fx.start();
   const { gateways, simulators } = createGateways(config);
@@ -208,6 +218,7 @@ export async function createServices(config: AppConfig, options: { clock?: Clock
     baserow: new BaserowClient(config.ops.baserow),
     analytics: new Analytics(config.ops.posthog),
     links: { web: config.urls.web, admin: config.urls.admin },
+    receiptLink: (donationId, locale) => donations.receiptLink(donationId, locale),
     clock: () => clock.now(),
   });
   const worker = new OutboxWorker(db, dispatcher, donations, clock);
@@ -223,6 +234,7 @@ export async function createServices(config: AppConfig, options: { clock?: Clock
     storage,
     devStorage: storage instanceof DevStorage ? storage : null,
     channels,
+    demoOutbox,
     fx,
     gateways,
     simulators,

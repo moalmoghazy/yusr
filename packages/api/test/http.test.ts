@@ -401,6 +401,52 @@ describe('operations', () => {
   });
 });
 
+describe('demo outbox («الرسائل المرسلة»)', () => {
+  it('lists what was sent to the donor’s chosen channel, masked, for super admins and moderators only', async () => {
+    const phone = '+201007778889';
+    const request = await donationRequest({ contactChannel: 'whatsapp', donor: { name: 'منى', phone, email: null } });
+    const created = await clientFor().createDonation(request, { idempotencyKey: 'e2e-whatsapp-preference-01' });
+    await payCheckout(created.action.type === 'redirect' ? created.action.url : '');
+    await services.worker.tick();
+
+    const missing = await call('POST', '/v1/donations', {
+      body: { ...request, donor: { email: 'mona@example.com' } },
+      headers: { 'idempotency-key': 'e2e-whatsapp-no-number-01' },
+    });
+    assert.equal(missing.status, 422, 'the WhatsApp number is required when WhatsApp is chosen');
+
+    // These officers signed in earlier in the suite: wait out the resend window.
+    clock.advance(10 * 60_000);
+    const sara = (await signIn(await staffPhone('sara'), { totp: true })).accessToken;
+    const messages = await adminFor(sara).sentMessages(50);
+    const receipt = messages.find((message) => message.donationId === created.donationId && message.template === 'receipt');
+    assert.ok(receipt, 'the receipt is in the outbox');
+    assert.equal(receipt.channel, 'whatsapp');
+    assert.equal(receipt.to, '+20••••••8889');
+    assert.equal(receipt.delivery, 'logged');
+    const raw = await call('GET', '/v1/admin/demo/messages', { token: sara });
+    assert.equal(raw.status, 200);
+    assert.ok(!raw.text.includes(phone) && !raw.text.includes(created.receiptToken), 'no contact or receipt token in the response');
+
+    const donation = await adminFor(sara).donations();
+    const row = donation.find((item) => item.id === created.donationId);
+    assert.equal(row?.contactChannel, 'whatsapp');
+    assert.ok(row?.donorContact && !row.donorContact.includes('7778889'), 'staff lists mask the contact');
+
+    const heba = (await signIn(await staffPhone('heba'), { totp: true })).accessToken;
+    await isApiError(adminFor(heba).sentMessages(), 'FORBIDDEN', 403);
+    const donor = (await signIn('+201066677788')).accessToken;
+    assert.equal((await call('GET', '/v1/admin/demo/messages', { token: donor })).status, 403);
+    assert.equal((await call('GET', '/v1/admin/demo/messages')).status, 401);
+  });
+
+  it('exists only on demo data', () => {
+    const route = ENDPOINTS.find((item) => item.id === 'demo.messages.list')!;
+    assert.equal(route.enabled!(services), true);
+    assert.equal(route.enabled!({ ...services, demoOutbox: null }), false, 'a real deployment has no such route');
+  });
+});
+
 describe('contract', () => {
   it('publishes every non-development route in OpenAPI, from the same schemas', async () => {
     const response = await call('GET', '/v1/openapi.json');

@@ -337,21 +337,20 @@ function createTx(x: Executor): Tx & { raw: Executor } {
             .limit(limit)
         ).map(toDonation),
       contactsForCase: async (caseId) => {
+        const who = sql`coalesce(${t.donations.donorId}::text, ${t.donations.guestContact} ->> 'email', ${t.donations.guestContact} ->> 'phone', ${t.donations.id}::text)`;
         const rows = await x
-          .selectDistinctOn(
-            [
-              sql`coalesce(${t.donations.donorId}::text, ${t.donations.guestContact} ->> 'email', ${t.donations.guestContact} ->> 'phone', ${t.donations.id}::text)`,
-            ],
-            {
-              id: t.donations.id,
-              donorId: t.donations.donorId,
-              guestContact: t.donations.guestContact,
-              locale: t.donations.locale,
-            },
-          )
+          .selectDistinctOn([who], {
+            id: t.donations.id,
+            donorId: t.donations.donorId,
+            guestContact: t.donations.guestContact,
+            contactChannel: t.donations.contactChannel,
+            locale: t.donations.locale,
+          })
           .from(t.donations)
-          .where(and(eq(t.donations.caseId, caseId), inArray(t.donations.status, ['succeeded', 'partially_refunded'])));
-        return rows;
+          .where(and(eq(t.donations.caseId, caseId), inArray(t.donations.status, ['succeeded', 'partially_refunded'])))
+          // Each donor's latest gift: its channel and contact are the most recent preference.
+          .orderBy(who, desc(t.donations.createdAt));
+        return rows.map((row) => ({ ...row, contactChannel: row.contactChannel ?? null }));
       },
       list: async ({ status, limit }) =>
         (

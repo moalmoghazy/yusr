@@ -4,10 +4,10 @@
  * run more than once for the same event (the in-app notification id is derived from
  * the event id to avoid duplicates).
  */
-import type { Locale, Localized } from '@yusr/core';
+import type { ContactChannel, Locale, Localized } from '@yusr/core';
 import { sha256Hex } from '../common/crypto';
 import type { Database } from '../db/ports';
-import type { GuestContact, OutboxRow } from '../db/rows';
+import type { DonationRow, GuestContact, OutboxRow } from '../db/rows';
 import { Analytics, amountBand } from '../integrations/posthog';
 import type { BaserowClient } from '../integrations/baserow';
 import type { SlackNotifier } from '../integrations/slack';
@@ -21,7 +21,18 @@ export interface DispatcherDeps {
   baserow: BaserowClient;
   analytics: Analytics;
   links: { web: string; admin: string };
+  /** The receipt page for a gift, with the token that opens it (DonationsService.receiptLink). */
+  receiptLink: (donationId: string, locale: Locale) => string;
   clock: () => Date;
+}
+
+/** Who a message about a gift goes to, and where they asked to receive it. */
+interface Recipient {
+  userId: string | null;
+  guest: GuestContact | null;
+  donationId: string | null;
+  contactChannel: ContactChannel | null;
+  caseId: string | null;
 }
 
 type Handler = (event: OutboxRow) => Promise<void>;
@@ -41,6 +52,7 @@ export class Dispatcher {
       'donation.failed': (event) => this.onDonationUnfinished(event),
       'donation.expired': (event) => this.onDonationUnfinished(event),
       'case.funded': (event) => this.onCaseFunded(event),
+      'case.closed': (event) => this.onCaseClosed(event),
       'payout.paid': (event) => this.onPayoutPaid(event),
       'refund.processed': (event) => this.onRefund(event),
       'case.submitted': (event) => this.onCaseSubmitted(event),
@@ -60,19 +72,17 @@ export class Dispatcher {
     if (event.type.startsWith('case.')) await this.deps.analytics.capture(event.type, String(event.payload['caseId'] ?? event.aggregateId));
   }
 
-  /** Delivers to a registered donor (in-app + push + email/SMS) or a guest contact (email, else SMS). */
-  private async deliver(
-    event: OutboxRow,
-    recipient: { userId: string | null; guest: GuestContact | null; donationId: string | null },
-    locale: Locale,
-    template: string,
-    message: Rendered,
-    data: Record<string, string>,
-  ) {
+  /**
+   * Delivers to a registered donor (in-app + push) or a guest, then to the channel the donor chose for
+   * the gift («طريقة التواصل المفضلة»: WhatsApp or email). Gifts made before that was asked fall back
+   * to email first, else SMS (registered) or WhatsApp (guest).
+   */
+  private async deliver(event: OutboxRow, recipient: Recipient, locale: Locale, template: string, message: Rendered, data: Record<string, string>) {
     const { db, channels, clock } = this.deps;
-    if (recipient.userId) {
-      const user = await db.read.users.byId(recipient.userId);
-      if (!user) return;
+    const meta = { template, donationId: recipient.donationId, caseId: recipient.caseId };
+    const user = recipient.userId ? await db.read.users.byId(recipient.userId) : null;
+    if (recipient.userId && !user) return;
+    if (user) {
       await db.transaction((tx) =>
         tx.notifications.insert({
           id: notificationId(event.id, user.id, 'in_app'),
@@ -88,12 +98,27 @@ export class Dispatcher {
         }),
       );
       await channels.push(user.id, message.subject, message.short, data);
-      if (user.email) await channels.email(user.email, message.subject, message.text);
-      else if (user.phone) await channels.sms(user.phone, message.short);
+    }
+    const contact = recipient.guest;
+    if (recipient.contactChannel === 'whatsapp' && contact?.phone) return channels.whatsapp(contact.phone, message.text, meta);
+    if (recipient.contactChannel === 'email' && contact?.email) return channels.email(contact.email, message.subject, message.text, meta);
+    if (user) {
+      if (user.email) await channels.email(user.email, message.subject, message.text, meta);
+      else if (user.phone) await channels.sms(user.phone, message.short, meta);
       return;
     }
-    if (recipient.guest?.email) await channels.email(recipient.guest.email, message.subject, message.text);
-    else if (recipient.guest?.phone) await channels.whatsapp(recipient.guest.phone, message.text);
+    if (contact?.email) await channels.email(contact.email, message.subject, message.text, meta);
+    else if (contact?.phone) await channels.whatsapp(contact.phone, message.text, meta);
+  }
+
+  private recipientOf(donation: Pick<DonationRow, 'id' | 'donorId' | 'guestContact' | 'contactChannel' | 'caseId'>): Recipient {
+    return {
+      userId: donation.donorId,
+      guest: donation.guestContact,
+      donationId: donation.id,
+      contactChannel: donation.contactChannel ?? null,
+      caseId: donation.caseId,
+    };
   }
 
   private async caseTitle(caseId: string): Promise<{ title: Localized; slug: string; reference: string } | null> {
@@ -114,7 +139,7 @@ export class Dispatcher {
       caseTitle: item.title,
       link,
     });
-    await this.deliver(event, { userId: donation.donorId, guest: donation.guestContact, donationId: donation.id }, donation.locale, 'receipt', message, {
+    await this.deliver(event, this.recipientOf(donation), donation.locale, 'receipt', message, {
       receiptNo: donation.receiptNo,
       caseSlug: item.slug,
     });
@@ -133,7 +158,7 @@ export class Dispatcher {
     const item = donation ? await this.caseTitle(donation.caseId) : null;
     if (!donation || !item) return;
     const message = templates.retry(donation.locale, { receiptNo: donation.receiptNo, link: `${this.deps.links.web}/${donation.locale}/cases/${item.slug}` });
-    await this.deliver(event, { userId: donation.donorId, guest: donation.guestContact, donationId: donation.id }, donation.locale, 'retry', message, {
+    await this.deliver(event, this.recipientOf(donation), donation.locale, 'retry', message, {
       caseSlug: item.slug,
     });
   }
@@ -144,9 +169,30 @@ export class Dispatcher {
     if (!item) return;
     for (const contact of await this.deps.db.read.donations.contactsForCase(caseId)) {
       const message = templates.funded(contact.locale, { caseTitle: item.title, link: `${this.deps.links.web}/${contact.locale}/cases/${item.slug}` });
-      await this.deliver(event, { userId: contact.donorId, guest: contact.guestContact, donationId: contact.id }, contact.locale, 'case_funded', message, {
+      await this.deliver(event, this.recipientOf({ ...contact, caseId }), contact.locale, 'case_funded', message, {
         caseSlug: item.slug,
       });
+    }
+  }
+
+  /**
+   * «اكتملت الحالة»: a funded case is closed once everything is paid out. Every donor hears it on their
+   * chosen channel, with their own receipt and the case's transparency tab. Nothing names a donor, so
+   * anonymous gifts are told too (privately). A case closed early (from published or paused, with a
+   * reason) is not "complete" and sends nothing here.
+   */
+  private async onCaseClosed(event: OutboxRow) {
+    if (event.payload['from'] !== 'funded') return;
+    const caseId = String(event.payload['caseId']);
+    const item = await this.caseTitle(caseId);
+    if (!item) return;
+    for (const contact of await this.deps.db.read.donations.contactsForCase(caseId)) {
+      const message = templates.closed(contact.locale, {
+        caseTitle: item.title,
+        receiptLink: this.deps.receiptLink(contact.id, contact.locale),
+        transparencyLink: `${this.deps.links.web}/${contact.locale}/cases/${item.slug}?tab=transparency`,
+      });
+      await this.deliver(event, this.recipientOf({ ...contact, caseId }), contact.locale, 'case_closed', message, { caseSlug: item.slug });
     }
   }
 
@@ -163,7 +209,7 @@ export class Dispatcher {
         currency: event.payload['currency'] as 'EGP',
         link: `${this.deps.links.web}/${contact.locale}/cases/${item.slug}?tab=transparency`,
       });
-      await this.deliver(event, { userId: contact.donorId, guest: contact.guestContact, donationId: contact.id }, contact.locale, 'disbursed', message, {
+      await this.deliver(event, this.recipientOf({ ...contact, caseId }), contact.locale, 'disbursed', message, {
         caseSlug: item.slug,
       });
     }
@@ -180,7 +226,7 @@ export class Dispatcher {
       amountMinor: Number(event.payload['amountMinor']),
       currency: donation.currency,
     });
-    await this.deliver(event, { userId: donation.donorId, guest: donation.guestContact, donationId: donation.id }, donation.locale, 'refund', message, {
+    await this.deliver(event, this.recipientOf(donation), donation.locale, 'refund', message, {
       receiptNo: donation.receiptNo,
     });
   }

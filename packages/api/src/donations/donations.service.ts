@@ -45,7 +45,7 @@ import type { Clock } from '../common/clock';
 import { canonicalJson, hmacHex, safeEqual, sha256Hex } from '../common/crypto';
 import type { IdGenerator } from '../common/ids';
 import type { Database, Tx } from '../db/ports';
-import type { CaseRow, DonationRow } from '../db/rows';
+import type { CaseRow, DonationRow, GuestContact } from '../db/rows';
 import type { FxProvider } from '../payments/fx';
 import type { CheckoutResult, PaymentEvent, PaymentOutcome, WebhookInput } from '../payments/gateway';
 import type { GatewayRegistry } from '../payments/registry';
@@ -176,7 +176,8 @@ export class DonationsService {
       isGuest: !actor,
       remainingMinor: remainingInCurrency(item, request.currency, this.deps.fx.current()),
     });
-    if (!actor && !request.donor?.email && !request.donor?.phone) {
+    const guestContact = this.contactOf(request, actor !== null);
+    if (!actor && !guestContact) {
       throw new DomainError('VALIDATION_FAILED', 'Guests need an email or a mobile number for the receipt', { field: 'donor' });
     }
 
@@ -194,7 +195,8 @@ export class DonationsService {
         id,
         caseId: item.id,
         donorId: actor?.id ?? null,
-        guestContact: actor ? null : { name: request.donor?.name?.trim() || null, email: request.donor?.email ?? null, phone: request.donor?.phone ?? null },
+        guestContact,
+        contactChannel: request.contactChannel ?? null,
         idempotencyKey: key,
         requestHash,
         type: request.type,
@@ -301,6 +303,27 @@ export class DonationsService {
       return (await tx.donations.byId(donation.id)) ?? donation;
     });
     return this.response(updated, result.action);
+  }
+
+  /**
+   * What is stored as the gift's contact. With a preferred channel («طريقة التواصل المفضلة») only that
+   * channel's contact is kept, and it is required — for a signed-in donor too, since the apps prefill it
+   * from the account. Without one (older apps) a guest's email/phone are kept as before.
+   */
+  private contactOf(request: CreateDonationRequest, signedIn: boolean): GuestContact | null {
+    const name = request.donor?.name?.trim() || null;
+    const email = request.donor?.email?.trim() || null;
+    const phone = request.donor?.phone?.trim() || null;
+    if (request.contactChannel === 'whatsapp') {
+      if (!phone) throw new DomainError('VALIDATION_FAILED', 'Add the WhatsApp number to send messages to', { field: 'donor.phone' });
+      return { name, email: null, phone };
+    }
+    if (request.contactChannel === 'email') {
+      if (!email) throw new DomainError('VALIDATION_FAILED', 'Add the email address to send messages to', { field: 'donor.email' });
+      return { name, email, phone: null };
+    }
+    if (signedIn || (!email && !phone)) return null;
+    return { name, email, phone };
   }
 
   private async contactFor(userId: string) {
@@ -642,6 +665,11 @@ export class DonationsService {
 
   receiptToken(donationId: string): string {
     return hmacHex('sha256', this.deps.config.receiptSecret, `receipt:${donationId}`).slice(0, 40);
+  }
+
+  /** The website's receipt page for a gift, with the token that opens it without signing in (sent only to the donor). */
+  receiptLink(donationId: string, locale: string): string {
+    return this.returnUrl(null, locale, donationId);
   }
 
   private returnUrl(requested: string | null, locale: string, donationId: string): string {

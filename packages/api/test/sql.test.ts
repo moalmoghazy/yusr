@@ -291,6 +291,42 @@ describe('PostgreSQL schema', { skip: SKIP }, () => {
     assert.match(psql(url, attempt).err, /payment_attempts_order_ref/);
   });
 
+  it('keeps a preferred channel with its contact, and messages each donor at their latest choice (0007)', async () => {
+    const give = (n: number, contact: string, channel: string, minutes: number) =>
+      psql(
+        url,
+        `SET yusr.actor_kind = 'seed';
+        INSERT INTO donations (id, case_id, donor_id, guest_contact, contact_channel, idempotency_key, request_hash, currency, amount_minor, cover_fees,
+                               estimated_fee_minor, fee_minor, charged_minor, case_currency, net_to_case_minor, method, provider, status, receipt_no,
+                               receipt_token_hash, expires_at, succeeded_at, created_at)
+        VALUES ('00000000-0000-4000-8000-00000000d07${n}', '${ID.case}', '${ID.donor}', ${contact}, ${channel}, 'contact-key-00000000${n}', 'h', 'EGP', 10000,
+                true, 300, 300, 10300, 'EGP', 10000, 'card', 'paymob', 'succeeded', 'YSR-2026-00007${n}', 't', now() + interval '30 minutes', now(),
+                now() + interval '${minutes} minutes');`,
+      );
+    assert.match(give(1, `'{"name": null, "email": "m@example.com", "phone": null}'`, `'whatsapp'`, 1).err, /donations_contact_for_channel/);
+    assert.match(give(1, `'{"name": null, "email": null, "phone": "01001234567"}'`, `'whatsapp'`, 1).err, /donations_contact_for_channel/, 'E.164 only');
+    assert.match(give(1, `'{"name": null, "email": null, "phone": "+201001234567"}'`, `'sms'`, 1).err, /donations_contact_channel/);
+    const first = give(1, `'{"name": null, "email": "m@example.com", "phone": null}'`, `'email'`, 1);
+    assert.ok(first.ok, first.err);
+    const latest = give(2, `'{"name": "منى", "email": null, "phone": "+201001234567"}'`, `'whatsapp'`, 2);
+    assert.ok(latest.ok, latest.err);
+
+    const { Client } = await import('pg');
+    const { drizzle } = await import('drizzle-orm/node-postgres');
+    const { DrizzleDatabase } = await import('../src/db/drizzle');
+    const { schema } = await import('../src/db/schema');
+    const client = new Client({ connectionString: url });
+    await client.connect();
+    try {
+      const contacts = await new DrizzleDatabase(drizzle(client, { schema })).read.donations.contactsForCase(ID.case);
+      assert.equal(contacts.length, 1, 'one message per donor');
+      assert.equal(contacts[0]?.contactChannel, 'whatsapp');
+      assert.equal(contacts[0]?.guestContact?.phone, '+201001234567');
+    } finally {
+      await client.end();
+    }
+  });
+
   it('matches the Drizzle schema: every table and column in schema.ts exists in the migration', () => {
     const source = readFileSync(SCHEMA_TS, 'utf8');
     const declared = new Map<string, string[]>();

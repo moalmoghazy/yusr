@@ -19,6 +19,7 @@ import {
   type PartnerAssociation,
   type SubmitterRelation,
 } from '@yusr/core';
+import type { ContactChannel } from '@yusr/core';
 import { sql } from 'drizzle-orm';
 import {
   bigint,
@@ -311,7 +312,10 @@ export const donations = pgTable(
       .notNull()
       .references(() => cases.id),
     donorId: uuid('donor_id').references(() => users.id),
+    /** The receipt contact: a guest's, or the number/address a donor chose for messages (0007). */
     guestContact: jsonb('guest_contact').$type<GuestContact>(),
+    /** «طريقة التواصل المفضلة» (0007); null for gifts made before it was asked. */
+    contactChannel: text('contact_channel').$type<ContactChannel>(),
     idempotencyKey: text('idempotency_key').notNull().unique(),
     requestHash: text('request_hash').notNull(),
     type: donationType('type').notNull().default('sadaqah'),

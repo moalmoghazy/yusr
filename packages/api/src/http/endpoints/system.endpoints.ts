@@ -1,9 +1,11 @@
-/** Probes, payment webhooks, and the development stand-ins (payment simulator, local object storage). */
+/** Probes, payment webhooks, and the development stand-ins (payment simulator, local object storage, demo outbox). */
 import { createHash } from 'node:crypto';
 import { DomainError, PAYMENT_PROVIDERS, fromMinor, type Currency, type PaymentProvider } from '@yusr/core';
+import { sentMessagesQuerySchema } from '@yusr/core/schemas';
 import { z } from 'zod';
 import type { Services } from '../../app.services';
 import type { Bucket } from '../../documents/storage';
+import { demoSentMessages } from '../../notifications/demo-outbox';
 import { endpoint, header, reply } from '../endpoint';
 
 const startedAt = Date.now();
@@ -239,6 +241,28 @@ export const devEndpoints = [
         object.contentType,
         bucket === 'private' ? { 'content-disposition': 'inline', 'x-content-type-options': 'nosniff' } : {},
       );
+    },
+  }),
+  endpoint({
+    id: 'demo.messages.list',
+    method: 'GET',
+    path: '/admin/demo/messages',
+    version: '1',
+    access: 'staff',
+    tag: 'Development',
+    summary: 'Demo only: the messages the platform sent or would have sent (recipients masked)',
+    description: 'Exists only on demo data (YUSR_STORAGE=memory). For super admins and content moderators. Receipt tokens and sign-in codes are hidden.',
+    query: sentMessagesQuerySchema,
+    returns: 'SentMessage[]',
+    enabled: (services) => services.demoOutbox !== null,
+    handle: async ({ services, ctx, query }) => {
+      const messages = () => demoSentMessages(services.demoOutbox!, ctx.actor, query.limit);
+      messages(); // refuse before doing any work
+      // A serverless demo (RUN_WORKER=false, e.g. Vercel) has no background worker: deliver what is waiting now.
+      if (!services.config.runWorker) {
+        for (let round = 0; round < 5; round += 1) if ((await services.worker.tick()) === 0) break;
+      }
+      return messages();
     },
   }),
 ];
