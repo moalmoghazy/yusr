@@ -259,8 +259,6 @@ export interface SubmitCaseResult {
   id: string;
   reference: string;
   status: CaseStatus;
-  /** Another open case exists for the same national ID; reviewers see it first. */
-  possibleDuplicate: boolean;
 }
 
 /** A 10-minute presigned upload into the private bucket (POST /uploads). */

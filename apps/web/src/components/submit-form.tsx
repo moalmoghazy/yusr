@@ -165,11 +165,6 @@ export function SubmitForm({ locale }: { locale: Locale }) {
           </span>
         </h2>
         <p className="text-muted-foreground">{t('submit.nextSteps')}</p>
-        {done.possibleDuplicate && (
-          <p className="flex items-start gap-2 rounded-control bg-warning-soft p-3 text-start text-sm text-warning-soft-foreground">
-            <Icon name="alert" size={18} className="mt-0.5" /> {t('submit.possibleDuplicate')}
-          </p>
-        )}
         <div className="flex flex-wrap justify-center gap-2">
           <Link href={href(locale, '/cases')} className={buttonClasses({ variant: 'outline' })}>
             {t('landing.heroPrimary')}

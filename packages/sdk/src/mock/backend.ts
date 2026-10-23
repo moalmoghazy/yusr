@@ -1585,7 +1585,8 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       { status: 'under_review', possibleDuplicate },
     );
     emit({ type: 'case.updated', caseId: id });
-    return { id, reference: item.reference, status: item.status, possibleDuplicate };
+    // Duplicates are flagged for reviewers only (audit log), never to the submitter.
+    return { id, reference: item.reference, status: item.status };
   };
 
   // ---------------------------------------------------------------- live simulation

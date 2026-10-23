@@ -53,14 +53,29 @@ export function totpAt(secret: string, time: Date, step = 30, digits = 6): strin
   return String(binary % 10 ** digits).padStart(digits, '0');
 }
 
+/** The 30-second step a time falls in (the TOTP counter). */
+export function totpStep(time: Date, step = 30): number {
+  return Math.floor(time.getTime() / 1000 / step);
+}
+
+/**
+ * Accepts the current code and one step either side (clock drift) and returns the step it matched,
+ * or null. Callers remember the step so the same code cannot be used twice.
+ */
+export function matchTotp(secret: string, code: string, now: Date, window = 1): number | null {
+  if (!/^\d{6}$/.test(code)) return null;
+  let matched: number | null = null;
+  for (let drift = -window; drift <= window; drift += 1) {
+    const time = new Date(now.getTime() + drift * 30_000);
+    // Every candidate is compared (no early exit), so timing does not reveal which one matched.
+    if (safeEqual(totpAt(secret, time), code) && matched === null) matched = totpStep(time);
+  }
+  return matched;
+}
+
 /** Accepts the current code and one step either side (clock drift). */
 export function verifyTotp(secret: string, code: string, now: Date, window = 1): boolean {
-  if (!/^\d{6}$/.test(code)) return false;
-  let ok = false;
-  for (let drift = -window; drift <= window; drift += 1) {
-    ok = safeEqual(totpAt(secret, new Date(now.getTime() + drift * 30_000)), code) || ok;
-  }
-  return ok;
+  return matchTotp(secret, code, now, window) !== null;
 }
 
 export function otpauthUri(secret: string, account: string, issuer = 'Yusr'): string {

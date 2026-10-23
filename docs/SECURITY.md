@@ -13,7 +13,8 @@ case was verified and every pound was paid out). This is how each is protected, 
 | Forged payment confirmations | Signed webhooks only (constant-time checks), amount/currency matching, replay-proof event store; return URLs never change state |
 | Account takeover (staff) | Phone OTP **and** authenticator app (TOTP) for any staff permission; short-lived access tokens; refresh-token reuse revokes the whole login |
 | Exposure of beneficiaries | Pseudonyms, redacted public documents, originals only to auditors via short-lived links, encrypted national IDs, masked contacts in the CRM |
-| Abuse of public endpoints | Redis rate limits per IP or account, body size limits, strict validation, OTP attempt limits and resend cooldown |
+| Abuse of public endpoints | Redis rate limits per IP or account (the visitor's IP, passed by the website and hub servers with `YUSR_EDGE_SECRET`), body size limits, strict validation, OTP attempt limits and resend cooldown |
+| SMS pumping (paid codes to premium numbers) | Codes only to served countries (`YUSR_OTP_COUNTRY_CODES`, default Egypt and Saudi Arabia), a platform-wide hourly budget (`YUSR_OTP_HOURLY_BUDGET`), per IP and per phone limits |
 | Script injection / clickjacking | Nonce-based CSP with no third-party scripts, `frame-ancestors 'none'`, React escaping, no `dangerouslySetInnerHTML` of user content |
 
 ## Identity and sessions
@@ -22,14 +23,24 @@ case was verified and every pound was paid out). This is how each is protected, 
   code, Google or Apple (ID tokens verified against the providers' JWKS and the configured
   client ids).
 - **Phone codes**: 6 digits, valid 5 minutes, 5 attempts, one resend per minute; stored only as a
-  peppered hash in Redis.
+  peppered hash in Redis. Send and verify limits count per phone *and* IP, with a higher ceiling per
+  phone, so nobody can lock a donor out from one address; requests refused during the cooldown are
+  not counted. In production an SMS or WhatsApp provider is required; codes are never logged outside
+  a developer's machine.
+- **Secrets**: the development defaults in the repository are refused in production and whenever
+  `DATABASE_URL` points at another machine (`YUSR_ALLOW_DEV_SECRETS=true` overrides that outside
+  production only).
 - **Access tokens**: JWT (HS256 with key ids, so a previous secret can verify while a new one signs),
   15 minutes, carrying roles and whether a second factor was completed.
 - **Refresh tokens**: opaque, 30 days, stored hashed, **rotated on every use**. Presenting a token
   that was already rotated means it leaked: the whole login family is revoked.
 - **Staff**: every staff permission requires `mfa=true` in the session — a code from an
-  authenticator app enrolled with `/v1/auth/mfa`. Without it the API answers `FORBIDDEN` with
-  `mfaRequired`, whatever the role.
+  authenticator app. Keys are issued by `staff:create`; a staff member can enroll one themselves
+  (`/v1/auth/mfa`) only within the one-day window a super admin opens by granting a staff role, so an
+  SMS code alone never attaches an authenticator. Each authenticator code works once. Without it the
+  API answers `FORBIDDEN` with `mfaRequired`, whatever the role.
+- **Revocation**: changing someone's roles, issuing them a new authenticator or enrolling one signs
+  them out everywhere (all refresh tokens revoked); the access token they hold lapses within 15 minutes.
 - **Control hub cookies** are httpOnly, `Secure` (in production) and `SameSite=Strict`; tokens are refreshed only in the
   Next.js proxy (never in parallel prefetches, which would trip reuse detection).
 
@@ -39,7 +50,7 @@ Least privilege, mapped to how the organisation works (`packages/core/src/rbac.t
 
 | Role | Can |
 |---|---|
-| Field auditor | Read cases, review, **verify** (checklist and sign-off on their own visits), open original documents |
+| Field auditor | Read cases, review, **verify** (checklist and sign-off on their own visits), open original documents of the cases assigned to them |
 | Content moderator | Edit wording, review, publish, pause, prioritise, redact documents, assign visits, manage volunteers, read the CRM |
 | Financial officer | Read and reconcile finance, request and approve refunds and payouts (never their own), close funded cases, read the CRM |
 | Super admin | Everything, including team and settings; still subject to four-eyes on money |
@@ -53,7 +64,7 @@ apps only hide what a role cannot do; they are never the enforcement point.
 
 | Data | Stored as | Who sees it |
 |---|---|---|
-| National ID | AES-256-GCM ciphertext (key from `DATA_KEY_BASE64` / KMS) + HMAC-SHA256 keyed hash (`NATIONAL_ID_PEPPER`) for duplicate checks | Auditors, through the API; everywhere else the hash only flags "possible duplicate" |
+| National ID | AES-256-GCM ciphertext (key from `DATA_KEY_BASE64` / KMS) + HMAC-SHA256 keyed hash (`NATIONAL_ID_PEPPER`) for duplicate checks | Auditors, through the API; everywhere else the hash only flags "possible duplicate" to reviewers (never to the submitter, so it cannot be used to test whether an ID is known) |
 | Beneficiary name | Never published; a pseudonym (e.g. «أم أحمد») is | Auditors (originals) |
 | Documents | Private bucket; SHA-256 recorded at upload; redacted copies in the public bucket | Public: redacted copies · Auditors: originals through 5-minute links |
 | Donor contact | Plain columns needed for receipts; masked in the CRM (`+201•••17`) | Finance/moderators see masked values |

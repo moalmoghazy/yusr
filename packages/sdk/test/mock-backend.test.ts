@@ -272,13 +272,13 @@ describe('case submission', () => {
     };
     const first = await backend.client.submitCase(request);
     assert.equal(first.status, 'under_review');
-    assert.equal(first.possibleDuplicate, false);
+    assert.equal('possibleDuplicate' in first, false, 'duplicates are for reviewers only');
     const created = backend.read.adminCases().find((item) => item.id === first.id)!;
     assert.equal(created.beneficiary.ar, 'أبو سالم');
     assert.equal(created.title.en, created.title.ar, 'missing translation falls back to the submitted text');
 
     const again = await backend.client.submitCase(request);
-    assert.equal(again.possibleDuplicate, true, 'same national ID is flagged for reviewers');
+    assert.equal('possibleDuplicate' in again, false, 'the submitter never learns whether a national ID is already known');
     await assert.rejects(
       backend.client.submitCase({ ...request, documents: [{ kind: 'medical_report', storageKey: 'uploads/someone-else/x.pdf', sha256: 'c'.repeat(64) }] }),
       (e) => DomainError.is(e, 'FORBIDDEN'),

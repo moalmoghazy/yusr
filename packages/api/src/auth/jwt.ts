@@ -42,7 +42,10 @@ export function verifyAccessToken(
   const [headerPart, payloadPart, signature] = token.split('.');
   const header = decodePart<{ alg?: string; kid?: string }>(headerPart);
   if (header.alg !== 'HS256') throw new DomainError('UNAUTHENTICATED', 'Unexpected token algorithm');
-  const secret = secrets[header.kid ?? 'k1'];
+  // Own keys only: a kid like "__proto__" or "constructor" must not reach Object.prototype.
+  const kid = typeof header.kid === 'string' ? header.kid : 'k1';
+  const secret = Object.hasOwn(secrets, kid) ? secrets[kid] : undefined;
+  if (typeof secret !== 'string') throw new DomainError('UNAUTHENTICATED', 'Unknown signing key');
   if (!secret || !signature) throw new DomainError('UNAUTHENTICATED', 'Unknown signing key');
   const expectedSignature = createHmac('sha256', secret).update(`${headerPart}.${payloadPart}`).digest('base64url');
   if (!safeEqual(expectedSignature, signature)) throw new DomainError('UNAUTHENTICATED', 'Bad token signature');

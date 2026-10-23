@@ -147,12 +147,18 @@ export async function createServices(config: AppConfig, options: { clock?: Clock
           sms: messaging.sms ?? undefined,
           whatsapp: messaging.whatsapp ?? undefined,
         })
-      : new LogChannels(options.log);
+      : new LogChannels(options.log, { reveal: config.nodeEnv !== 'production' && !config.demo });
   const fx: FxProvider = config.payments.fxFeedUrl ? new RefreshingFx({ url: config.payments.fxFeedUrl }) : new StaticFx();
   if (fx instanceof RefreshingFx) fx.start();
   const { gateways, simulators } = createGateways(config);
 
-  const otp = new OtpService(kv, limiter, channels, clock, { ...DEFAULT_OTP, pepper: config.auth.otpPepper, revealCode: config.demo });
+  const otp = new OtpService(kv, limiter, channels, clock, {
+    ...DEFAULT_OTP,
+    pepper: config.auth.otpPepper,
+    revealCode: config.demo,
+    countryCodes: config.auth.otpCountryCodes,
+    hourlyBudget: config.auth.otpHourlyBudget,
+  });
   const oauth = new OAuthVerifier({ clientIds: { google: config.auth.googleClientIds, apple: config.auth.appleClientIds } }, clock);
   const auth = new AuthService({
     db,
@@ -193,7 +199,7 @@ export async function createServices(config: AppConfig, options: { clock?: Clock
   const refunds = new RefundsService({ db, gateways, clock, ids });
   const documents = new DocumentsService({ db, storage, limiter, clock, ids });
   const admin = new AdminQueries({ db, cases, donations, fx, clock });
-  const team = new TeamService(db);
+  const team = new TeamService(db, clock);
   const me = new MeQueries({ db, clock, chatwootHmacToken: config.ops.chatwootHmacToken });
   const dispatcher = new Dispatcher({
     db,

@@ -21,9 +21,13 @@ export class RateLimiter {
 
 /** Default limits, tuned for a donation platform (per phone / IP / donor). */
 export const RATE_RULES = {
-  otpPerPhone: { limit: 5, windowSeconds: 3_600 },
+  /** Codes to one phone asked from one IP; otpPerPhone is the ceiling across all IPs. */
+  otpPerPhoneAndIp: { limit: 5, windowSeconds: 3_600 },
+  otpPerPhone: { limit: 15, windowSeconds: 3_600 },
   otpPerIp: { limit: 20, windowSeconds: 3_600 },
-  otpVerifyPerPhone: { limit: 10, windowSeconds: 900 },
+  /** Verification attempts for one phone from one IP; otpVerifyPerPhone is the ceiling across all IPs. */
+  otpVerifyPerPhoneAndIp: { limit: 10, windowSeconds: 900 },
+  otpVerifyPerPhone: { limit: 50, windowSeconds: 900 },
   donationsPerIp: { limit: 30, windowSeconds: 600 },
   webhooksPerProvider: { limit: 600, windowSeconds: 60 },
 } as const satisfies Record<string, RateRule>;

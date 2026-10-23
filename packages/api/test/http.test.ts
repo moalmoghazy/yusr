@@ -375,7 +375,7 @@ describe('operations', () => {
       consent: true,
     });
     assert.equal(result.status, 'under_review');
-    assert.equal(result.possibleDuplicate, false);
+    assert.equal('possibleDuplicate' in result, false, 'duplicates are flagged to reviewers only');
 
     const submitted = await call('GET', `/v1/admin/cases/${result.id}`, { token: youssef });
     assert.equal(submitted.status, 200, submitted.text);
@@ -384,6 +384,11 @@ describe('operations', () => {
     const moderator = await call('GET', `/v1/admin/documents/${documentId}/original`, { token: youssef });
     assert.equal(moderator.status, 403, 'moderators work with redacted copies only');
     assert.equal(moderator.json.error.details.permission, 'documents:read_private');
+    const unassigned = await call('GET', `/v1/admin/documents/${documentId}/original`, { token: mahmoud });
+    assert.equal(unassigned.status, 403, 'a field auditor opens only the cases assigned to them');
+    const auditorId = (await services.db.read.users.byPhone(await staffPhone('mahmoud')))!.id;
+    const assigned = await call('POST', `/v1/admin/cases/${result.id}/verification`, { token: youssef, body: { auditorId } });
+    assert.equal(assigned.status, 201, assigned.text);
     const link = await call('GET', `/v1/admin/documents/${documentId}/original`, { token: mahmoud });
     assert.equal(link.status, 200, link.text);
     const original = await fetch(link.json.url);

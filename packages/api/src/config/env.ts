@@ -1,7 +1,14 @@
+import { randomBytes } from 'node:crypto';
+import { isIP } from 'node:net';
+
 /**
  * Typed configuration from environment variables (see .env.example). Parsed once at
  * boot; a missing secret in production stops the process with a clear message
  * instead of failing on the first payment.
+ *
+ * The repository's development secrets are public, so they are accepted only on a developer's
+ * machine: in production, or whenever the API talks to a database that is not on this machine, every
+ * secret must be set (YUSR_ALLOW_DEV_SECRETS=true overrides this for a throwaway staging stack).
  */
 export interface AppConfig {
   nodeEnv: 'development' | 'test' | 'production';
@@ -19,6 +26,12 @@ export interface AppConfig {
   demo: boolean;
   urls: { api: string; web: string; admin: string };
   corsOrigins: string[];
+  /**
+   * Shared secret of the website and control hub servers (YUSR_EDGE_SECRET). A request that carries it
+   * in x-yusr-edge-secret may name the visitor's IP in x-yusr-client-ip, so rate limits count visitors
+   * rather than the Next.js server. Null: those headers are ignored.
+   */
+  edgeSecret: string | null;
   databaseUrl: string;
   redisUrl: string | null;
   auth: {
@@ -28,6 +41,10 @@ export interface AppConfig {
     accessTtlSeconds: number;
     refreshTtlDays: number;
     otpPepper: string;
+    /** Country calling codes (without +) that may receive sign-in codes (YUSR_OTP_COUNTRY_CODES). */
+    otpCountryCodes: string[];
+    /** Sign-in codes the whole platform may send per hour (YUSR_OTP_HOURLY_BUDGET), against SMS pumping. */
+    otpHourlyBudget: number;
     googleClientIds: string[];
     appleClientIds: string[];
   };
@@ -84,7 +101,7 @@ export function loadConfig(env: Env = process.env): AppConfig {
   const secret = (name: string, devDefault: string) => {
     const value = get(name);
     if (value) return value;
-    if (production) missing.push(name);
+    if (strictSecrets) missing.push(name);
     return devDefault;
   };
   const list = (name: string) =>
@@ -103,6 +120,9 @@ export function loadConfig(env: Env = process.env): AppConfig {
   const storage = get('YUSR_STORAGE') === 'memory' ? 'memory' : 'postgres';
   const demo = get('YUSR_DEMO') === 'true';
   if (demo && storage !== 'memory') throw new ConfigError('YUSR_DEMO=true needs YUSR_STORAGE=memory: a demo never uses a real database');
+  // Development defaults are public (they are in this repository): only a database on this machine may use them.
+  const remoteDatabase = storage === 'postgres' && !isLocalDatabase(get('DATABASE_URL'));
+  const strictSecrets = production || (remoteDatabase && get('YUSR_ALLOW_DEV_SECRETS') !== 'true');
   // RENDER_EXTERNAL_URL is set by Render (https://<service>.onrender.com).
   const apiUrl = get('PUBLIC_API_URL') ?? get('RENDER_EXTERNAL_URL') ?? `http://localhost:${int('PORT', 4000)}`;
   const paymob = group(['PAYMOB_SECRET_KEY', 'PAYMOB_PUBLIC_KEY', 'PAYMOB_HMAC_SECRET', 'PAYMOB_INTEGRATION_CARD', 'PAYMOB_INTEGRATION_WALLET'], () => ({
@@ -130,6 +150,7 @@ export function loadConfig(env: Env = process.env): AppConfig {
     demo,
     urls: { api: apiUrl, web: get('PUBLIC_WEB_URL') ?? 'http://localhost:3000', admin: get('PUBLIC_ADMIN_URL') ?? 'http://localhost:3001' },
     corsOrigins: list('CORS_ORIGINS').length ? list('CORS_ORIGINS') : ['http://localhost:3000', 'http://localhost:3001'],
+    edgeSecret: get('YUSR_EDGE_SECRET') ?? null,
     databaseUrl: storage === 'postgres' ? secret('DATABASE_URL', 'postgres://yusr:yusr@localhost:5432/yusr') : '',
     redisUrl: storage === 'postgres' ? (get('REDIS_URL') ?? 'redis://localhost:6379') : null,
     auth: {
@@ -139,6 +160,8 @@ export function loadConfig(env: Env = process.env): AppConfig {
       accessTtlSeconds: int('ACCESS_TOKEN_TTL_SECONDS', 900),
       refreshTtlDays: int('REFRESH_TOKEN_TTL_DAYS', 30),
       otpPepper: secret('OTP_PEPPER', 'dev-only-otp-pepper'),
+      otpCountryCodes: list('YUSR_OTP_COUNTRY_CODES').length ? list('YUSR_OTP_COUNTRY_CODES').map((code) => code.replace(/^\+/, '')) : ['20', '966'],
+      otpHourlyBudget: int('YUSR_OTP_HOURLY_BUDGET', 1_000),
       googleClientIds: list('GOOGLE_CLIENT_IDS'),
       appleClientIds: list('APPLE_CLIENT_IDS'),
     },
@@ -165,7 +188,9 @@ export function loadConfig(env: Env = process.env): AppConfig {
         webhookToken: get('MOYASAR_WEBHOOK_TOKEN')!,
       })),
       instapay: { ipa: get('INSTAPAY_IPA') ?? 'yusr@instapay', accountName: get('INSTAPAY_ACCOUNT_NAME') ?? 'Yusr Foundation' },
-      simulatorSecret: get('SIMULATOR_SECRET') ?? 'dev-only-simulator-secret',
+      // The simulator signs its own checkout links and webhooks inside this process, so where the public
+      // default is not acceptable (production, public demo, shared database) an unset secret is random per boot.
+      simulatorSecret: get('SIMULATOR_SECRET') ?? (production || remoteDatabase ? randomBytes(32).toString('base64url') : 'dev-only-simulator-secret'),
       fxFeedUrl: get('FX_FEED_URL') ?? null,
     },
     storageBuckets: group(['S3_ENDPOINT', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY'], () => ({
@@ -204,8 +229,31 @@ export function loadConfig(env: Env = process.env): AppConfig {
   if (production && !demo && config.storage === 'memory')
     throw new ConfigError('YUSR_STORAGE=memory is for development only (or a public demo: YUSR_DEMO=true)');
   if (production && !demo && !config.storageBuckets) missing.push('S3_ENDPOINT, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY');
+  // Without a provider sign-in codes would only be printed to the log.
+  if (production && !demo && !config.messaging.sms && !config.messaging.whatsapp)
+    missing.push('an SMS or WhatsApp provider for sign-in codes (SMS_PROVIDER_URL + SMS_PROVIDER_TOKEN, or WHATSAPP_PHONE_NUMBER_ID + WHATSAPP_TOKEN)');
+  if (config.auth.otpCountryCodes.some((code) => !/^[1-9]\d{0,3}$/.test(code)))
+    throw new ConfigError('YUSR_OTP_COUNTRY_CODES must be calling codes, e.g. 20,966');
+  if (config.auth.otpHourlyBudget < 1) throw new ConfigError('YUSR_OTP_HOURLY_BUDGET must be at least 1');
+  if (missing.length && strictSecrets && !production)
+    throw new ConfigError(
+      `Missing configuration: ${missing.join(', ')} (DATABASE_URL is not on this machine, so the development secrets are refused; YUSR_ALLOW_DEV_SECRETS=true overrides this)`,
+    );
   if (missing.length) throw new ConfigError(`Missing configuration: ${missing.join(', ')}`);
   return config;
+}
+
+/** True for a PostgreSQL URL on this machine (or no URL: the development default is localhost). */
+export function isLocalDatabase(url: string | undefined): boolean {
+  if (!url) return true;
+  let host: string;
+  try {
+    host = new URL(url).hostname.replace(/^\[|\]$/g, '').toLowerCase();
+  } catch {
+    return false;
+  }
+  if (host === 'localhost' || host.endsWith('.localhost') || host === '::1') return true;
+  return isIP(host) === 4 && host.startsWith('127.');
 }
 
 export const APP_CONFIG = Symbol('APP_CONFIG');

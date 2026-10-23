@@ -16,7 +16,10 @@ import type { UserRow } from '../db/rows';
 import { signAccessToken, verifyAccessToken, type AccessClaims } from './jwt';
 import type { OAuthProvider, OAuthVerifier } from './oauth';
 import type { OtpService } from './otp.service';
-import { generateTotpSecret, otpauthUri, verifyTotp } from './totp';
+import { generateTotpSecret, matchTotp, otpauthUri } from './totp';
+
+/** How long a super admin's grant of a staff role leaves authenticator enrollment open. */
+export const MFA_ENROLLMENT_WINDOW_MS = 24 * 3_600_000;
 
 export interface AuthConfig {
   jwtSecrets: Readonly<Record<string, string>>;
@@ -54,8 +57,9 @@ export class AuthService {
     name?: string | null;
     locale?: Locale;
     userAgent?: string | null;
+    ip?: string | null;
   }): Promise<Session> {
-    await this.deps.otp.verify(input.phone, input.code);
+    await this.deps.otp.verify(input.phone, input.code, input.ip ?? null);
     const { db, clock, ids } = this.deps;
     const user = await db.transaction(async (tx) => {
       const existing = await tx.users.byPhone(input.phone);
@@ -71,6 +75,8 @@ export class AuthService {
         region: null,
         mfaEnabled: false,
         totpSecretCipher: null,
+        totpLastStep: null,
+        mfaEnrollmentExpiresAt: null,
         marketingOptIn: false,
         status: 'active',
         createdAt: now,
@@ -110,6 +116,8 @@ export class AuthService {
           region: null,
           mfaEnabled: false,
           totpSecretCipher: null,
+          totpLastStep: null,
+          mfaEnrollmentExpiresAt: null,
           marketingOptIn: false,
           status: 'active',
           createdAt: now,
@@ -130,17 +138,20 @@ export class AuthService {
     let mfa = false;
     if (isStaff(user.roles) && user.mfaEnabled) {
       if (!totp) throw new DomainError('UNAUTHENTICATED', 'Authenticator code required', { mfaRequired: true });
-      if (!this.checkTotp(user, totp)) throw new DomainError('OTP_INVALID', 'Authenticator code is not correct', { mfaRequired: true });
+      if (!(await this.useTotp(user, totp))) throw new DomainError('OTP_INVALID', 'Authenticator code is not correct', { mfaRequired: true });
       mfa = true;
     }
     const refreshToken = await this.storeRefreshToken(user.id, this.deps.ids(), userAgent, mfa);
     return this.session(user, mfa, refreshToken);
   }
 
-  private checkTotp(user: UserRow, code: string): boolean {
+  /** Checks an authenticator code and spends it: the same code (or an older one) is refused afterwards. */
+  private async useTotp(user: UserRow, code: string): Promise<boolean> {
     if (!user.totpSecretCipher) return false;
     const secret = this.deps.cipher.decrypt(user.totpSecretCipher, `totp:${user.id}`);
-    return verifyTotp(secret, code, this.deps.clock.now());
+    const step = matchTotp(secret, code, this.deps.clock.now());
+    if (step === null) return false;
+    return this.deps.db.transaction((tx) => tx.users.claimTotpStep(user.id, step));
   }
 
   private async storeRefreshToken(userId: string, familyId: string, userAgent: string | null, mfa: boolean): Promise<string> {
@@ -246,24 +257,38 @@ export class AuthService {
     });
   }
 
-  /** Starts authenticator enrollment for a staff member; confirmed by confirmMfa(). */
+  /**
+   * Starts authenticator enrollment for a staff member; confirmed by confirmMfa(). Only inside an
+   * enrollment a super admin opened (granting a staff role in the hub opens one for a day): an SMS code
+   * alone must never be enough to attach an authenticator to a staff account. The staff:create command
+   * issues keys directly and does not need this.
+   */
   async enrollMfa(actor: RequestActor): Promise<{ secret: string; otpauthUri: string }> {
     const { db, cipher } = this.deps;
     const user = await db.read.users.byId(actor.id);
     if (!user) throw new DomainError('NOT_FOUND', 'User not found');
     if (user.mfaEnabled) throw new DomainError('VALIDATION_FAILED', 'Two-factor authentication is already on');
+    if (!isStaff(user.roles) || !this.enrollmentOpen(user)) {
+      throw new DomainError('FORBIDDEN', 'Ask a super admin to issue your authenticator');
+    }
     const secret = generateTotpSecret();
     await db.transaction((tx) => tx.users.update(user.id, { totpSecretCipher: cipher.encrypt(secret, `totp:${user.id}`) }));
     return { secret, otpauthUri: otpauthUri(secret, user.email ?? user.phone ?? user.id) };
   }
 
+  private enrollmentOpen(user: UserRow): boolean {
+    return Boolean(user.mfaEnrollmentExpiresAt && user.mfaEnrollmentExpiresAt > this.deps.clock.now());
+  }
+
   async confirmMfa(actor: RequestActor, code: string): Promise<void> {
     const { db } = this.deps;
     const user = await db.read.users.byId(actor.id);
-    if (!user?.totpSecretCipher) throw new DomainError('VALIDATION_FAILED', 'Start enrollment first');
-    if (!this.checkTotp(user, code)) throw new DomainError('OTP_INVALID');
+    if (!user?.totpSecretCipher || user.mfaEnabled || !this.enrollmentOpen(user)) throw new DomainError('VALIDATION_FAILED', 'Start enrollment first');
+    if (!(await this.useTotp(user, code))) throw new DomainError('OTP_INVALID');
     await db.transaction(async (tx) => {
-      await tx.users.update(user.id, { mfaEnabled: true });
+      // The enrollment is used up; sessions from before the authenticator existed end here.
+      await tx.users.update(user.id, { mfaEnabled: true, mfaEnrollmentExpiresAt: null });
+      await tx.refreshTokens.revokeAllForUser(user.id, this.deps.clock.now());
       await tx.audit.record({
         actorId: user.id,
         actorRole: null,

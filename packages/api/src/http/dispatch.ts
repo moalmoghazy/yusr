@@ -4,10 +4,12 @@
  * Errors of any kind leave as problem+json with a stable domain code (problem.ts);
  * unexpected ones are reported through `onError` (logs, Sentry) without leaking details.
  */
+import { isIP } from 'node:net';
 import { DomainError, isStaff } from '@yusr/core';
 import type { ZodType } from 'zod';
 import type { Services } from '../app.services';
 import type { CallContext, RequestActor } from '../common/actor';
+import { safeEqual } from '../common/crypto';
 import { header, isReply, type AnyEndpoint, type RawRequest, type Reply } from './endpoint';
 import { problemFor } from './problem';
 
@@ -37,6 +39,30 @@ function authenticate(request: RawRequest, services: Services): RequestActor | n
 function channelOf(request: RawRequest): CallContext['channel'] {
   const channel = header(request, 'x-yusr-channel');
   return channel === 'mobile' || channel === 'admin' ? channel : 'web';
+}
+
+/** Record ids are UUIDs; anything else in an :id segment cannot name a record. */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function assertIdParams(params: Readonly<Record<string, string>>): void {
+  for (const [name, value] of Object.entries(params)) {
+    if ((name === 'id' || name.endsWith('Id')) && !UUID.test(value)) throw new DomainError('NOT_FOUND', 'Not found');
+  }
+}
+
+/**
+ * The visitor's IP. The website and the control hub call the API from their servers, so every visitor
+ * would share the Next.js server's address; those servers prove themselves with the edge secret
+ * (YUSR_EDGE_SECRET, compared in constant time) and name the visitor in x-yusr-client-ip. Without the
+ * secret those headers are ignored, so nobody else can choose the IP their rate limits count against.
+ */
+export function clientIp(request: RawRequest, edgeSecret: string | null): string | null {
+  if (edgeSecret) {
+    const presented = header(request, 'x-yusr-edge-secret');
+    const forwarded = header(request, 'x-yusr-client-ip')?.trim();
+    if (presented && safeEqual(presented, edgeSecret) && forwarded && isIP(forwarded)) return forwarded;
+  }
+  return request.ip;
 }
 
 /** Validates with a shared schema; failures carry field-level issues the forms can show. */
@@ -81,14 +107,16 @@ export async function dispatch(route: AnyEndpoint, request: RawRequest, options:
   try {
     if (route.enabled && !route.enabled(services)) throw new DomainError('NOT_FOUND', 'Not available in this environment');
 
+    assertIdParams(request.params);
     const actor = authenticate(request, services);
     if (route.access !== 'public' && !actor) throw new DomainError('UNAUTHENTICATED', 'Sign in to continue');
     if (route.access === 'staff' && actor && !isStaff(actor.roles)) throw new DomainError('FORBIDDEN', 'Staff only');
-    const ctx: CallContext = { actor, ip: request.ip, requestId: request.requestId, channel: channelOf(request) };
+    const ip = clientIp(request, services.config.edgeSecret);
+    const ctx: CallContext = { actor, ip, requestId: request.requestId, channel: channelOf(request) };
 
     if (route.rateLimit) {
       const { name, by, limit, windowSeconds } = route.rateLimit;
-      const who = by === 'actor' && actor ? `u:${actor.id}` : `ip:${request.ip ?? 'unknown'}`;
+      const who = by === 'actor' && actor ? `u:${actor.id}` : `ip:${ip ?? 'unknown'}`;
       await services.limiter.consume(`${name}:${who}`, { limit, windowSeconds });
     }
 
@@ -110,7 +138,10 @@ export async function dispatch(route: AnyEndpoint, request: RawRequest, options:
       body = validate(route.body, request.body ?? {}, 'body');
     }
 
-    const out = toReply(await route.handle({ services, ctx, params: request.params, query, body, request }), route);
+    const out = toReply(
+      await route.handle({ services, ctx, params: request.params, query, body, request: ip === request.ip ? request : { ...request, ip } }),
+      route,
+    );
     const result = serialize(out, publicCache);
     if (cached && out.kind === 'json' && out.status === 200 && typeof result.body === 'string') {
       await services.kv.set(cached.key, result.body, { ttlSeconds: cached.seconds }).catch(() => undefined);

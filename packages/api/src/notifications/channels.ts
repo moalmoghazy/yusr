@@ -1,6 +1,7 @@
 import type { Locale } from '@yusr/core';
 import type { OtpSender } from '../auth/otp.service';
 import type { FetchLike } from '../payments/gateway';
+import { mask } from '../common/crypto';
 import { callJson } from '../payments/http';
 import { templates } from './templates';
 
@@ -66,21 +67,47 @@ export class HttpChannels implements Channels, OtpSender {
     });
   }
 
+  /** By SMS when an SMS provider is configured, otherwise by WhatsApp. */
   async sendOtp(phone: string, code: string, locale: Locale) {
-    await this.sms(phone, templates.otp(locale, code).short);
+    const text = templates.otp(locale, code).short;
+    if (this.config.sms) await this.sms(phone, text);
+    else if (this.config.whatsapp) await this.whatsapp(phone, text);
+    else throw new Error('No SMS or WhatsApp provider is configured for sign-in codes');
   }
+}
+
+export interface LogChannelsOptions {
+  /**
+   * Print recipients and sign-in codes in full. Only on a developer's machine, where the terminal is
+   * how a developer signs in; anywhere else (a public demo) they are masked.
+   */
+  reveal?: boolean;
+  /** How many recent messages `sent` keeps (oldest dropped first). */
+  keep?: number;
 }
 
 /** Development channels: print what would be sent. */
 export class LogChannels implements Channels, OtpSender {
+  /** The most recent messages, for tests and local tooling; capped so a long-running process does not grow. */
   readonly sent: Array<{ channel: string; to: string; text: string }> = [];
+  private readonly reveal: boolean;
+  private readonly keep: number;
 
-  // eslint-disable-next-line no-console -- the development channel prints messages instead of sending them
-  constructor(private readonly log: (line: string) => void = (line) => console.log(line)) {}
+  constructor(
+    // eslint-disable-next-line no-console -- the development channel prints messages instead of sending them
+    private readonly log: (line: string) => void = (line) => console.log(line),
+    options: LogChannelsOptions = {},
+  ) {
+    this.reveal = options.reveal ?? false;
+    this.keep = Math.max(1, options.keep ?? 200);
+  }
 
-  private record(channel: string, to: string, text: string) {
+  private record(channel: string, to: string, text: string, secret?: string) {
     this.sent.push({ channel, to, text });
-    this.log(`[${channel}] → ${to}: ${text.split('\n')[0]}`);
+    if (this.sent.length > this.keep) this.sent.splice(0, this.sent.length - this.keep);
+    let line = text.split('\n')[0] ?? '';
+    if (!this.reveal && secret) line = line.split(secret).join('•'.repeat(secret.length));
+    this.log(`[${channel}] → ${this.reveal ? to : mask(to)}: ${line}`);
   }
 
   async email(to: string, subject: string) {
@@ -96,6 +123,6 @@ export class LogChannels implements Channels, OtpSender {
     this.record('push', userId, title);
   }
   async sendOtp(phone: string, code: string, locale: Locale) {
-    this.record('sms', phone, templates.otp(locale, code).short);
+    this.record('sms', phone, templates.otp(locale, code).short, code);
   }
 }

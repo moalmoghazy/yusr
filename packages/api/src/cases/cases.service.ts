@@ -86,6 +86,14 @@ function slugify(title: string, reference: string): string {
   return `${latin || 'case'}-${reference.toLowerCase()}`.replace(/-+/g, '-');
 }
 
+/** How a donor is named in public: first name and initial ("Sara A."), as on the live ticker. */
+export function publicDonorName(full: string | null | undefined): string | null {
+  const parts = full?.trim().split(/\s+/).filter(Boolean) ?? [];
+  if (!parts.length) return null;
+  const [first, second] = parts;
+  return second ? `${first} ${Array.from(second)[0]}.` : first!;
+}
+
 export class CasesService {
   constructor(private readonly deps: CasesDeps) {}
 
@@ -194,7 +202,8 @@ export class CasesService {
     for (const donation of recent) {
       let displayName: string | null = null;
       if (!donation.anonymous) {
-        displayName = donation.donorId ? ((await db.read.users.byId(donation.donorId))?.displayName ?? null) : (donation.guestContact?.name ?? null);
+        const full = donation.donorId ? ((await db.read.users.byId(donation.donorId))?.displayName ?? null) : (donation.guestContact?.name ?? null);
+        displayName = staff ? full : publicDonorName(full);
       }
       recentDonations.push({
         id: donation.id,
@@ -217,7 +226,11 @@ export class CasesService {
   }
 
   // ------------------------------------------------------------------ submission portal
-  async submit(input: SubmissionInput, context: CallContext): Promise<Pick<CaseRow, 'id' | 'reference' | 'status'> & { possibleDuplicate: boolean }> {
+  /**
+   * Whether the beneficiary's national ID matches an earlier case is told to reviewers only (audit log,
+   * Slack): telling the submitter would let anyone test whether a national ID is in the database.
+   */
+  async submit(input: SubmissionInput, context: CallContext): Promise<Pick<CaseRow, 'id' | 'reference' | 'status'>> {
     const actor = context.actor;
     if (!actor) throw new DomainError('UNAUTHENTICATED', 'Sign in to submit a case');
     if (input.consent !== true) throw new DomainError('VALIDATION_FAILED', 'Consent is required', { field: 'consent' });
@@ -321,7 +334,7 @@ export class CasesService {
           possibleDuplicate: Boolean(existing),
         },
       });
-      return { id, reference: created.reference, status: 'under_review' as const, possibleDuplicate: Boolean(existing) };
+      return { id, reference: created.reference, status: 'under_review' as const };
     });
   }
 
