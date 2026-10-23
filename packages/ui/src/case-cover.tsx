@@ -31,31 +31,20 @@ const GLYPH_SCALE = 3.4;
 const GLYPH_X = 40;
 const GLYPH_Y = (180 - 24 * GLYPH_SCALE) / 2;
 
-/**
- * The Yusr mark in the motif's box, for the loop where it turns into the category's motif: centred
- * on the motif and as tall as it. `DROP_TARGET` is where, on the 24-unit motif, the golden ḍamma lands
- * and stays as a small gold accent (the heart's pulse, the keyhole, the tassel…).
- */
+/** The Yusr mark in the motif's box, for the loop where it turns into the category's motif: centred on the motif and as tall as it. */
 const LOGO = brand.logo;
 const MARK_SCALE = (24 * GLYPH_SCALE * 0.92) / LOGO.bounds.height;
 const MARK_X = GLYPH_X + 12 * GLYPH_SCALE - MARK_SCALE * (LOGO.bounds.x + LOGO.bounds.width / 2);
 const MARK_Y = GLYPH_Y + 12 * GLYPH_SCALE - MARK_SCALE * (LOGO.bounds.y + LOGO.bounds.height / 2);
-const DROP_TARGET: Readonly<Record<CaseCategory, readonly [number, number]>> = {
-  medical: [12, 4.4],
-  debt_relief: [12, 16],
-  education: [22, 17.8],
-  orphans: [12, 14.4],
-  relief: [12, 12],
-};
 
 /**
  * The illustrated case cover. Yusr never shows beneficiaries' photos — dignity first — so
  * each category has a motif set on the brand's Andalusian lattice. Every cover puts its motif
  * in the same place (start of the card, vertically centred) so a row of cards lines up; the
  * lattice drifts left to right and fades out, like the home hero (`.case-cover-drift` in the
- * web stylesheet; still under reduced motion). The motif itself is a loop: the Yusr mark is drawn, then
- * turns into the motif while its golden ḍamma flies to a spot on it, and back (`.cover-morph-*`; without
- * the animation only the motif shows). Deterministic: the seed only shifts the lattice
+ * web stylesheet; still under reduced motion). The motif itself is a loop: the Yusr mark is drawn and its
+ * golden ḍamma falls onto it like a drop of water; then the ḍamma fades as the mark turns into the motif,
+ * and back (`.cover-morph-*`; without the animation only the motif shows). Deterministic: the seed only shifts the lattice
  * and the light, so the server and client draw the same cover.
  */
 const r2 = (value: number) => Math.round(value * 100) / 100;
@@ -130,19 +119,9 @@ export function CaseCover({ category, seed, className, label }: CaseCoverProps) 
             <Tag key={index} {...attrs} pathLength={1} />
           ))}
         </g>
-        {/* The golden ḍamma: above the mark, then flying to its place on the motif. */}
+        {/* The golden ḍamma: falls onto the mark like a drop of water, and fades as the mark turns into the motif. */}
         <g transform={`translate(${r2(MARK_X)} ${r2(MARK_Y)}) scale(${r2(MARK_SCALE)})`}>
-          <g
-            className="cover-morph-drop"
-            style={
-              {
-                opacity: 0,
-                '--drop-x': `${r2((GLYPH_X + DROP_TARGET[category][0] * GLYPH_SCALE - MARK_X) / MARK_SCALE - LOGO.guides.drop.cx)}px`,
-                '--drop-y': `${r2((GLYPH_Y + DROP_TARGET[category][1] * GLYPH_SCALE - MARK_Y) / MARK_SCALE - LOGO.guides.drop.cy)}px`,
-                transformOrigin: `${LOGO.guides.drop.cx}px ${LOGO.guides.drop.cy}px`,
-              } as CSSProperties
-            }
-          >
+          <g className="cover-morph-drop" style={{ opacity: 0, transformOrigin: `${LOGO.guides.drop.cx}px ${LOGO.guides.drop.cy}px` }}>
             <path d={LOGO.drop.d} transform={LOGO.drop.transform} className="fill-highlight" />
           </g>
         </g>

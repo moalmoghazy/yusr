@@ -248,8 +248,8 @@
   }
 }
 
-/* Case covers: the Yusr mark is drawn, turns into the category's motif (its golden ḍamma flies to a spot
-   on it and stays as a gold accent), then the motif turns back into the mark. One 9s loop; each cover
+/* Case covers: the Yusr mark is drawn and its golden ḍamma falls onto it like a drop of water; the ḍamma
+   fades as the mark turns into the category's motif, then the motif turns back into the mark. One 9s loop; each cover
    starts at its own point (--morph-delay). Without motion only the motif shows (case-cover.tsx). */
 @media (prefers-reduced-motion: no-preference) {
   .cover-morph-mark,
@@ -337,25 +337,32 @@
 }
 
 @keyframes cover-drop {
+  /* Falls from above with gravity, lands with a small splash, rests, then fades with the mark. */
   0%,
   8% {
     opacity: 0;
-    transform: translateY(-14px);
+    transform: translateY(-34px) scale(0.85, 1.15);
+    animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45);
   }
-  15%,
-  30% {
+  10% {
+    opacity: 1;
+  }
+  16% {
+    transform: translateY(0) scale(1.18, 0.82);
+    animation-timing-function: cubic-bezier(0.3, 0, 0.3, 1);
+  }
+  19% {
+    transform: translateY(-2px) scale(0.94, 1.06);
+  }
+  22%,
+  28% {
     opacity: 1;
     transform: none;
   }
-  44%,
-  82% {
-    opacity: 1;
-    transform: translate(var(--drop-x), var(--drop-y)) scale(0.34);
-  }
-  92%,
+  36%,
   100% {
     opacity: 0;
-    transform: translate(var(--drop-x), var(--drop-y)) scale(0.2);
+    transform: scale(0.6);
   }
 }
 
