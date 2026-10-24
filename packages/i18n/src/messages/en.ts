@@ -335,12 +335,19 @@ export const en: Messages = {
     urgentBody: 'Real deadlines: scheduled surgeries and families facing eviction.',
     categoriesTitle: 'Give by need',
     howTitle: 'From request to proof of payment',
-    howBody: 'Four stages every case passes before a single pound reaches it.',
+    howBody: 'Five stages every case passes, from submission to after the payout.',
     howSteps: {
       submit: { title: 'Case submitted', body: 'A partner association submits the case with official documents.' },
       verify: { title: 'Field research', body: 'The partner association visits the family and confirms the need and the amount.' },
       publish: { title: 'Reviewed & published', body: 'The Yusr team reviews the file, redacts personal data and publishes the story with a cost breakdown.' },
-      disburse: { title: 'Paid directly, with proof', body: 'The association pays the institution directly, and we send you the receipt.' },
+      disburse: {
+        title: 'Paid directly, with proof',
+        body: 'Your gift goes straight to the partner association’s account; it pays the institution directly, and we send you the receipt.',
+      },
+      follow: {
+        title: 'Follow-up after closing',
+        body: 'We contact the beneficiary to confirm the help arrived, and keep following the case as an independent third party after it closes.',
+      },
     },
     transparencyTitle: 'Every pound leaves a trail you can follow',
     transparencyBody:
@@ -531,7 +538,7 @@ export const en: Messages = {
           },
           money: {
             q: 'Where exactly does the money go?',
-            a: 'Donations never pass through Yusr’s account. They reach the association that received them, and the association pays the service provider directly: the hospital, the creditor or the school. No cash is handed to the beneficiary.',
+            a: 'Donations never pass through Yusr’s account. They reach the association that received them, and the association pays the service provider directly: the hospital, the creditor or the school. No cash is handed to the beneficiary. After the payout, the Yusr team contacts the beneficiary to confirm the help arrived, and we keep following the case as an independent third party after it closes.',
           },
           photos: {
             q: 'Why are there no photos or real names of beneficiaries?',

@@ -273,6 +273,7 @@ function HowItWorks() {
     { key: 'verify', icon: 'clipboard-check' as const },
     { key: 'publish', icon: 'shield-check' as const },
     { key: 'disburse', icon: 'landmark' as const },
+    { key: 'follow', icon: 'eye' as const },
   ];
   return (
     <ol className="how-steps">

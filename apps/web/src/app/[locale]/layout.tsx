@@ -23,22 +23,23 @@ const sans = IBM_Plex_Sans_Arabic({ subsets: ['arabic', 'latin'], weight: ['400'
 // The logo face: the English name beside the mark stays in Reem Kufi whatever the headings use.
 const logo = Reem_Kufi({ subsets: ['arabic', 'latin'], weight: ['700'], variable: '--font-reem-kufi', display: 'swap' });
 // Palestine: the main page titles and the opening line, in Arabic. Its Latin letters are blank, so
-// the face covers Arabic and digits only and anything else falls back to the text face.
+// the face covers Arabic and digits only and anything else falls back to the text face. Its decimal
+// mark ٫ is blank too, so it is left out (the text face draws it).
 const wordmark = localFont({
   src: '../../fonts/palestine-regular.otf',
   weight: '400',
   variable: '--font-palestine',
   display: 'swap',
-  declarations: [{ prop: 'unicode-range', value: 'U+0020-0040, U+0600-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFF' }],
+  declarations: [{ prop: 'unicode-range', value: 'U+0020-0040, U+0600-066A, U+066C-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFF' }],
 });
-// KAF FODA (the face «يُسر» is drawn in) for the home's stats band, in Arabic: its Arabic letters and
-// digits (٠–٩ take its digit shapes); anything else stays in the heading face.
-const stats = localFont({
-  src: '../../fonts/kaf-foda-stats.ttf',
+// KAF FODA's digits (the face «يُسر» is drawn in) for the home's stats band, in Arabic: only ٠–٩ and the thousands mark ٬; the
+// words beside them («مليون ج.م») are in Palestine.
+const digits = localFont({
+  src: '../../fonts/kaf-foda-digits.ttf',
   weight: '700',
-  variable: '--font-kaf-stats',
+  variable: '--font-kaf-digits',
   display: 'swap',
-  declarations: [{ prop: 'unicode-range', value: 'U+0020, U+002E, U+0600-06FF' }],
+  declarations: [{ prop: 'unicode-range', value: 'U+0660-0669, U+066C' }],
 });
 const mono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-plex-mono', display: 'swap' });
 
@@ -84,7 +85,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
     <html
       lang={locale}
       dir={dirOf(locale)}
-      className={cn(sans.variable, logo.variable, wordmark.variable, stats.variable, mono.variable, theme !== 'system' && theme)}
+      className={cn(sans.variable, logo.variable, wordmark.variable, digits.variable, mono.variable, theme !== 'system' && theme)}
       suppressHydrationWarning
     >
       <body className="min-h-dvh">

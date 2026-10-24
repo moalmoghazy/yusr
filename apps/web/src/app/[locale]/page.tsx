@@ -204,10 +204,10 @@ const METHOD_ICON: Partial<Record<string, IconName>> = {
   instapay: 'landmark',
 };
 
-const HOW_STEPS = ['submit', 'verify', 'publish', 'disburse'] as const;
+const HOW_STEPS = ['submit', 'verify', 'publish', 'disburse', 'follow'] as const;
 
 /**
- * «كيف نعمل» inside the hero: the four stages a case passes, shown one after another, with a glowing
+ * «كيف نعمل» inside the hero: the five stages a case passes, shown one after another, with a glowing
  * gold line running from each step to the next (globals.css, `.how-*`). Without motion it is all shown.
  */
 function HowItWorks({ locale }: { locale: Locale }) {

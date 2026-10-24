@@ -100,8 +100,8 @@ accessible foreground, in both schemes).
 | Face | Use |
 |---|---|
 | **Reem Kufi** | The logo face: «Yusr» beside the mark, and nothing else |
-| **Palestine** | Arabic main titles and the homepage's opening line |
-| **KAF FODA** | The figures in the home's stats band, in Arabic, e.g. «١٫٢ مليون ج.م» (`apps/web/src/fonts/kaf-foda-stats.ttf`: its Arabic letters and digits, from the face «يُسر» is drawn in; personal-use licence, published on the owner's call) |
+| **Palestine** | Arabic main titles, the homepage's opening line, and the words in its stats band |
+| **KAF FODA digits** | The digits in the home's stats band, in Arabic; the words beside them («مليون ج.م») are in Palestine (`apps/web/src/fonts/kaf-foda-digits.ttf`: only its ٠–٩, from the face «يُسر» is drawn in; personal-use licence, published on the owner's call) |
 | **IBM Plex Sans Arabic** | Everything else, Arabic and Latin (it carries both); in **bold** for headings — hero titles, section titles, big numbers |
 | **IBM Plex Mono** | Case references, receipt numbers, code |
 

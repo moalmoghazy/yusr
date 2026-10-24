@@ -17,9 +17,11 @@
   --y-font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-/* The stats band's figures (page.tsx, StatsBand) in KAF FODA, in Arabic: «١٫٢ مليون ج.م». */
+/* The stats band's figures (page.tsx, StatsBand), in Arabic: digits in KAF FODA, words («مليون ج.م») in
+   Palestine. Neither gets a synthetic bold (KAF FODA's digits are bold already, Palestine has one weight). */
 html[lang='ar'] .stat-digits {
-  font-family: var(--font-kaf-stats), var(--y-font-display);
+  font-family: var(--font-kaf-digits), var(--y-font-wordmark);
+  font-synthesis-weight: none;
 }
 
 /* Main page and section titles in Palestine, in Arabic (unlayered, so it wins over the utility). Titles
