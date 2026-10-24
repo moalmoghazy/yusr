@@ -51,7 +51,7 @@ export function LogoMark({ size = 28, bowl, drop, logo = brand.logo }: { size?: 
 
 /**
  * Mark + name, as on the website: the name set in the logo face (Reem Kufi) beside the mark, or —
- * with brand.wordmark = 'lettered' — «يُسر» drawn with the mark's own pen on the mark's grid
+ * with brand.wordmark = 'lettered' — the approved lettering of «يُسر» on the mark's grid
  * (@yusr/theme wordmark.ts). `size` is the mark's size; label the parent for screen readers.
  */
 export function Lockup({ size = 30, ink, drop }: { size?: number; ink?: string; drop?: string }) {
@@ -84,11 +84,8 @@ export function Lockup({ size = 30, ink, drop }: { size?: number; ink?: string; 
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     >
-      <Path d={wordmark.stroke.d} fill="none" stroke={color} strokeWidth={wordmark.stroke.width} strokeLinecap="round" strokeLinejoin="round" />
-      {wordmark.dots.map((dot) => (
-        <Circle key={dot.cx} cx={dot.cx} cy={dot.cy} r={dot.r} fill={color} />
-      ))}
-      <Path d={wordmark.damma.d} transform={wordmark.damma.transform} fill={gold} />
+      <Path d={wordmark.ink.d} fill={color} fillRule="evenodd" />
+      <Path d={wordmark.damma.d} fill={gold} fillRule="evenodd" />
       <G transform={`translate(${lockup.markX} 0)`}>
         <MarkShapes logo={brand.logo} bowl={color} drop={gold} size={size} maskId={maskId} />
       </G>

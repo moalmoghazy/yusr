@@ -79,15 +79,12 @@ export function LogoMark({
   );
 }
 
-/** The lettered «يُسر» (see @yusr/theme wordmark.ts): one round-capped stroke, the dots of ي, the golden ḍamma. */
+/** The approved lettering of «يُسر» (see @yusr/theme wordmark.ts): the letters with the dots of ي, the golden ḍamma. */
 export function WordmarkShapes({ ink, drop, word = wordmark }: { ink: string; drop: string; word?: WordmarkGeometry }) {
   return (
     <>
-      <path d={word.stroke.d} fill="none" stroke={ink} strokeWidth={word.stroke.width} strokeLinecap="round" strokeLinejoin="round" />
-      {word.dots.map((dot) => (
-        <circle key={dot.cx} cx={dot.cx} cy={dot.cy} r={dot.r} fill={ink} />
-      ))}
-      <path d={word.damma.d} transform={word.damma.transform} fill={drop} />
+      <path d={word.ink.d} fill={ink} fillRule="evenodd" />
+      <path d={word.damma.d} fill={drop} fillRule="evenodd" />
     </>
   );
 }
@@ -95,7 +92,7 @@ export function WordmarkShapes({ ink, drop, word = wordmark }: { ink: string; dr
 const round = (value: number) => Math.round(value * 100) / 100;
 
 /**
- * The name alone (splash screens, receipts): set in the logo face, or drawn with the mark's pen when
+ * The name alone (splash screens, receipts): set in the logo face, or the approved lettering when
  * brand.wordmark is 'lettered'. `height` is in px.
  */
 export function Wordmark({
@@ -126,8 +123,8 @@ export function Wordmark({
 
 /**
  * Mark + name. The name is set in the logo face (Reem Kufi) beside the mark — the mark leads in the
- * reading direction. With brand.wordmark = 'lettered', «يُسر» is instead drawn with the mark's own
- * pen on the mark's grid. `size` is the mark's size in px.
+ * reading direction. With brand.wordmark = 'lettered', «يُسر» is instead the approved lettering,
+ * drawn on the mark's grid. `size` is the mark's size in px.
  */
 export function Lockup({
   lang,

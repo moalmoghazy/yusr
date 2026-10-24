@@ -214,13 +214,13 @@ describe('Logo', () => {
     assert.ok(en.includes('>Yusr</span>') && en.includes('font-logo'));
   });
 
-  it('letters «يُسر» in Kufi beside the mark by default', async () => {
+  it('draws the approved lettering of «يُسر» beside the mark by default', async () => {
     const { Logo } = await import('../src/index');
     const { lockup, wordmark } = await import('@yusr/theme');
     const ar = renderToStaticMarkup(<Logo locale="ar" size={32} />);
-    assert.ok(ar.includes(`d="${wordmark.stroke.d}"`) && ar.includes('stroke-linecap="round"'), 'the word is drawn, with round ends');
+    assert.ok(ar.includes(`d="${wordmark.ink.d}"`) && ar.includes(`d="${wordmark.damma.d}"`), 'the word is drawn');
     assert.ok(ar.includes(`translate(${lockup.markX} 0)`), 'the mark shares the word’s grid');
-    assert.equal((ar.match(/<circle /g) ?? []).length, 4, 'two dots in the word, two in the mark');
+    assert.equal((ar.match(/<circle /g) ?? []).length, 2, 'the mark’s two dots (the word’s are part of its shape)');
     assert.ok(!ar.includes('يُسر<'), 'no text: the word is drawn');
   });
 });

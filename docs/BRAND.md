@@ -17,7 +17,7 @@ hands. A small gift, held carefully, that changes the meaning of someone's day.
 |---|---|
 | `packages/theme/assets/logo-mark.svg` | The mark on light backgrounds |
 | `packages/theme/assets/logo-mark-inverse.svg` | The mark on the primary colour or photos |
-| `packages/theme/assets/logo-ar.svg`, `logo-en.svg` | Mark + name: the Arabic lettered in Kufi, the Latin set in Reem Kufi |
+| `packages/theme/assets/logo-ar.svg`, `logo-en.svg` | Mark + name: the Arabic in the approved lettering, the Latin set in Reem Kufi |
 | `packages/theme/assets/app-icon.svg` | 1024 × 1024 app icon (rendered to PNG for iOS / Android) |
 | `packages/theme/assets/backgrounds/*.svg` | 1920 × 1200 screen backgrounds: emerald, light and dark |
 
@@ -25,8 +25,7 @@ hands. A small gift, held carefully, that changes the meaning of someone's day.
   draw from it, so there is one logo, not copies.
 - **Small sizes**: below 20 px the two dots join into one short stroke (as ي is written by hand
   in Ruqʿa), so the mark stays legible in a tab or a notification.
-- The mark's drop is `DROP_PATH` in `brand.ts`, its point turned up to the left. The written ḍamma
-  (`dammaPath()`, a round head with a level tail) is used only above the lettered name.
+- The mark's drop is `DROP_PATH` in `brand.ts`, its point turned up to the left.
 - **Animated**: the website's «من نحن» page (`/about`) draws the mark live and replays on click;
   the ḍamma moves towards the pointer wherever it is on the page.
 - **Clear space**: at least the height of the ḍamma on every side. **Minimum size**: 16 px (mark),
@@ -36,13 +35,17 @@ hands. A small gift, held carefully, that changes the meaning of someone's day.
 
 ### The name
 
-The Arabic name «يُسر» beside the mark is **lettered in a geometric Kufi** (`wordmark.ts`), not set
-in a font: one heavy weight with round tops; ي and the three teeth of س at one height on a broad
-baseline, meeting it in square inside corners; the ي turning into the line through one broad
-curve; ر a single upright dropping below the line; two round dots under the ي; and above it the
-ḍamma as it is written — a round head with a level tail — in gold. Its teeth reach the top of the
-mark's bowl and its baseline sits on the bowl's lowest edge, so word and mark line up. It needs no
-font, so it looks the same everywhere.
+The Arabic name «يُسر» beside the mark is **the approved lettering** of 2026-10-24 (`wordmark.ts`),
+not set in a font: a classical, high-contrast Naskh, with pointed teeth on a level baseline, ر
+sweeping out in a long hairline, the two dots of ي as joined diamonds, and the ḍamma in gold with
+its counter open. It was traced from the approved artwork onto the mark's 64-unit grid in the place
+it holds beside the mark, so word and mark always line up as approved. It needs no font, so it
+looks the same everywhere. Don't re-set it in another face.
+
+For lines that speak in the logo's voice — the homepage's opening line «كن سببًا في يُسر أحدهم
+اليوم» — use **Amiri** bold, the free face nearest the lettering (`WORDMARK_FACE`,
+`typography.fonts.wordmark`, `--y-font-wordmark`, `font-wordmark`). Arabic only; English keeps the
+heading face.
 
 «Yusr» (and «يُسر» when `brand.wordmark = 'typeset'`) is set in **Reem Kufi**, the *logo face*
 (`typography.fonts.logo`, `--y-font-logo`, `font-logo`), kept apart from the heading face so
@@ -54,8 +57,8 @@ the Arabic name, left of the Latin one.
 `logoBackgroundSvg({ tone })` draws a 1920 × 1200 background (any size): the lockup centred on a
 soft glow, with «روضة العطاء» coming in towards the edges and clearing behind the logo. Three
 tones — `brand` (white on emerald), `light`, `dark` — follow the theme, so a rebrand repaints
-them. The name is set text: the SVG links its face, so open it in a browser (or install Reem Kufi)
-before exporting a PNG for a wallpaper, an event screen or a video call.
+them. The name is drawn (no font needed), so the SVG exports to a PNG anywhere for a wallpaper, an
+event screen or a video call.
 
 ## Colour
 
@@ -84,13 +87,14 @@ accessible foreground, in both schemes).
 
 | Face | Use |
 |---|---|
-| **Reem Kufi** | The logo face: «يُسر» and «Yusr» beside the mark, and nothing else |
+| **Reem Kufi** | The logo face: «Yusr» beside the mark, and nothing else |
+| **Amiri** (bold) | Lines in the logo's voice, Arabic only: the homepage's opening line |
 | **IBM Plex Sans Arabic** | Everything else, Arabic and Latin (it carries both); in **bold** for headings — hero titles, section titles, big numbers |
 | **IBM Plex Mono** | Case references, receipt numbers, code |
 
 Scale (px): 12 · 14 · 16 · 18 · 21 · 25 · 31 · 39 · 50. Arabic body text uses a line height of
 1.8 (Latin 1.6); Arabic headings at least 1.4 (Arabic needs room for its dots and marks above and
-below the line), the hero 1.4 (Latin 1.15). Numbers use Arabic-Indic digits in Arabic (١٢٣) and are tabular where
+below the line), the Arabic hero (Amiri) 1.45 (Latin 1.15). Numbers use Arabic-Indic digits in Arabic (١٢٣) and are tabular where
 they line up.
 
 **Switching the heading face.** Headings use the text family's bold (`DISPLAY_FACES.plexArabic`,

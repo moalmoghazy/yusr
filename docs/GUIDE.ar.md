@@ -159,6 +159,7 @@ node scripts/doctor.mjs
 |---|---|
 | الألوان، الزوايا، الظلال، الخطوط | `packages/theme/src/tokens.ts` |
 | الشعار (هندسة حرف الياء والضمّة الذهبية) | `packages/theme/src/brand.ts` و `packages/theme/src/svg.ts` |
+| كلمة «يُسر» في الشعار (الرسم المعتمد في ٢٤ أكتوبر ٢٠٢٦، مسارات فكتور) | `packages/theme/src/wordmark.ts`. وجملة الرئيسية «كن سببًا في يُسر أحدهم اليوم» بخط أميري، أقرب خط مجاني لحروف الشعار (`WORDMARK_FACE` في `tokens.ts`) |
 | روابط التطبيق في المتاجر (شارات App Store وGoogle Play وAppGallery في الفوتر) | `brand.apps` في `packages/theme/src/brand.ts`، وما دامت فارغة تظهر الشارة بعبارة «قريبًا على» |
 | أي نص يظهر للمستخدم (عربي / إنجليزي) | `packages/i18n/src/messages/ar.ts` و `en.ts` |
 | صفحات الموقع | `apps/web/src/app/[locale]/…` (الرئيسية `page.tsx`، الحالات `cases/`، التقديم `submit/`) |

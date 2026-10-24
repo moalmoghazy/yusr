@@ -186,13 +186,17 @@
 }
 
 .hero-title {
-  font-size: clamp(2.05rem, 1.2rem + 2.6vw, 3.3rem);
+  /* In Arabic the opening line speaks in the logo's voice: Amiri, the face nearest its lettering. */
+  font-family: var(--y-font-wordmark);
+  font-size: clamp(2.35rem, 1.4rem + 3vw, 3.8rem);
   /* Arabic needs more room between lines than Latin. */
-  line-height: 1.4;
+  line-height: 1.45;
   color: var(--foreground);
 }
 
 html[lang='en'] .hero-title {
+  font-family: var(--y-font-display);
+  font-size: clamp(2.05rem, 1.2rem + 2.6vw, 3.3rem);
   line-height: 1.15;
 }
 

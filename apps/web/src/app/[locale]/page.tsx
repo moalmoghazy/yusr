@@ -45,7 +45,15 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
               <LogoMark size={20} />
               {t('landing.eyebrow')}
             </p>
-            <h1 className={cn('font-display text-[clamp(2.05rem,1.2rem+2.6vw,3.3rem)] font-bold', locale === 'en' ? 'leading-[1.15]' : 'leading-[1.4]')}>
+            {/* In Arabic the opening line speaks in the logo's voice: Amiri, the face nearest its lettering. */}
+            <h1
+              className={cn(
+                'font-bold',
+                locale === 'en'
+                  ? 'font-display text-[clamp(2.05rem,1.2rem+2.6vw,3.3rem)] leading-[1.15]'
+                  : 'font-wordmark text-[clamp(2.35rem,1.4rem+3vw,3.8rem)] leading-[1.45]',
+              )}
+            >
               {t('landing.heroTitle')}
             </h1>
             <p className="max-w-[58ch] text-[1.08rem] text-muted-foreground">{t('landing.heroBody')}</p>

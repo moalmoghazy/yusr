@@ -62,13 +62,11 @@ export function appIconSvg(theme: Theme = defaultTheme, config: BrandConfig = br
   ].join('');
 }
 
-/** The Arabic wordmark's shapes: the lettered stroke, the two dots of ي and the golden ḍamma. */
+/** The Arabic wordmark's shapes: the letters with the dots of ي, and the golden ḍamma. */
 export function wordmarkPaths(word: WordmarkGeometry, colors: { ink: string; drop: string }): string {
-  return [
-    `<path d="${word.stroke.d}" fill="none" stroke="${colors.ink}" stroke-width="${word.stroke.width}" stroke-linecap="round" stroke-linejoin="round"/>`,
-    word.dots.map((dot) => `<circle cx="${dot.cx}" cy="${dot.cy}" r="${dot.r}" fill="${colors.ink}"/>`).join(''),
-    `<path d="${word.damma.d}" transform="${word.damma.transform}" fill="${colors.drop}"/>`,
-  ].join('');
+  return [`<path d="${word.ink.d}" fill="${colors.ink}" fill-rule="evenodd"/>`, `<path d="${word.damma.d}" fill="${colors.drop}" fill-rule="evenodd"/>`].join(
+    '',
+  );
 }
 
 /** A font stack as an XML attribute value (its quoted family names in single quotes). */
@@ -83,7 +81,7 @@ const TYPESET = { viewBox: '48 0 152 64', markX: 136, textEnd: 132, baseline: 45
 
 /**
  * Mark + name. The Arabic name is set in the logo face (Reem Kufi) beside the mark, or — with
- * `wordmark: 'lettered'` — drawn with the mark's pen (paths, no font needed). The English name is
+ * `wordmark: 'lettered'` — drawn from the approved lettering (paths, no font needed). The English name is
  * set in the logo face. Outline set text in design tools for print.
  */
 export function logoLockupSvg(locale: 'ar' | 'en', theme: Theme = defaultTheme, config: BrandConfig = brand): string {
@@ -98,7 +96,7 @@ export function logoLockupSvg(locale: 'ar' | 'en', theme: Theme = defaultTheme, 
     ].join('');
   }
   if (locale === 'ar') {
-    const word = arabicWordmark(config.logo);
+    const word = arabicWordmark();
     const layout = arabicLockup(config.logo, word);
     return [
       `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${layout.viewBox}" role="img" aria-label="${config.name.ar}">`,
@@ -180,7 +178,7 @@ export function logoBackgroundSvg(options: LogoBackgroundOptions = {}, theme: Th
   let ty: number;
   let scale: number;
   if (config.wordmark === 'lettered') {
-    const word = arabicWordmark(config.logo);
+    const word = arabicWordmark();
     const layout = arabicLockup(config.logo, word);
     const [vx, vy] = layout.viewBox.split(' ').map(Number) as [number, number];
     scale = (width * logoShare) / layout.width;

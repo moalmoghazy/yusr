@@ -49,8 +49,7 @@ const r2 = (value: number) => Math.round(value * 100) / 100;
 
 /**
  * A ḍamma as it is written: a round head with a short tail leaving from the bottom of the head.
- * At `angle` 0 the tail runs straight out to the left, level with the head's bottom (as above
- * the lettered «يُسر»); a negative angle turns it anticlockwise, so -45 sends the tail down and to
+ * At `angle` 0 the tail runs straight out to the left, level with the head's bottom; a negative angle turns it anticlockwise, so -45 sends the tail down and to
  * the left. Returned as one filled path (head and tail drawn in the same direction, so they join).
  */
 export function dammaPath(cx: number, cy: number, r: number, options: { angle?: number; tail?: number; tailWidth?: number } = {}): string {
@@ -125,7 +124,7 @@ export interface BrandConfig {
   logo: LogoGeometry;
   /**
    * How the Arabic name is written beside the mark: `typeset` sets «يُسر» in the logo face
-   * (Reem Kufi, `typography.fonts.logo`); `lettered` draws it with the mark's own pen (wordmark.ts).
+   * (Reem Kufi, `typography.fonts.logo`); `lettered` draws the approved lettering (wordmark.ts).
    */
   wordmark: 'typeset' | 'lettered';
   /** Placeholders — set real values through environment config before launch. */

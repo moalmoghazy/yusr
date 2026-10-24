@@ -1,5 +1,6 @@
 // Polyfills first: @yusr/i18n formats numbers, plurals and dates with Intl.
 import '@/lib/intl';
+import { Amiri_700Bold } from '@expo-google-fonts/amiri';
 import { IBMPlexMono_400Regular } from '@expo-google-fonts/ibm-plex-mono';
 import {
   IBMPlexSansArabic_400Regular,
@@ -22,9 +23,11 @@ SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 export default function RootLayout() {
   // Registered under the names @yusr/theme's nativeFonts uses. Headings are IBM Plex Sans Arabic bold
-  // (the text family); Reem Kufi is the logo face, for «يُسر» beside the mark.
+  // (the text family); Reem Kufi is the logo face, for the English name beside the mark; Amiri is the
+  // face nearest the logo's lettering, for the opening line.
   const [fontsLoaded, fontError] = useFonts({
     ReemKufi_700Bold,
+    Amiri_700Bold,
     IBMPlexSansArabic_400Regular,
     IBMPlexSansArabic_500Medium,
     IBMPlexSansArabic_600SemiBold,

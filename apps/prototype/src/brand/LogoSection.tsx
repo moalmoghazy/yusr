@@ -1,16 +1,5 @@
 import type { Locale } from '@yusr/core';
-import {
-  LOGO_VARIANTS,
-  brand,
-  centreMark,
-  lockup,
-  logoBackgroundSvg,
-  mix,
-  wordmark,
-  type BackgroundTone,
-  type LogoGeometry,
-  type LogoVariant,
-} from '@yusr/theme';
+import { LOGO_VARIANTS, brand, centreMark, lockup, logoBackgroundSvg, mix, type BackgroundTone, type LogoGeometry, type LogoVariant } from '@yusr/theme';
 import { useId, useMemo, type CSSProperties, type ReactNode } from 'react';
 import { useT } from '../app/i18n';
 import { usePrototype } from '../app/prefs';
@@ -270,17 +259,14 @@ function Construction() {
   );
 }
 
-const WORDMARK_PARTS = ['stroke', 'corners', 'dots', 'damma'] as const;
+const WORDMARK_PARTS = ['teeth', 'ra', 'dots', 'damma'] as const;
 
 /**
- * How «يُسر» is lettered, drawn from the same geometry as the logo (@yusr/theme wordmark.ts):
- * the lines word and mark share, and the four decisions that keep it soft.
+ * The approved lettering of «يُسر» beside the mark, on the mark's grid (@yusr/theme wordmark.ts),
+ * with its four features pointed out.
  */
 function WordmarkConstruction() {
   const { t, f } = useT();
-  const { logo } = brand;
-  const g = wordmark.guides;
-  const half = wordmark.stroke.width / 2;
   const [vx, vy, vw, vh] = lockup.viewBox.split(' ').map(Number) as [number, number, number, number];
   const box = { x: vx - 7, y: vy - 3, w: vw + 14, h: vh + 16 };
   const row = vy + vh + 8.2;
@@ -291,18 +277,17 @@ function WordmarkConstruction() {
     for (let y = Math.ceil(box.y / 4) * 4; y <= box.y + box.h; y += 4) ys.push(y);
     return { xs, ys };
   }, [box.x, box.y, box.w, box.h]);
-  const [dammaX = 0, dammaY = 0] = wordmark.damma.d.match(/-?[\d.]+/g)!.map(Number);
+  // Points on the traced shapes (the mark's grid), measured from the approved artwork.
   const markers = [
-    // 1 — ر: one upright dropping below the line.
-    { n: 1, x: g.ra, y: row, to: [g.ra, g.descender + 0.7] },
-    // 2 — the ي's broad turn into the baseline (pointed at from above, right of the ي).
-    { n: 2, x: g.ya + 10, y: vy + 6.2, to: [g.ya + half * 0.7, g.baseline] },
-    // 3 — the dots of ي.
-    { n: 3, x: wordmark.dots[0].cx, y: row, to: [wordmark.dots[0].cx, wordmark.dots[0].cy + wordmark.dots[0].r + 0.7] },
-    // 4 — the ḍamma.
-    { n: 4, x: dammaX - 22, y: dammaY + 1.5, to: [dammaX - 14, dammaY + 1] },
+    // 1 — the pointed teeth of س.
+    { n: 1, x: -36.8, y: vy + 4, to: [-36.8, 25.4] },
+    // 2 — ر sweeping out in a long hairline.
+    { n: 2, x: -80, y: row, to: [-80, 55.6] },
+    // 3 — the dots of ي, two joined diamonds.
+    { n: 3, x: -9.8, y: row, to: [-9.8, 50] },
+    // 4 — the golden ḍamma.
+    { n: 4, x: -32, y: vy + 6, to: [-21, 19.6] },
   ] as const;
-  const lines = [g.top, g.baseline, g.bottom];
   return (
     <svg viewBox={`${box.x} ${box.y} ${box.w} ${box.h}`} className="construction-svg wordmark-svg" role="img" aria-label={t('proto.brand.wordmark')}>
       <g className="cg-grid">
@@ -313,22 +298,11 @@ function WordmarkConstruction() {
           <line key={`h${y}`} x1={box.x} y1={y} x2={box.x + box.w} y2={y} className={y % 16 === 0 ? 'is-major' : undefined} />
         ))}
       </g>
-      {lines.map((y) => (
-        <line key={y} x1={box.x + 1} y1={y} x2={box.x + box.w - 1} y2={y} className="cg-axis cg-axis-strong" />
-      ))}
-      {/* The circle the ي turns around into the baseline. */}
-      <circle cx={g.ya - g.turn} cy={g.baseline - g.turn} r={g.turn} className="cg-guide" />
       <g className="cg-shapes">
         <WordmarkShapes ink="var(--primary)" drop="var(--highlight)" />
         <g transform={`translate(${lockup.markX} 0)`}>
           <MarkShapes bowl="var(--primary)" drop="var(--highlight)" size={200} maskId="wordmark-construction-dots" />
         </g>
-      </g>
-      <g className="cg-points">
-        <circle cx={g.ya} cy={g.top} r={0.9} />
-        <circle cx={lockup.markX + logo.guides.bowl.cx - logo.guides.bowl.rx} cy={logo.guides.bowl.cy} r={0.9} />
-        <circle cx={lockup.markX + logo.guides.bowl.cx + logo.guides.bowl.rx} cy={logo.guides.bowl.cy} r={0.9} />
-        <circle cx={lockup.markX + logo.guides.bowl.cx} cy={g.baseline} r={0.9} />
       </g>
       {markers.map((marker) => (
         <g key={marker.n} className="cg-marker">

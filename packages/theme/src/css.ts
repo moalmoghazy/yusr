@@ -39,6 +39,7 @@ function staticVariables(theme: Theme): Record<string, string> {
   return {
     '--y-font-display': typography.fonts.display,
     '--y-font-logo': typography.fonts.logo,
+    '--y-font-wordmark': typography.fonts.wordmark,
     '--y-font-sans': typography.fonts.sans,
     '--y-font-mono': typography.fonts.mono,
     '--radius': `${radius.control}px`,
@@ -100,6 +101,7 @@ export function tailwindThemeCss(theme: Theme): string {
   lines.push(
     '  --font-display: var(--y-font-display);',
     '  --font-logo: var(--y-font-logo);',
+    '  --font-wordmark: var(--y-font-wordmark);',
     '  --font-sans: var(--y-font-sans);',
     '  --font-mono: var(--y-font-mono);',
     '  --radius-sm: calc(var(--radius) - 4px);',

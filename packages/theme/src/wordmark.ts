@@ -1,129 +1,37 @@
 /**
- * The Arabic wordmark «يُسر», lettered in a geometric Kufi instead of set in a font:
+ * The Arabic wordmark «يُسر», as approved by the owner on 2026-10-24: a classical, high-contrast Naskh
+ * hand — pointed teeth on a flat baseline, ر sweeping out in a long hairline, the two dots of ي as
+ * joined diamonds, and the ḍamma in the brand gold with its counter open. It is artwork, not a font:
+ * the shapes were traced from the approved file onto the mark's 64-unit grid, in the place they hold
+ * beside the mark, so word and mark always line up as approved.
  *
- *   - one heavy monoline weight with round ends at the top of every stroke;
- *   - the ي and the three teeth of س stand at one height on a single thick baseline, meeting it
- *     in square inside corners; the ي turns into the baseline through one broad curve;
- *   - ر is a single upright that rises with the teeth and drops below the line;
- *   - two round dots under the ي, and above it the ḍamma as it is written — a round head with a
- *     level tail — in the brand gold.
- *
- * The proportions are those of the approved lettering (stroke 35, teeth 52 apart, x-height 95 on
- * its own grid); they are scaled onto the logo's 64-unit grid so the teeth reach the top of the
- * bowl and the baseline sits on the bowl's lowest edge, and the word lines up with the mark in a
- * lockup.
+ * For text in the logo's voice (the homepage's opening line), the nearest free face is Amiri
+ * (`WORDMARK_FACE` in tokens.ts).
  */
-import { brand, dammaPath, type LogoDot, type LogoGeometry } from './brand';
+import { brand, type LogoGeometry } from './brand';
 
 export interface WordmarkGeometry {
-  /** The letters: straight strokes and one curve, drawn with round caps. */
-  stroke: { d: string; width: number };
-  /** The two dots under ي, in the stroke's colour. */
-  dots: readonly [LogoDot, LogoDot];
-  /** The golden ḍamma above ي: a round head with a level tail. */
-  damma: { d: string; transform: string };
-  /** Visual bounds (stroke, dots and ḍamma included), in logo units. */
+  /** ي, س and ر with the dots of ي: one filled shape in the ink colour. */
+  ink: { d: string };
+  /** The golden ḍamma above ي, its counter cut out (fill-rule evenodd). */
+  damma: { d: string };
+  /** Visual bounds (letters and ḍamma), on the mark's grid with the mark at its own origin. */
   bounds: { x: number; y: number; width: number; height: number };
-  /** Construction lines and anchors, in logo units (for construction drawings and checks). */
-  guides: {
-    /** Top edge of the teeth (all letters share it): the top of the bowl's ends. */
-    top: number;
-    /** Centre line of the baseline stroke. */
-    baseline: number;
-    /** Lower edge of the baseline stroke: the bowl's lowest edge. */
-    bottom: number;
-    /** x of the ي, of the three teeth of س (right to left) and of ر. */
-    ya: number;
-    sin: readonly [number, number, number];
-    ra: number;
-    /** Where ر ends below the line (its lowest edge). */
-    descender: number;
-    /** Radius of the ي's turn into the baseline (centre line). */
-    turn: number;
-  };
-}
-
-export interface WordmarkOptions {
-  /** x of the ي (the word's right edge, since Arabic starts there). */
-  right?: number;
 }
 
 const round = (value: number) => Math.round(value * 100) / 100;
-const pt = (x: number, y: number) => `${round(x)} ${round(y)}`;
 
-/** The approved lettering, on its own grid (y down): every number below is measured from it. */
-const SOURCE = {
-  stroke: 35,
-  top: 78, // top edge of the teeth
-  bottom: 173, // lower edge of the baseline stroke
-  descender: 221, // lowest edge of ر
-  ya: 474,
-  sin: [392.5, 340, 288],
-  ra: 209,
-  turn: 28.5, // centre-line radius of the ي's turn
-  dots: { y: 204, r: 17, x: [436.5, 474] },
-  damma: { x: 484, y: 42.5, r: 17.5 },
-} as const;
+/** Traced from the approved artwork (yusr-logo-ar-color, 4000 px), on the mark's grid. */
+const INK =
+  'M-88.27 54.58C-88.88 54.57 -89.34 54.54 -89.3 54.53C-89.26 54.51 -89.04 54.5 -88.82 54.5C-88.59 54.5 -88.15 54.48 -87.83 54.46C-80.79 53.96 -72.5 50.82 -66.7 46.48C-64.27 44.66 -62.65 42.96 -61.62 41.17C-61.38 40.74 -60.99 39.92 -60.99 39.83C-60.99 39.81 -61.05 39.78 -61.13 39.77C-61.4 39.72 -62.18 39.47 -62.63 39.29C-63.9 38.79 -64.88 38.14 -65.76 37.23C-66.41 36.55 -66.9 35.81 -67.28 34.93L-67.46 34.52L-67.44 34.04C-67.33 32.07 -66.9 30.48 -65.64 27.46C-65.02 25.97 -64.1 23.91 -64.06 23.95C-64.06 23.95 -64.13 24.16 -64.21 24.42C-64.73 25.98 -64.76 27.8 -64.28 28.97C-64.03 29.56 -63.71 30.04 -63.21 30.56C-61.65 32.17 -59.58 32.88 -56.04 33.04C-55.54 33.06 -55.05 33.09 -54.96 33.1C-54.87 33.11 -54.55 33.1 -54.25 33.08C-53.22 33.01 -52.55 32.85 -51.83 32.49C-50.98 32.08 -50.52 31.62 -49.98 30.71C-49.34 29.6 -48.95 28.44 -48.82 27.21C-48.78 26.79 -48.74 26.68 -48.65 26.68C-48.57 26.68 -48.51 26.78 -48.26 27.36C-47.79 28.43 -47 29.88 -46.52 30.53C-45.99 31.23 -45.45 31.75 -44.69 32.26C-43.78 32.87 -43.28 33.05 -42.41 33.05C-41.83 33.05 -41.51 33 -40.95 32.82C-40.51 32.68 -39.74 32.29 -39.34 32.02C-38.94 31.75 -38.37 31.18 -38.12 30.8C-37.58 29.98 -37.1 28.52 -36.97 27.26C-36.94 26.98 -36.89 26.74 -36.87 26.71C-36.83 26.68 -36.8 26.68 -36.73 26.71C-36.66 26.74 -36.58 26.88 -36.45 27.18C-35.59 29.12 -34.4 31.03 -33.54 31.86C-33.13 32.26 -32.82 32.48 -32.33 32.71C-31.65 33.03 -30.88 33.15 -29.99 33.08C-28.46 32.96 -27.33 32.46 -26.34 31.47C-25.59 30.73 -25.11 29.86 -24.81 28.74C-24.69 28.27 -24.54 27.37 -24.54 27.08C-24.54 26.87 -24.47 26.71 -24.37 26.69C-24.28 26.67 -24.19 26.83 -23.93 27.47C-23.64 28.15 -22.95 29.55 -22.69 29.99C-22.36 30.54 -22.04 30.95 -21.6 31.39C-20.7 32.29 -19.89 32.76 -18.83 33.01C-18.48 33.09 -18.46 33.09 -11.04 33.11L-3.61 33.12L-3.73 33.03C-4.25 32.64 -7.64 29.97 -9.47 28.5C-9.81 28.23 -10.09 27.98 -10.1 27.96C-10.11 27.91 -7.64 17.62 -7.61 17.59C-7.6 17.58 -7.59 17.65 -7.57 17.74C-7.53 18.03 -7.36 18.66 -7.25 18.96C-6.83 20.13 -5.95 21.31 -4.04 23.27C-2.79 24.55 -2.12 25.32 -1.64 26.02C-0.72 27.37 -0.64 28.91 -1.38 31.17C-2.1 33.38 -3.47 36.05 -5.55 39.3L-5.9 39.85L-11.89 39.85C-17.5 39.85 -17.91 39.84 -18.24 39.77C-18.94 39.64 -19.49 39.42 -19.97 39.1C-20.4 38.81 -20.64 38.59 -21.01 38.15C-22.17 36.76 -22.71 35.43 -23.46 32.05C-23.63 31.32 -23.78 30.65 -23.81 30.56C-23.85 30.41 -23.86 30.57 -23.88 31.74C-23.91 33.59 -24.05 34.56 -24.43 35.66C-24.98 37.26 -26.12 38.73 -27.22 39.25C-27.59 39.43 -28.24 39.64 -28.74 39.75C-29.27 39.86 -30.13 39.87 -30.63 39.77C-31.81 39.54 -32.62 39.06 -33.41 38.14C-34.57 36.78 -35.14 35.32 -35.98 31.59C-36.12 30.95 -36.24 30.42 -36.25 30.42C-36.26 30.41 -36.27 30.95 -36.28 31.61C-36.3 32.35 -36.33 33.02 -36.37 33.31C-36.52 34.51 -36.85 35.71 -37.25 36.57C-37.98 38.09 -39.24 39.23 -40.65 39.65C-41.16 39.8 -41.93 39.83 -42.54 39.71C-43.02 39.62 -43.64 39.42 -44.02 39.23C-45.21 38.63 -46.34 37.25 -46.92 35.69C-47.24 34.83 -47.6 33.35 -47.9 31.61C-48 31.05 -48.1 30.53 -48.12 30.47C-48.14 30.39 -48.15 30.68 -48.15 31.35C-48.16 32.51 -48.2 33.06 -48.34 33.89C-48.92 37.41 -50.84 39.33 -54.26 39.79C-54.43 39.81 -55.02 39.83 -55.58 39.83L-56.58 39.82L-56.61 40.56C-56.73 43.71 -57.4 46.16 -58.62 47.85C-59.58 49.2 -61.09 50.41 -62.99 51.35C-64.47 52.1 -66.07 52.64 -68.26 53.14C-73.16 54.28 -79.64 54.74 -88.27 54.58ZM-16.75 49.11C-17.82 47.55 -18.69 46.25 -18.69 46.23C-18.69 46.17 -12.96 42.37 -12.93 42.4C-12.91 42.42 -12.33 43.26 -11.63 44.28C-10.94 45.29 -10.36 46.13 -10.35 46.14C-10.34 46.15 -9.06 45.3 -7.51 44.26C-5.95 43.22 -4.67 42.38 -4.65 42.4C-4.6 42.46 -0.8 48.04 -0.78 48.08C-0.76 48.13 -6.47 51.92 -6.53 51.9C-6.55 51.9 -7.14 51.07 -7.83 50.07C-8.52 49.06 -9.1 48.23 -9.12 48.21C-9.14 48.19 -10.42 49.02 -11.98 50.06L-14.81 51.95L-16.75 49.11Z';
+const DAMMA =
+  'M-19.93 23.36C-21.4 22.53 -22.84 21.72 -23.13 21.57C-23.73 21.26 -24.21 20.99 -24.37 20.85C-24.43 20.8 -24.16 20.94 -23.77 21.16C-22.92 21.64 -22.62 21.78 -21.68 22.09C-20.81 22.38 -19.81 22.63 -18.79 22.82C-17.65 23.02 -17.4 23.05 -16.52 23.02C-15.41 22.99 -14.82 22.85 -14.4 22.53C-14.2 22.38 -13.95 22.07 -13.99 22.03C-14.01 22.02 -14.11 22.08 -14.23 22.17C-15.09 22.83 -15.96 22.89 -16.72 22.35C-17.16 22.03 -17.34 21.7 -17.33 21.19C-17.33 20.44 -16.97 19.99 -15.92 19.42C-15.44 19.16 -14.36 18.66 -13.56 18.33L-13.08 18.13L-12.91 18.49C-12.64 19.06 -12.56 19.4 -12.56 19.93C-12.57 20.84 -12.86 21.58 -13.51 22.37C-14.23 23.23 -15.08 23.91 -16.03 24.39C-16.46 24.6 -17.13 24.88 -17.21 24.88C-17.24 24.88 -18.46 24.19 -19.93 23.36ZM-13.99 21.32C-14.07 21.06 -14.38 20.36 -14.7 19.73C-15.05 19.03 -14.98 19.07 -15.42 19.27C-15.73 19.41 -15.89 19.55 -15.97 19.76C-16.03 19.92 -16.03 19.94 -15.97 20.12C-15.84 20.51 -15.4 20.93 -14.78 21.24C-14.44 21.41 -13.98 21.55 -13.95 21.5C-13.95 21.48 -13.96 21.4 -13.99 21.32Z';
 
-export function arabicWordmark(logo: LogoGeometry = brand.logo, options: WordmarkOptions = {}): WordmarkGeometry {
-  // Teeth tops on the top of the bowl's ends, baseline on the bowl's lowest edge.
-  const half = logo.bowl.strokeWidth / 2;
-  const top = logo.guides.bowl.cy - half;
-  const bottom = logo.guides.bowl.cy + logo.guides.bowl.ry + half;
-  const s = (bottom - top) / (SOURCE.bottom - SOURCE.top);
-  const { right = 72 } = options;
-  const x = (value: number) => right + (value - SOURCE.ya) * s;
-  const y = (value: number) => top + (value - SOURCE.top) * s;
-
-  const width = SOURCE.stroke * s;
-  const w2 = width / 2;
-  const capTop = top + w2; // centre of the round ends
-  const baseline = bottom - w2;
-  const turn = SOURCE.turn * s;
-  const ya = x(SOURCE.ya);
-  const sin = SOURCE.sin.map(x) as unknown as readonly [number, number, number];
-  const ra = x(SOURCE.ra);
-  const descender = y(SOURCE.descender);
-
-  const parts = [
-    // ي: down, round the broad turn, and on along the baseline to ر.
-    `M${pt(ya, capTop)}L${pt(ya, baseline - turn)}A${round(turn)} ${round(turn)} 0 0 1 ${pt(ya - turn, baseline)}L${pt(ra, baseline)}`,
-    // س: three teeth standing on the line.
-    ...sin.map((tooth) => `M${pt(tooth, capTop)}L${pt(tooth, baseline)}`),
-    // ر: one upright, from the teeth's height to below the line.
-    `M${pt(ra, capTop)}L${pt(ra, descender - w2)}`,
-  ];
-
-  const dotR = SOURCE.dots.r * s;
-  const dots = [
-    { cx: round(x(SOURCE.dots.x[0])), cy: round(y(SOURCE.dots.y)), r: round(dotR) },
-    { cx: round(x(SOURCE.dots.x[1])), cy: round(y(SOURCE.dots.y)), r: round(dotR) },
-  ] as const;
-
-  const dammaR = SOURCE.damma.r * s;
-  const dammaX = x(SOURCE.damma.x);
-  const dammaY = y(SOURCE.damma.y);
-  const damma = { d: dammaPath(dammaX, dammaY, dammaR), transform: 'translate(0 0)' };
-
-  const minX = ra - w2;
-  const maxX = Math.max(ya + w2, dammaX + dammaR, dots[1].cx + dotR);
-  const minY = dammaY - dammaR;
-  const maxY = Math.max(descender, dots[0].cy + dotR);
+export function arabicWordmark(): WordmarkGeometry {
   return {
-    stroke: { d: parts.join(''), width: round(width) },
-    dots,
-    damma,
-    bounds: { x: round(minX), y: round(minY), width: round(maxX - minX), height: round(maxY - minY) },
-    guides: {
-      top: round(top),
-      baseline: round(baseline),
-      bottom: round(bottom),
-      ya: round(ya),
-      sin: [round(sin[0]), round(sin[1]), round(sin[2])],
-      ra: round(ra),
-      descender: round(descender),
-      turn: round(turn),
-    },
+    ink: { d: INK },
+    damma: { d: DAMMA },
+    bounds: { x: -89.35, y: 17.58, width: 88.59, height: 37.04 },
   };
 }
 
@@ -139,8 +47,9 @@ export interface LockupLayout {
   markX: number;
 }
 
-export function arabicLockup(logo: LogoGeometry = brand.logo, word: WordmarkGeometry = wordmark, gap = 9): LockupLayout {
-  const markX = word.bounds.x + word.bounds.width + gap - logo.bounds.x;
+/** The word keeps the place it has in the approved artwork, so the mark stays at its own origin. */
+export function arabicLockup(logo: LogoGeometry = brand.logo, word: WordmarkGeometry = wordmark): LockupLayout {
+  const markX = 0;
   const left = word.bounds.x;
   const right = markX + logo.bounds.x + logo.bounds.width;
   const top = Math.min(word.bounds.y, logo.bounds.y);
@@ -149,7 +58,7 @@ export function arabicLockup(logo: LogoGeometry = brand.logo, word: WordmarkGeom
     viewBox: `${round(left)} ${round(top)} ${round(right - left)} ${round(bottom - top)}`,
     width: round(right - left),
     height: round(bottom - top),
-    markX: round(markX),
+    markX,
   };
 }
 

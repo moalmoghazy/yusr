@@ -36,15 +36,12 @@ function MarkShapes({ logo, bowl, drop, size, maskId }: { logo: LogoGeometry; bo
   );
 }
 
-/** The lettered «يُسر»: one round-capped stroke, the dots of ي and the golden ḍamma (see @yusr/theme wordmark.ts). */
+/** The approved lettering of «يُسر»: the letters with the dots of ي, and the golden ḍamma (see @yusr/theme wordmark.ts). */
 function WordmarkShapes({ word, ink, drop }: { word: WordmarkGeometry; ink: string; drop: string }) {
   return (
     <>
-      <path d={word.stroke.d} fill="none" stroke={ink} strokeWidth={word.stroke.width} strokeLinecap="round" strokeLinejoin="round" />
-      {word.dots.map((dot) => (
-        <circle key={dot.cx} cx={dot.cx} cy={dot.cy} r={dot.r} fill={ink} />
-      ))}
-      <path d={word.damma.d} transform={word.damma.transform} fill={drop} />
+      <path d={word.ink.d} fill={ink} fillRule="evenodd" />
+      <path d={word.damma.d} fill={drop} fillRule="evenodd" />
     </>
   );
 }
@@ -86,7 +83,7 @@ export function LogoMark({ size = 32, bowl = 'var(--primary)', drop = 'var(--hig
 
 /**
  * Mark + name, named for assistive tech. The name is set in the logo face (Reem Kufi) beside the
- * mark; with `wordmark="lettered"` the Arabic name is instead drawn with the mark's own pen on the
+ * mark; with `wordmark="lettered"` the Arabic name is instead the approved lettering, drawn on the
  * mark's grid (@yusr/theme wordmark.ts). `size` is the mark's size in px, as for <LogoMark>.
  */
 export function Logo({

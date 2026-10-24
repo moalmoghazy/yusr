@@ -251,16 +251,16 @@ export const protoEn: Widen<typeof protoAr> = {
         'Drawn on a 64-unit grid: the curve is a half-ellipse with the two dots of yā’ side by side beneath its lowest point, on one line, and the ḍamma is a drop tilted the way a hand writes it.',
       lockups: 'Mark and name',
       lockupsBody: 'The mark leads in the reading direction: right of the Arabic name, left of the Latin one.',
-      wordmark: 'The name, in a geometric Kufi',
+      wordmark: 'The name, in a classical Naskh',
       wordmarkBody:
-        'We don’t set «يُسر» in a ready-made font: it is lettered in a heavy geometric Kufi with round tops. The yā’ and the three teeth of the sīn stand at one height on a broad baseline, the yā’ turns into it through a single curve, and the rā’ is one upright that drops below the line. Above the yā’, the ḍamma as it is written — a round head with a level tail — in gold. The word stands on the bowl’s own line and looks the same on every screen, with no font to load.',
+        'We don’t set «يُسر» in a ready-made font: it is approved artwork in a classical, high-contrast Naskh. The teeth of the sīn are pointed on a level baseline, the rā’ sweeps out in a long hairline, the two dots of the yā’ are joined diamonds, and above the yā’ sits the ḍamma in gold with its counter open. The name keeps its approved place beside the mark and looks the same on every screen, with no font to load.',
       wordmarkParts: {
-        stroke: 'The rā’: one upright, dropping below the line',
-        corners: 'The yā’ turns into the line through one broad curve',
-        dots: 'The two round dots of the yā’, under its stem',
-        damma: 'The ḍamma as it is written: a round head, a level tail',
+        teeth: 'The pointed teeth of the sīn on a level baseline',
+        ra: 'The rā’ sweeping out in a long hairline',
+        dots: 'The two dots of the yā’ as joined diamonds',
+        damma: 'The golden ḍamma, its counter open',
       },
-      wordmarkGuides: 'Shared lines: the letters reach the top of the bowl’s ends, and the baseline sits on its lowest edge.',
+      wordmarkGuides: 'Name and mark on one 64-unit grid; each square is 4 units.',
       backgrounds: 'Screen backgrounds',
       backgroundsBody:
         '1920 × 1200 px, generated from the brand file: the pattern shows at the edges and clears behind the logo, and the logo is drawn without fonts, so it looks the same anywhere. Files in packages/theme/assets/backgrounds.',

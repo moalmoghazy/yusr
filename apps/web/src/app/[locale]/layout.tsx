@@ -3,7 +3,7 @@ import { dirOf } from '@yusr/i18n';
 import { defaultTheme } from '@yusr/theme';
 import { cn, DemoBanner, textFor } from '@yusr/ui';
 import type { Metadata, Viewport } from 'next';
-import { IBM_Plex_Mono, IBM_Plex_Sans_Arabic, Reem_Kufi } from 'next/font/google';
+import { Amiri, IBM_Plex_Mono, IBM_Plex_Sans_Arabic, Reem_Kufi } from 'next/font/google';
 import { cookies } from 'next/headers';
 import { Suspense, type ReactNode } from 'react';
 import { PageLoading } from '@/components/page-loading';
@@ -19,8 +19,10 @@ import { site } from '@/lib/site';
 import '../globals.css';
 
 const sans = IBM_Plex_Sans_Arabic({ subsets: ['arabic', 'latin'], weight: ['400', '500', '600', '700'], variable: '--font-plex-arabic', display: 'swap' });
-// The logo face: «يُسر» beside the mark stays in Reem Kufi whatever the headings use.
+// The logo face: the English name beside the mark stays in Reem Kufi whatever the headings use.
 const logo = Reem_Kufi({ subsets: ['arabic', 'latin'], weight: ['700'], variable: '--font-reem-kufi', display: 'swap' });
+// The face nearest the logo's lettering, for lines in its voice (the homepage's opening line).
+const wordmark = Amiri({ subsets: ['arabic'], weight: ['700'], variable: '--font-amiri', display: 'swap' });
 const mono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-plex-mono', display: 'swap' });
 
 export function generateStaticParams() {
@@ -62,7 +64,12 @@ export default async function LocaleLayout({ children, params }: { children: Rea
   const theme = themeFrom((await cookies()).get(THEME_COOKIE)?.value);
   const { t } = textFor(locale);
   return (
-    <html lang={locale} dir={dirOf(locale)} className={cn(sans.variable, logo.variable, mono.variable, theme !== 'system' && theme)} suppressHydrationWarning>
+    <html
+      lang={locale}
+      dir={dirOf(locale)}
+      className={cn(sans.variable, logo.variable, wordmark.variable, mono.variable, theme !== 'system' && theme)}
+      suppressHydrationWarning
+    >
       <body className="min-h-dvh">
         <a
           href="#main"

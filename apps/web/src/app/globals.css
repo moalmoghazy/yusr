@@ -12,6 +12,8 @@
   /* Headings: the text family in bold (DISPLAY_FACES.plexArabic); to switch, see docs/BRAND.md → Type. */
   --y-font-display: var(--font-plex-arabic), 'IBM Plex Sans', 'Segoe UI', Tahoma, sans-serif;
   --y-font-logo: var(--font-reem-kufi), var(--font-plex-arabic), 'Segoe UI', Tahoma, sans-serif;
+  /* Lines in the logo's voice: Amiri, the free face nearest the approved lettering (WORDMARK_FACE). */
+  --y-font-wordmark: var(--font-amiri), var(--font-plex-arabic), 'Segoe UI', Tahoma, serif;
   --y-font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 

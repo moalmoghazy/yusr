@@ -8,7 +8,7 @@ import './globals.css';
 
 const sans = IBM_Plex_Sans_Arabic({ subsets: ['arabic', 'latin'], weight: ['400', '500', '600', '700'], variable: '--font-plex-arabic', display: 'swap' });
 const mono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-plex-mono', display: 'swap' });
-// The logo face: «يُسر» beside the mark is set in Reem Kufi (brand.wordmark = 'typeset').
+// The logo face: the English name beside the mark is set in Reem Kufi (the Arabic one is drawn).
 const logo = Reem_Kufi({ subsets: ['arabic', 'latin'], weight: ['700'], variable: '--font-reem-kufi', display: 'swap' });
 
 export async function generateMetadata(): Promise<Metadata> {

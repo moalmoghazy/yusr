@@ -69,12 +69,15 @@ export interface ToneColors {
 }
 
 export interface Typography {
-  /** `display`: headings; `logo`: the name beside the mark (kept apart so headings can change alone). */
-  fonts: { display: string; logo: string; sans: string; mono: string };
+  /**
+   * `display`: headings; `logo`: the name beside the mark (kept apart so headings can change alone);
+   * `wordmark`: the Arabic face nearest the logo's lettering, for lines in the logo's voice.
+   */
+  fonts: { display: string; logo: string; wordmark: string; sans: string; mono: string };
   /** Google Fonts stylesheet for the web; mobile loads the same families via @expo-google-fonts. */
   googleFontsHref: string;
   /** Font family names registered in React Native (loaded in apps/mobile/src/app/_layout.tsx). */
-  nativeFonts: { display: string; logo: string; regular: string; medium: string; semibold: string; bold: string; mono: string };
+  nativeFonts: { display: string; logo: string; wordmark: string; regular: string; medium: string; semibold: string; bold: string; mono: string };
   /** Type scale in px. */
   scale: Readonly<Record<'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl', number>>;
   /** Arabic needs more leading than Latin; body copy uses `relaxed` in RTL. */
@@ -231,6 +234,8 @@ export const DISPLAY_FACES = {
   lemonada: { family: 'Lemonada', google: 'Lemonada:wght@500;600;700', native: 'Lemonada_700Bold' },
   /** Geometric Fatimid Kufi: the face of the name in the logo, and the first heading face. */
   reemKufi: { family: 'Reem Kufi', google: 'Reem+Kufi:wght@500;600;700', native: 'ReemKufi_700Bold' },
+  /** Classical Naskh: the free face nearest the approved lettering of «يُسر» (wordmark.ts). */
+  amiri: { family: 'Amiri', google: 'Amiri:wght@400;700', native: 'Amiri_700Bold' },
 } as const satisfies Record<string, { family: string; google: string; native: string }>;
 
 export type DisplayFace = keyof typeof DISPLAY_FACES;
@@ -239,6 +244,8 @@ export type DisplayFace = keyof typeof DISPLAY_FACES;
 export const DEFAULT_DISPLAY_FACE: DisplayFace = 'plexArabic';
 /** «يُسر» beside the mark is set in this face, whatever the headings use. */
 export const LOGO_FACE: DisplayFace = 'reemKufi';
+/** For lines set in the logo's voice, such as the homepage's opening line (Arabic only). */
+export const WORDMARK_FACE: DisplayFace = 'amiri';
 
 /** The CSS font stack for a heading face, falling back to the text face. */
 export function displayStack(face: DisplayFace): string {
@@ -248,11 +255,12 @@ export function displayStack(face: DisplayFace): string {
 
 const TEXT_FACES = 'family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700';
 
-/** The Google Fonts stylesheet: the text faces, one heading face and the logo face (bold only). */
+/** The Google Fonts stylesheet: the text faces, one heading face, the logo face and the wordmark face (bold only). */
 export function webFontsHref(face: DisplayFace): string {
   const families = [TEXT_FACES];
   if (face !== 'plexArabic') families.push(`family=${DISPLAY_FACES[face].google}`);
   if (face !== LOGO_FACE) families.push('family=Reem+Kufi:wght@700');
+  if (face !== WORDMARK_FACE) families.push('family=Amiri:wght@700');
   return `https://fonts.googleapis.com/css2?${families.join('&')}&display=swap`;
 }
 
@@ -260,6 +268,7 @@ export const defaultTypography: Typography = {
   fonts: {
     display: displayStack(DEFAULT_DISPLAY_FACE),
     logo: displayStack(LOGO_FACE),
+    wordmark: displayStack(WORDMARK_FACE),
     sans: '"IBM Plex Sans Arabic", "IBM Plex Sans", "Segoe UI", Tahoma, Arial, sans-serif',
     mono: '"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
   },
@@ -267,6 +276,7 @@ export const defaultTypography: Typography = {
   nativeFonts: {
     display: DISPLAY_FACES[DEFAULT_DISPLAY_FACE].native,
     logo: DISPLAY_FACES[LOGO_FACE].native,
+    wordmark: DISPLAY_FACES[WORDMARK_FACE].native,
     regular: 'IBMPlexSansArabic_400Regular',
     medium: 'IBMPlexSansArabic_500Medium',
     semibold: 'IBMPlexSansArabic_600SemiBold',

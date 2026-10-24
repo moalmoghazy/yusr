@@ -143,42 +143,26 @@ describe('wordmark', () => {
   const logo = brand.logo;
   const numbers = (d: string) => d.match(/-?\d+(?:\.\d+)?/g)!.map(Number);
 
-  it('is lettered in a heavy Kufi whose teeth reach the top of the bowl and sit on its lowest edge', () => {
-    const { guides } = wordmark;
-    const half = logo.bowl.strokeWidth / 2;
-    assert.equal(guides.top, logo.guides.bowl.cy - half);
-    assert.equal(guides.bottom, logo.guides.bowl.cy + logo.guides.bowl.ry + half);
-    assert.ok(wordmark.stroke.width > logo.bowl.strokeWidth, 'a heavier weight than the bowl');
-    assert.ok(Math.abs(guides.baseline + wordmark.stroke.width / 2 - guides.bottom) < 0.02, 'the baseline stroke ends on the bowl’s lowest edge');
-    const [startX, startY] = numbers(wordmark.stroke.d);
-    assert.equal(startX, 72, 'the word starts at the ي');
-    assert.ok(Math.abs(startY! - wordmark.stroke.width / 2 - guides.top) < 0.02, 'with a round end at the shared top');
+  it('is the approved lettering: the letters in one filled shape, the ḍamma with its counter open', () => {
+    assert.ok(wordmark.ink.d.startsWith('M') && wordmark.ink.d.endsWith('Z'));
+    assert.ok((wordmark.ink.d.match(/M/g) ?? []).length >= 2, 'the letters and the dots of ي');
+    assert.equal((wordmark.damma.d.match(/M/g) ?? []).length, 2, 'the ḍamma and its counter');
+    assert.deepEqual(arabicWordmark(), wordmark);
   });
 
-  it('stands ي and the teeth of س at one height, evenly spaced, with ر dropping below the line on the left', () => {
-    const { guides } = wordmark;
-    assert.ok(guides.ya > guides.sin[0] && guides.sin[0] > guides.sin[1] && guides.sin[1] > guides.sin[2] && guides.sin[2] > guides.ra);
-    assert.ok(Math.abs(guides.sin[0] - guides.sin[1] - (guides.sin[1] - guides.sin[2])) < 0.2, 'teeth evenly spaced');
-    assert.ok(guides.descender > guides.bottom, 'ر ends below the line');
-    assert.ok(guides.turn > wordmark.stroke.width / 2, 'the ي turns into the line through a curve, round inside too');
-  });
-
-  it('puts two round dots under the ي and a written ḍamma above it', () => {
-    const [a, b] = wordmark.dots;
-    assert.equal(a.r, b.r);
-    assert.ok(a.cy > wordmark.guides.bottom && a.cx < b.cx && Math.abs(b.cx - wordmark.guides.ya) < 0.1, 'under the ي, the right dot under its stem');
-    assert.ok((wordmark.damma.d.match(/M/g) ?? []).length === 2, 'a head and a tail');
-    const [headX = NaN, headY = NaN] = numbers(wordmark.damma.d);
-    assert.ok(headY < wordmark.guides.top, 'the ḍamma floats above the letters');
-    assert.ok(Math.abs(headX - 72) < 12, 'over the ي');
-  });
-
-  it('keeps every part inside its bounds', () => {
+  it('keeps every point inside its bounds, left of the mark and within the mark’s height', () => {
     const { x, y, width, height } = wordmark.bounds;
-    assert.ok(x < wordmark.guides.ra && x + width > 72 && y < wordmark.guides.top && y + height >= wordmark.guides.descender);
-    const moved = arabicWordmark(logo, { right: 80 });
-    assert.equal(moved.guides.ya, 80);
-    assert.ok(Math.abs(moved.bounds.x - x - 8) < 0.02, 'the whole word moves with its right edge');
+    for (const d of [wordmark.ink.d, wordmark.damma.d]) {
+      const values = numbers(d);
+      const xs = values.filter((_, i) => i % 2 === 0);
+      const ys = values.filter((_, i) => i % 2 === 1);
+      assert.ok(Math.min(...xs) >= x - 0.6 && Math.max(...xs) <= x + width + 0.6, 'x within bounds');
+      assert.ok(Math.min(...ys) >= y - 0.6 && Math.max(...ys) <= y + height + 0.6, 'y within bounds');
+    }
+    assert.ok(x + width < logo.bounds.x, 'the word ends before the mark begins');
+    assert.ok(y > logo.bounds.y && y + height < logo.bounds.y + logo.bounds.height, 'the word sits within the mark’s height');
+    const [dammaX = NaN, dammaY = NaN] = numbers(wordmark.damma.d);
+    assert.ok(dammaY < 26 && dammaX > x + width / 2, 'the ḍamma floats above the right of the word, over the ي');
   });
 
   it('locks up with the mark on the right, both on one grid, and letters the Arabic asset', () => {
@@ -193,7 +177,7 @@ describe('wordmark', () => {
     );
     const lettered = logoLockupSvg('ar');
     assert.ok(!lettered.includes('<text'), 'the lettered name needs no font');
-    assert.ok(lettered.includes(wordmark.stroke.d) && lettered.includes(`translate(${layout.markX} 0)`));
+    assert.ok(lettered.includes(wordmark.ink.d) && lettered.includes('fill-rule="evenodd"') && lettered.includes(`translate(${layout.markX} 0)`));
   });
 
   it('letters the Arabic name by default; the typeset name and the English name use the logo face', () => {
@@ -250,7 +234,7 @@ describe('display faces', () => {
     const svg = logoBackgroundSvg({}, defaultTheme, { ...brand, wordmark: 'lettered' });
     assert.match(svg, /^<svg [^>]*width="1920" height="1200" viewBox="0 0 1920 1200"/);
     assert.ok(!svg.includes('<text'), 'lettered, so it renders the same without fonts');
-    assert.ok(svg.includes(wordmark.stroke.d) && svg.includes(brand.logo.bowl.d));
+    assert.ok(svg.includes(wordmark.ink.d) && svg.includes(brand.logo.bowl.d));
     assert.ok(svg.includes('stroke="#FFFFFF"'), 'the brand tone draws the lockup in white');
     assert.ok(svg.includes('<pattern id="yusr-bg-brand-tile" width="240" height="240"'), 'eight tiles across: symmetric about the centre');
     assert.ok(svg.includes('mask="url(#yusr-bg-brand-mask)"'));
