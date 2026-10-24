@@ -48,10 +48,11 @@ it holds beside the mark, so word and mark always line up as approved. It needs 
 looks the same everywhere. Don't re-set it in another face.
 
 In Arabic the main page and section titles (every `h1`/`h2` with `font-display` on the web,
-`display` and `heading` text on mobile) and the homepage's opening line «كن سببًا في يُسر أحدهم
+`display` and `heading` text on mobile) and the homepage's opening line «كُن سببًا في يُسر أحدهم
 اليوم» are set in **Palestine** (`WORDMARK_FONT`, `typography.fonts.wordmark`, `--y-font-wordmark`,
 `font-wordmark`), chosen by the owner on 2026-10-24. It has one weight, already heavy, so it is never
-synthetically bolded. Its Latin letters, ḍamma and shadda are blank: the web limits it to Arabic and
+synthetically bolded. Its Latin letters and shadda are blank, and it shipped with a blank ḍamma: our copy draws the
+ḍamma from the approved lettering's gold ḍamma, placed like its tanwīn (2026-10-24). Because of the blanks, the web limits it to Arabic and
 digits (`unicode-range`) so Latin falls back to IBM Plex Sans Arabic, and English titles keep the
 heading face. Exceptions stay in the heading face (bold IBM Plex Sans Arabic): the homepage's «من
 الطلب حتى إثبات الصرف» and case titles (`title-plain` on the web; the case screen on mobile). The web self-hosts it (`apps/web/src/fonts`), mobile bundles it
