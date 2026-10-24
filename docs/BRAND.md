@@ -52,7 +52,8 @@ In Arabic the main page and section titles (every `h1`/`h2` with `font-display` 
 اليوم» are set in **Palestine** (`WORDMARK_FONT`, `typography.fonts.wordmark`, `--y-font-wordmark`,
 `font-wordmark`), chosen by the owner on 2026-10-24. It has one weight, already heavy, so it is never
 synthetically bolded. Its Latin letters and shadda are blank, and it shipped with a blank ḍamma: our copy draws the
-ḍamma from the approved lettering's gold ḍamma, placed like its tanwīn (2026-10-24). Because of the blanks, the web limits it to Arabic and
+ḍamma from the approved lettering's gold ḍamma, placed like its tanwīn (2026-10-24). Its medial and final letters also
+reach 12 units past their advance, so joined letters overlap instead of only touching, which left a hairline seam. Because of the blanks, the web limits it to Arabic and
 digits (`unicode-range`) so Latin falls back to IBM Plex Sans Arabic, and English titles keep the
 heading face. Exceptions stay in the heading face (bold IBM Plex Sans Arabic): the homepage's «من
 الطلب حتى إثبات الصرف» and case titles (`title-plain` on the web; the case screen on mobile). The web self-hosts it (`apps/web/src/fonts`), mobile bundles it
