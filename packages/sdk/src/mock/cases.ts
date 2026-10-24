@@ -6,6 +6,8 @@ import {
   type CaseStatus,
   type Currency,
   type DocumentKind,
+  type FollowupKind,
+  type FollowupOutcome,
   type Localized,
   type PartnerAssociation,
   type PayeeType,
@@ -54,6 +56,8 @@ export interface SeedCase {
   reason?: string;
   /** Payout state of the plan for funded/closed cases. */
   payout?: 'approved' | 'paid';
+  /** Follow-up calls and visits after funding («متابعة ما بعد الصرف»), oldest first. */
+  followups?: Array<{ daysAgo: number; kind: FollowupKind; outcome: FollowupOutcome; note: string; by: string; nextDueInDays?: number }>;
 }
 
 /**
@@ -989,6 +993,23 @@ export const SEED_CASES: readonly SeedCase[] = [
     submittedBy: { name: 'والدة جنى', relation: 'family' },
     auditorId: 'u_aya',
     payout: 'paid',
+    followups: [
+      {
+        daysAgo: 19,
+        kind: 'partner_call',
+        outcome: 'confirmed',
+        note: 'أكدت الجمعية سداد ثمن المضخة للمورّد، والفاتورة مرفوعة على الحالة.',
+        by: 'u_youssef',
+      },
+      {
+        daysAgo: 12,
+        kind: 'beneficiary_call',
+        outcome: 'confirmed',
+        note: 'تواصلنا مع ولي الأمر: المضخة تعمل، وتلقت الأسرة التدريب على استخدامها. نعاود الاتصال بعد أسبوعين.',
+        by: 'u_aya',
+        nextDueInDays: -2,
+      },
+    ],
   },
   {
     slug: 'twin-hearing-aids-damietta',

@@ -36,6 +36,7 @@ import type {
   AuthIdentityRow,
   BeneficiaryRow,
   CaseDocumentRow,
+  CaseFollowupRow,
   CaseFundSummary,
   CaseRow,
   CaseTransitionRow,
@@ -87,6 +88,7 @@ interface State {
   cases: Map<Id, CaseRow>;
   transitions: CaseTransitionRow[];
   documents: Map<Id, CaseDocumentRow>;
+  followups: CaseFollowupRow[];
   lines: Map<Id, DisbursementLineRow>;
   tasks: Map<Id, VerificationTaskRow>;
   donations: Map<Id, DonationRow>;
@@ -133,6 +135,7 @@ function emptyState(): State {
     cases: new Map(),
     transitions: [],
     documents: new Map(),
+    followups: [],
     lines: new Map(),
     tasks: new Map(),
     donations: new Map(),
@@ -456,6 +459,18 @@ export class MemoryDatabase implements Database {
           throw new DomainError('VALIDATION_FAILED', 'beneficiary already registered');
         }
         s().beneficiaries.set(row.id, clone(row));
+      },
+      followups: async (caseIds) =>
+        cloneAll(
+          s()
+            .followups.filter((row) => caseIds.includes(row.caseId))
+            .sort((a, b) => b.recordedAt.getTime() - a.recordedAt.getTime()),
+        ),
+      insertFollowup: async (row) => {
+        // Like case_followups_case_guard in 0010.
+        const status = s().cases.get(row.caseId)?.status;
+        if (status !== 'funded' && status !== 'closed') throw new DomainError('VALIDATION_FAILED', 'Only funded or closed cases take follow-ups');
+        s().followups.push(clone(row));
       },
     };
   }

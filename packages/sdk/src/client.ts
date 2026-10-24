@@ -1,5 +1,7 @@
-import type { CreatePartnerInput, EditCaseInput, PartnerApplicationInput, UpdatePartnerInput } from '@yusr/core/schemas';
+import type { CreatePartnerInput, EditCaseInput, PartnerApplicationInput, RecordFollowupInput, UpdatePartnerInput } from '@yusr/core/schemas';
 import type {
+  FollowupCase,
+  FollowupLog,
   AdminCase,
   AdminDonation,
   AdminOverview,
@@ -110,6 +112,12 @@ export interface AdminClient {
   /** Join requests from associations, newest first (partners:manage). */
   partnerApplications(limit?: number): Promise<PartnerApplication[]>;
   setPartnerApplicationStatus(applicationId: string, status: Exclude<PartnerApplicationStatus, 'new'>): Promise<PartnerApplication>;
+  /** «متابعة ما بعد الصرف»: funded and closed cases with their latest check, most pressing first (cases:read). */
+  followups(): Promise<FollowupCase[]>;
+  /** A funded or closed case's follow-up log, newest first. */
+  caseFollowups(caseId: string): Promise<FollowupLog>;
+  /** Logs a call or visit (cases:follow_up); append-only. */
+  recordFollowup(caseId: string, input: RecordFollowupInput): Promise<FollowupLog>;
 }
 
 /** Sign-in and sessions (phone OTP, Google/Apple, rotation, logout). */

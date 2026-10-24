@@ -263,6 +263,17 @@ function createTx(x: Executor): Tx & { raw: Executor } {
       insertBeneficiary: async (row) => {
         await x.insert(t.beneficiaries).values(row);
       },
+      followups: async (caseIds) =>
+        caseIds.length === 0
+          ? []
+          : x
+              .select()
+              .from(t.caseFollowups)
+              .where(inArray(t.caseFollowups.caseId, [...caseIds]))
+              .orderBy(desc(t.caseFollowups.recordedAt)),
+      insertFollowup: async (row) => {
+        await x.insert(t.caseFollowups).values(row);
+      },
     },
 
     // ------------------------------------------------------------------ approved partners

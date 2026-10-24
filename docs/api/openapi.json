@@ -36,6 +36,9 @@
       "name": "Operations · Cases"
     },
     {
+      "name": "Operations · Follow-up"
+    },
+    {
       "name": "Operations · Finance"
     },
     {
@@ -3151,6 +3154,190 @@
               "application/json": {
                 "schema": {
                   "description": "{ publicUrl } (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/followups": {
+      "get": {
+        "operationId": "admin.followups.board",
+        "tags": [
+          "Operations · Follow-up"
+        ],
+        "summary": "Funded and closed cases with their latest follow-up, most pressing first",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `cases:read`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "x-permission": "cases:read",
+        "responses": {
+          "200": {
+            "description": "FollowupCase[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "FollowupCase[] (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/cases/{id}/followups": {
+      "get": {
+        "operationId": "admin.followups.log",
+        "tags": [
+          "Operations · Follow-up"
+        ],
+        "summary": "A funded or closed case’s follow-up log, newest first",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `cases:read`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-permission": "cases:read",
+        "responses": {
+          "200": {
+            "description": "FollowupLog",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "FollowupLog (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "admin.followups.record",
+        "tags": [
+          "Operations · Follow-up"
+        ],
+        "summary": "Log a follow-up call or visit (append-only)",
+        "description": "Only funded or closed cases. The next check, when given, must be after today (Cairo time).\n\nRequires a staff session with two-factor authentication.\n\nPermission: `cases:follow_up`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "partner_call",
+                      "beneficiary_call",
+                      "payee_check",
+                      "field_visit"
+                    ]
+                  },
+                  "outcome": {
+                    "type": "string",
+                    "enum": [
+                      "confirmed",
+                      "concern",
+                      "unreachable"
+                    ]
+                  },
+                  "note": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 1000
+                  },
+                  "nextDueOn": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "outcome",
+                  "note"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "cases:follow_up",
+        "responses": {
+          "201": {
+            "description": "FollowupLog",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "FollowupLog (see @yusr/core)"
                 }
               }
             }

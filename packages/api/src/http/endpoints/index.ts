@@ -2,6 +2,7 @@
 import { endpoint, type AnyEndpoint } from '../endpoint';
 import { buildOpenApi } from '../openapi';
 import { accountEndpoints } from './account.endpoints';
+import { followupOperations } from './followups.endpoints';
 import { caseOperations, financeOperations, peopleOperations } from './operations.endpoints';
 import { partnerApplicationEndpoints, partnerOperations } from './partners.endpoints';
 import { publicEndpoints } from './public.endpoints';
@@ -29,6 +30,7 @@ export const ENDPOINTS: readonly AnyEndpoint[] = [
   ...partnerApplicationEndpoints,
   ...accountEndpoints,
   ...caseOperations,
+  ...followupOperations,
   ...financeOperations,
   ...peopleOperations,
   ...partnerOperations,

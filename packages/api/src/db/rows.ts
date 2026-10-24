@@ -11,6 +11,8 @@ import type {
   DocumentKind,
   DonationStatus,
   DonationType,
+  FollowupKind,
+  FollowupOutcome,
   Locale,
   Localized,
   PayeeType,
@@ -170,6 +172,19 @@ export interface BeneficiaryRow {
   region: string;
   householdSize: number | null;
   createdAt: Timestamp;
+}
+
+/** A follow-up call or visit (0010_case_followups.sql). */
+export interface CaseFollowupRow {
+  id: Id;
+  caseId: Id;
+  kind: FollowupKind;
+  outcome: FollowupOutcome;
+  note: string;
+  /** Calendar day, YYYY-MM-DD. */
+  nextDueOn: string | null;
+  recordedBy: Id;
+  recordedAt: Timestamp;
 }
 
 export interface CaseDocumentRow {

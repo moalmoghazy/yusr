@@ -15,6 +15,8 @@ import {
   PAYMENT_PROVIDERS,
   ROLES,
   type CheckoutAction,
+  type FollowupKind,
+  type FollowupOutcome,
   type Localized,
   type PartnerAssociation,
   type PartnerApplicationStatus,
@@ -278,6 +280,26 @@ export const caseDocuments = pgTable(
     createdAt: created(),
   },
   (t) => [index('case_documents_case_idx').on(t.caseId)],
+);
+
+/** Follow-up calls and visits on funded and closed cases (0010_case_followups.sql); append-only. */
+export const caseFollowups = pgTable(
+  'case_followups',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    caseId: uuid('case_id')
+      .notNull()
+      .references(() => cases.id),
+    kind: text('kind').$type<FollowupKind>().notNull(),
+    outcome: text('outcome').$type<FollowupOutcome>().notNull(),
+    note: text('note').notNull(),
+    nextDueOn: date('next_due_on', { mode: 'string' }),
+    recordedBy: uuid('recorded_by')
+      .notNull()
+      .references(() => users.id),
+    recordedAt: at('recorded_at').notNull().defaultNow(),
+  },
+  (t) => [index('case_followups_case_idx').on(t.caseId, t.recordedAt)],
 );
 
 export const caseUpdates = pgTable('case_updates', {

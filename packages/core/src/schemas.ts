@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { CHECKLIST_ITEMS, SUBMITTER_RELATIONS } from './admin-types';
 import { CONTACT_CHANNELS } from './contact';
 import { DEDICATION_MAX_LENGTH } from './donation';
+import { FOLLOWUP_KINDS, FOLLOWUP_OUTCOMES } from './followups';
 import { isYusrCode, normalizeRegistrationNumber, normalizeYusrCode, PARTNER_APPLICATION_STATUSES, PARTNER_STATUSES } from './partners';
 import {
   CASE_CATEGORIES,
@@ -297,6 +298,15 @@ export const markPayoutPaidSchema = z.object({
 });
 
 export const rejectSchema = z.object({ reason: z.string().trim().min(5).max(500) });
+
+/** A follow-up call or visit after funding: what was done, what came of it, and when to check again. */
+export const recordFollowupSchema = z.object({
+  kind: z.enum(FOLLOWUP_KINDS),
+  outcome: z.enum(FOLLOWUP_OUTCOMES),
+  note: z.string().trim().min(3).max(1000),
+  nextDueOn: calendarDay.nullish(),
+});
+export type RecordFollowupInput = z.infer<typeof recordFollowupSchema>;
 
 export const assignAuditorSchema = z.object({
   auditorId: z.uuid(),

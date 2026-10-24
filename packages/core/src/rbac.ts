@@ -26,6 +26,8 @@ export const PERMISSIONS = [
   'settings:manage',
   /** The approved-partner registry: add associations after contract signature, suspend them, issue «كود يُسر». */
   'partners:manage',
+  /** Log follow-up calls and visits on funded and closed cases (reading the board needs only cases:read). */
+  'cases:follow_up',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -38,7 +40,7 @@ export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Permission[]>> = {
   donor: [],
   beneficiary: ['cases:submit'],
   volunteer: ['cases:submit'],
-  field_auditor: ['cases:read', 'cases:review', 'cases:verify', 'documents:read_private', 'verifications:perform'],
+  field_auditor: ['cases:read', 'cases:review', 'cases:verify', 'cases:follow_up', 'documents:read_private', 'verifications:perform'],
   content_moderator: [
     'cases:read',
     'cases:edit',
@@ -51,6 +53,7 @@ export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Permission[]>> = {
     'volunteers:manage',
     'crm:read',
     'partners:manage',
+    'cases:follow_up',
   ],
   financial_officer: ['cases:read', 'cases:close', 'finance:read', 'finance:reconcile', 'finance:refunds', 'finance:payouts', 'finance:approve', 'crm:read'],
   super_admin: PERMISSIONS,

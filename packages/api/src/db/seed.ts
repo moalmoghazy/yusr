@@ -13,6 +13,7 @@ import {
   buildDonationPostings,
   buildPayoutPostings,
   buildPlatformFeePostings,
+  cairoDay,
   computeDonationBreakdown,
   formatReceiptNumber,
   resolveProvider,
@@ -267,6 +268,18 @@ export async function seedDemo(tx: Tx, options: { now: Date; cipher: FieldCipher
     summary.cases += 1;
 
     await seedHistory(tx, seed, row, staffId);
+    for (const [step, entry] of (seed.followups ?? []).entries()) {
+      await tx.cases.insertFollowup({
+        id: stableId(`followup:${seed.slug}:${step}`),
+        caseId,
+        kind: entry.kind,
+        outcome: entry.outcome,
+        note: entry.note,
+        nextDueOn: entry.nextDueInDays !== undefined ? cairoDay(ago(-entry.nextDueInDays)) : null,
+        recordedBy: staffId(entry.by),
+        recordedAt: ago(entry.daysAgo),
+      });
+    }
     const lineIds = seed.plan.map((_, position) => stableId(`line:${seed.slug}:${position}`));
     await tx.cases.insertLines(
       seed.plan.map((line, position) => ({

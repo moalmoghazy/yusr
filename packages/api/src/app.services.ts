@@ -10,6 +10,7 @@ import { MeQueries } from './auth/me.queries';
 import { OAuthVerifier } from './auth/oauth';
 import { DEFAULT_OTP, OtpService, type OtpSender } from './auth/otp.service';
 import { CasesService } from './cases/cases.service';
+import { FollowupsService } from './cases/followups.service';
 import { VerificationService } from './cases/verification.service';
 import { FieldCipher } from './common/cipher';
 import { systemClock, type Clock } from './common/clock';
@@ -66,6 +67,8 @@ export interface Services {
   me: MeQueries;
   cases: CasesService;
   partners: PartnersService;
+  /** Follow-up after funding («متابعة ما بعد الصرف»). */
+  followups: FollowupsService;
   verification: VerificationService;
   donations: DonationsService;
   payouts: PayoutsService;
@@ -191,6 +194,7 @@ export async function createServices(config: AppConfig, options: { clock?: Clock
   // The codes' keyed hash reuses the national-ID pepper, domain-separated ("yusr-code:" prefix).
   const partners = new PartnersService({ db, cipher, clock, ids, limiter, config: { codePepper: config.crypto.nationalIdPepper } });
   const cases = new CasesService({ db, cipher, clock, ids, partners, config: { nationalIdPepper: config.crypto.nationalIdPepper } });
+  const followups = new FollowupsService({ db, clock, ids });
   const verification = new VerificationService({ db, cases, clock, ids });
   const webHost = new URL(config.urls.web).host;
   const donations = new DonationsService({
@@ -246,6 +250,7 @@ export async function createServices(config: AppConfig, options: { clock?: Clock
     me,
     cases,
     partners,
+    followups,
     verification,
     donations,
     payouts,

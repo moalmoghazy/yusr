@@ -18,3 +18,4 @@ export * from './phone';
 export * from './share';
 export * from './contact';
 export * from './partners';
+export * from './followups';

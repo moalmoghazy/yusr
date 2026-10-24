@@ -147,6 +147,9 @@ export function createHttpAdminClient(options: HttpClientOptions): AdminClient {
     regeneratePartnerCode: (partnerId) => post(`/admin/partners/${seg(partnerId)}/code`),
     partnerApplications: (limit = 100) => request('GET', `/admin/partner-applications?limit=${limit}`),
     setPartnerApplicationStatus: (applicationId, status) => post(`/admin/partner-applications/${seg(applicationId)}/status`, { status }),
+    followups: () => request('GET', '/admin/followups'),
+    caseFollowups: (caseId) => request('GET', `/admin/cases/${seg(caseId)}/followups`),
+    recordFollowup: (caseId, input) => post(`/admin/cases/${seg(caseId)}/followups`, input),
   };
 }
 

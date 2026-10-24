@@ -10,6 +10,7 @@ import type {
   AuthIdentityRow,
   BeneficiaryRow,
   CaseDocumentRow,
+  CaseFollowupRow,
   CaseFundSummary,
   CaseRow,
   CaseTransitionRow,
@@ -86,6 +87,10 @@ export interface CasesRepo {
   beneficiary(id: Id): Promise<BeneficiaryRow | null>;
   beneficiaryByNationalIdHash(hash: string): Promise<BeneficiaryRow | null>;
   insertBeneficiary(row: BeneficiaryRow): Promise<void>;
+  /** Follow-up entries of these cases (0010), newest first. */
+  followups(caseIds: readonly Id[]): Promise<CaseFollowupRow[]>;
+  /** Refused unless the case is funded or closed. */
+  insertFollowup(row: CaseFollowupRow): Promise<void>;
 }
 
 /** The approved-partner registry. Renaming a partner renames it on its cases too (a trigger in SQL). */

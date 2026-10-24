@@ -8,6 +8,13 @@ import {
   ACCOUNTS,
   DEMO_FX,
   DomainError,
+  FOLLOWUP_STATUSES,
+  cairoDay,
+  compareFollowups,
+  followupState,
+  type CaseFollowup,
+  type FollowupCase,
+  type FollowupLog,
   assertDonationAllowed,
   remainingInCurrency,
   assertTransition,
@@ -77,7 +84,7 @@ import {
   type VolunteerRow,
 } from '@yusr/core';
 import { canSeeSentMessages, maskRecipient, type ContactChannel, type SentMessage } from '@yusr/core';
-import type { CreatePartnerInput, EditCaseInput, PartnerApplicationInput, UpdatePartnerInput } from '@yusr/core/schemas';
+import type { CreatePartnerInput, EditCaseInput, PartnerApplicationInput, RecordFollowupInput, UpdatePartnerInput } from '@yusr/core/schemas';
 import type { AdminClient, LedgerQuery, YusrClient } from '../client';
 import { DEMO_PARTNER_REGISTRY, DEMO_PARTNERS, demoPartnerFor, SEED_CASES, seedAmounts, type SeedCase } from './cases';
 import { CURRENT_DONOR, DONORS, STAFF, VOLUNTEERS, type SeedDonor } from './people';
@@ -1147,6 +1154,48 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
 
   const read = createReadApi(state, clock, cached);
 
+  // ---------------------------------------------------------------- follow-up after funding («متابعة ما بعد الصرف»)
+
+  /** Calls and visits on funded and closed cases, oldest first (append-only, as in 0010). */
+  const followupLog: CaseFollowup[] = SEED_CASES.flatMap((seed) =>
+    (seed.followups ?? []).map((entry, step) => ({
+      id: `followup_${seed.ref}_${step}`,
+      caseId: `case_${seed.ref}`,
+      kind: entry.kind,
+      outcome: entry.outcome,
+      note: entry.note,
+      nextDueOn: entry.nextDueInDays !== undefined ? cairoDay(new Date(clock() + entry.nextDueInDays * DAY)) : null,
+      recordedBy: { id: entry.by, name: staffName(entry.by).ar },
+      recordedAt: iso(clock() - entry.daysAgo * DAY),
+    })),
+  );
+  const isFollowed = (status: CaseStatus): status is FollowupCase['status'] => (FOLLOWUP_STATUSES as readonly CaseStatus[]).includes(status);
+  const followupCase = (item: AdminCase): FollowupCase => {
+    const entries = followupLog.filter((entry) => entry.caseId === item.id).reverse();
+    const last = entries[0] ?? null;
+    return {
+      caseId: item.id,
+      reference: item.reference,
+      slug: item.slug,
+      title: item.title,
+      category: item.category,
+      status: item.status as FollowupCase['status'],
+      partnerName: item.partner?.name ?? item.submittedBy.association?.name ?? null,
+      fundedAt: item.fundedAt,
+      closedAt: item.history.find((change) => change.to === 'closed')?.at ?? null,
+      state: followupState(last, cairoDay(new Date(clock()))),
+      count: entries.length,
+      last,
+      entries,
+      nextDueOn: last?.nextDueOn ?? null,
+    };
+  };
+  const followupLogFor = (caseId: string): FollowupLog => {
+    const item = state.cases.get(caseId);
+    if (!item || !isFollowed(item.status)) throw new DomainError('NOT_FOUND', 'Case not found');
+    return followupCase(item);
+  };
+
   // ---------------------------------------------------------------- approved partners («كود يُسر»)
 
   const youssef = STAFF.find((member) => member.id === 'u_youssef') ?? STAFF[0]!;
@@ -1703,6 +1752,43 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
         logAudit(actorRef, `partner.application_${status}`, 'partner_application', applicationId, next.name, { status: current.status }, { status });
         return toApplication(next);
       },
+      followups: () => {
+        ensure('cases:read');
+        return [...state.cases.values()]
+          .filter((item) => isFollowed(item.status))
+          .map(followupCase)
+          .sort(compareFollowups);
+      },
+      caseFollowups: (caseId: string) => {
+        ensure('cases:read');
+        return followupLogFor(caseId);
+      },
+      recordFollowup: (caseId: string, input: RecordFollowupInput) => {
+        ensure('cases:follow_up');
+        const item = mustCase(caseId);
+        if (!isFollowed(item.status)) throw new DomainError('VALIDATION_FAILED', `Only funded or closed cases are followed up (this one is ${item.status})`);
+        const now = clock();
+        if (input.nextDueOn && input.nextDueOn <= cairoDay(new Date(now))) {
+          throw new DomainError('VALIDATION_FAILED', 'The next check must be after today', { field: 'nextDueOn' });
+        }
+        const entry: CaseFollowup = {
+          id: `followup_${String(followupLog.length + 1).padStart(5, '0')}`,
+          caseId,
+          kind: input.kind,
+          outcome: input.outcome,
+          note: input.note.trim(),
+          nextDueOn: input.nextDueOn ?? null,
+          recordedBy: { id: actor.id, name: actor.name },
+          recordedAt: iso(now),
+        };
+        followupLog.push(entry);
+        logAudit(actorRef, 'case.followup_recorded', 'case', caseId, item.reference, null, {
+          kind: entry.kind,
+          outcome: entry.outcome,
+          nextDueOn: entry.nextDueOn,
+        });
+        return followupLogFor(caseId);
+      },
     };
     return api;
   };
@@ -1753,6 +1839,9 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       regeneratePartnerCode: wrap(sync.regeneratePartnerCode),
       partnerApplications: wrap(sync.partnerApplications),
       setPartnerApplicationStatus: wrap(sync.setPartnerApplicationStatus),
+      followups: wrap(sync.followups),
+      caseFollowups: wrap(sync.caseFollowups),
+      recordFollowup: wrap(sync.recordFollowup),
     };
   };
 
