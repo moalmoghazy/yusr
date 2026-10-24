@@ -269,14 +269,14 @@ function StatsBand({ locale, stats }: { locale: Locale; stats: PlatformStats }) 
   ];
   return (
     <section className="border-y border-border bg-card" aria-label={t('landing.stats.raised')}>
-      <dl className="container-page grid grid-cols-2 gap-6 py-8 lg:grid-cols-4">
+      <dl className="container-page grid grid-cols-2 gap-x-6 gap-y-8 py-10 lg:grid-cols-4">
         {items.map(([icon, value, label]) => (
           <div key={label} className="flex flex-col gap-1">
-            <dt className="order-2 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-              <Icon name={icon} size={15} className="text-primary" />
+            <dt className="order-2 inline-flex items-center gap-2 text-base text-muted-foreground sm:text-lg">
+              <Icon name={icon} size={19} className="text-primary" />
               {label}
             </dt>
-            <dd className="stat-digits order-1 font-display text-2xl font-bold tabular-nums">{value}</dd>
+            <dd className="stat-digits order-1 font-display text-[1.85rem] font-bold leading-tight tabular-nums sm:text-4xl">{value}</dd>
           </div>
         ))}
       </dl>
