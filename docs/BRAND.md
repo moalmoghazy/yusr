@@ -101,6 +101,7 @@ accessible foreground, in both schemes).
 |---|---|
 | **Reem Kufi** | The logo face: «Yusr» beside the mark, and nothing else |
 | **Palestine** | Arabic main titles and the homepage's opening line |
+| **KAF FODA digits** | The numbers in the home's stats band, in Arabic (`apps/web/src/fonts/kaf-foda-digits.ttf`: only its ٠–٩, from the face «يُسر» is drawn in; personal-use licence, published on the owner's call) |
 | **IBM Plex Sans Arabic** | Everything else, Arabic and Latin (it carries both); in **bold** for headings — hero titles, section titles, big numbers |
 | **IBM Plex Mono** | Case references, receipt numbers, code |
 

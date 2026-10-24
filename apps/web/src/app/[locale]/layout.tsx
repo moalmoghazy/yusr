@@ -31,6 +31,15 @@ const wordmark = localFont({
   display: 'swap',
   declarations: [{ prop: 'unicode-range', value: 'U+0020-0040, U+0600-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFF' }],
 });
+// KAF FODA's digits (the face «يُسر» is drawn in) for the home's stats band, in Arabic: only ٠–٩, so the
+// words and separators around them stay in the heading face.
+const digits = localFont({
+  src: '../../fonts/kaf-foda-digits.ttf',
+  weight: '700',
+  variable: '--font-kaf-digits',
+  display: 'swap',
+  declarations: [{ prop: 'unicode-range', value: 'U+0660-0669' }],
+});
 const mono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-plex-mono', display: 'swap' });
 
 export function generateStaticParams() {
@@ -75,7 +84,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
     <html
       lang={locale}
       dir={dirOf(locale)}
-      className={cn(sans.variable, logo.variable, wordmark.variable, mono.variable, theme !== 'system' && theme)}
+      className={cn(sans.variable, logo.variable, wordmark.variable, digits.variable, mono.variable, theme !== 'system' && theme)}
       suppressHydrationWarning
     >
       <body className="min-h-dvh">

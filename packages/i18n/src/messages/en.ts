@@ -330,7 +330,6 @@ export const en: Messages = {
       funded: 'cases fully funded',
       donors: 'donors who trust us',
       regions: 'governorates reached',
-      hoursToFund: 'median hours to fund',
     },
     urgentTitle: 'Urgent cases',
     urgentBody: 'Real deadlines: scheduled surgeries and families facing eviction.',

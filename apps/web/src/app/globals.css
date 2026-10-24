@@ -17,6 +17,11 @@
   --y-font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
+/* The stats band's numbers (page.tsx, StatsBand) in KAF FODA's digits, in Arabic. */
+html[lang='ar'] .stat-digits {
+  font-family: var(--font-kaf-digits), var(--y-font-display);
+}
+
 /* Main page and section titles in Palestine, in Arabic (unlayered, so it wins over the utility). Titles
    marked .title-plain (case titles, «من الطلب حتى إثبات الصرف») keep the heading face. */
 html[lang='ar'] :is(h1, h2).font-display:not(.title-plain),
