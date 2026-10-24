@@ -7,6 +7,7 @@ import { CaseCard } from '@/components/CaseCard';
 import { DonateSheet, type DonateTarget } from '@/components/DonateSheet';
 import { Icon } from '@/components/Icon';
 import { Lockup, LogoMark } from '@/components/LogoMark';
+import { HeroPattern } from '@/components/HeroPattern';
 import { ErrorState, Loading } from '@/components/States';
 import { SupervisionBadge } from '@/components/SupervisionBadge';
 import { Text } from '@/components/Text';
@@ -47,6 +48,8 @@ export default function Home() {
         contentContainerStyle={{ paddingTop: insets.top + 10, paddingBottom: 32, gap: 26 }}
         refreshControl={<RefreshControl refreshing={query.refreshing} onRefresh={query.refresh} tintColor={theme.colors.primary} />}
       >
+        {/* «روضة العطاء» drifting behind the opening, as on the website's hero. */}
+        <HeroPattern width={width} height={insets.top + 420} />
         <View style={[styles.pad, styles.topBar]}>
           <View style={styles.brand} accessible accessibilityRole="header" accessibilityLabel={t('a11y.logo')}>
             <Lockup size={30} />

@@ -22,11 +22,11 @@ SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 export default function RootLayout() {
   // Registered under the names @yusr/theme's nativeFonts uses. Headings are IBM Plex Sans Arabic bold
-  // (the text family); Reem Kufi is the logo face, for the English name beside the mark; KAF FODA, the
-  // face «يُسر» is drawn in, sets the Arabic screen titles (bundled: it is not on Google Fonts).
+  // (the text family); Reem Kufi is the logo face, for the English name beside the mark; Palestine
+  // sets the Arabic screen titles (bundled: it is not on Google Fonts).
   const [fontsLoaded, fontError] = useFonts({
     ReemKufi_700Bold,
-    KafFoda_700Bold: require('../../assets/fonts/KafFoda-Bold.ttf'),
+    Palestine_400Regular: require('../../assets/fonts/Palestine-Regular.otf'),
     IBMPlexSansArabic_400Regular,
     IBMPlexSansArabic_500Medium,
     IBMPlexSansArabic_600SemiBold,

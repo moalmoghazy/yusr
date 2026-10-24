@@ -28,6 +28,9 @@ hands. A small gift, held carefully, that changes the meaning of someone's day.
 - The mark's drop is `DROP_PATH` in `brand.ts`, its point turned up to the left.
 - **Animated**: the website's «من نحن» page (`/about`) draws the mark live and replays on click;
   the ḍamma moves towards the pointer wherever it is on the page.
+- **In the app**: the case covers loop like the website's (the mark appears, its ḍamma falls like a drop,
+  it turns into the category's motif and back) and the home's pattern drifts behind the opening
+  (`apps/mobile/src/lib/motion.ts`: one shared clock per loop, still under reduced motion).
 - **Clear space**: at least the height of the ḍamma on every side. **Minimum size**: 16 px (mark),
   96 px wide (mark + wordmark).
 - **Don't** recolour the ḍamma (it is always the highlight gold), outline the mark, rotate it, or
@@ -42,15 +45,14 @@ its counter open. It was traced from the approved artwork onto the mark's 64-uni
 it holds beside the mark, so word and mark always line up as approved. It needs no font, so it
 looks the same everywhere. Don't re-set it in another face.
 
-The lettering is drawn in **KAF FODA** (by Foda, @WE_KAF; `WORDMARK_FONT`,
-`typography.fonts.wordmark`, `--y-font-wordmark`, `font-wordmark`). In Arabic it also sets the main
-page and section titles (every `h1`/`h2` with `font-display` on the web, `display` and `heading`
-text on mobile) and the homepage's opening line «كن سببًا في يُسر أحدهم اليوم». It has Arabic letters
-only (no digits, no Latin), so digits fall back to IBM Plex Sans Arabic and English titles keep the
+In Arabic the main page and section titles (every `h1`/`h2` with `font-display` on the web,
+`display` and `heading` text on mobile) and the homepage's opening line «كن سببًا في يُسر أحدهم
+اليوم» are set in **Palestine** (`WORDMARK_FONT`, `typography.fonts.wordmark`, `--y-font-wordmark`,
+`font-wordmark`), chosen by the owner on 2026-10-24. It has one weight, already heavy, so it is never
+synthetically bolded. Its Latin letters, ḍamma and shadda are blank: the web limits it to Arabic and
+digits (`unicode-range`) so Latin falls back to IBM Plex Sans Arabic, and English titles keep the
 heading face. The web self-hosts it (`apps/web/src/fonts`), mobile bundles it
-(`apps/mobile/assets/fonts`). Its file is marked for personal use; the owner chose on 2026-10-24 to
-publish it and holds the licensing decision. Amiri is the fallback where it isn't shipped (the
-prototype).
+(`apps/mobile/assets/fonts`). Amiri is the fallback where it isn't shipped (the prototype).
 
 «Yusr» (and «يُسر» when `brand.wordmark = 'typeset'`) is set in **Reem Kufi**, the *logo face*
 (`typography.fonts.logo`, `--y-font-logo`, `font-logo`), kept apart from the heading face so
@@ -93,7 +95,7 @@ accessible foreground, in both schemes).
 | Face | Use |
 |---|---|
 | **Reem Kufi** | The logo face: «Yusr» beside the mark, and nothing else |
-| **KAF FODA** | The face «يُسر» is drawn in; Arabic main titles and the homepage's opening line |
+| **Palestine** | Arabic main titles and the homepage's opening line |
 | **IBM Plex Sans Arabic** | Everything else, Arabic and Latin (it carries both); in **bold** for headings — hero titles, section titles, big numbers |
 | **IBM Plex Mono** | Case references, receipt numbers, code |
 

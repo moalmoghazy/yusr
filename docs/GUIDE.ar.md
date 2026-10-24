@@ -159,7 +159,7 @@ node scripts/doctor.mjs
 |---|---|
 | الألوان، الزوايا، الظلال، الخطوط | `packages/theme/src/tokens.ts` |
 | الشعار (هندسة حرف الياء والضمّة الذهبية) | `packages/theme/src/brand.ts` و `packages/theme/src/svg.ts` |
-| كلمة «يُسر» في الشعار (الرسم المعتمد في ٢٤ أكتوبر ٢٠٢٦، مسارات فكتور) | `packages/theme/src/wordmark.ts`. والعناوين الرئيسية بالعربي وجملة «كن سببًا في يُسر أحدهم اليوم» بخط KAF FODA نفسه (`WORDMARK_FONT` في `tokens.ts`، والملف في `apps/web/src/fonts` و`apps/mobile/assets/fonts`) |
+| كلمة «يُسر» في الشعار (الرسم المعتمد في ٢٤ أكتوبر ٢٠٢٦، مسارات فكتور) | `packages/theme/src/wordmark.ts`. والعناوين الرئيسية بالعربي وجملة «كن سببًا في يُسر أحدهم اليوم» بخط Palestine (`WORDMARK_FONT` في `tokens.ts`، والملف في `apps/web/src/fonts` و`apps/mobile/assets/fonts`) |
 | روابط التطبيق في المتاجر (شارات App Store وGoogle Play وAppGallery في الفوتر) | `brand.apps` في `packages/theme/src/brand.ts`، وما دامت فارغة تظهر الشارة بعبارة «قريبًا على» |
 | أي نص يظهر للمستخدم (عربي / إنجليزي) | `packages/i18n/src/messages/ar.ts` و `en.ts` |
 | صفحات الموقع | `apps/web/src/app/[locale]/…` (الرئيسية `page.tsx`، الحالات `cases/`، التقديم `submit/`) |

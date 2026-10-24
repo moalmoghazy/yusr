@@ -247,11 +247,12 @@ export const LOGO_FACE: DisplayFace = 'reemKufi';
 /** Fallback for lines in the logo's voice where the wordmark font is not shipped (the prototype). */
 export const WORDMARK_FACE: DisplayFace = 'amiri';
 /**
- * The face the approved «يُسر» is drawn in: KAF FODA (by Foda, @WE_KAF), Arabic letters only, no
- * digits or Latin. Used for the main page titles and the homepage's opening line, in Arabic. Not on
- * Google Fonts: the web self-hosts it (apps/web/src/fonts) and mobile bundles it (assets/fonts).
+ * The face of the main page titles and the homepage's opening line, in Arabic: Palestine (one
+ * weight, already heavy; its Latin letters, ḍamma and shadda are blank, so the web keeps Latin on
+ * the text face). Not on Google Fonts: the web self-hosts it (apps/web/src/fonts) and mobile
+ * bundles it (assets/fonts).
  */
-export const WORDMARK_FONT = { family: 'KAF FODA', native: 'KafFoda_700Bold' } as const;
+export const WORDMARK_FONT = { family: 'Palestine', native: 'Palestine_400Regular' } as const;
 
 /** The CSS font stack for a heading face, falling back to the text face. */
 export function displayStack(face: DisplayFace): string {

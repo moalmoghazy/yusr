@@ -45,13 +45,13 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
               <LogoMark size={20} />
               {t('landing.eyebrow')}
             </p>
-            {/* In Arabic the opening line speaks in the logo's voice: Amiri, the face nearest its lettering. */}
+            {/* In Arabic the opening line is set in Palestine, like the main titles (font-wordmark). */}
             <h1
               className={cn(
                 'font-bold',
                 locale === 'en'
                   ? 'font-display text-[clamp(2.05rem,1.2rem+2.6vw,3.3rem)] leading-[1.15]'
-                  : 'font-wordmark text-[clamp(2.35rem,1.4rem+3vw,3.8rem)] leading-[1.45]',
+                  : 'font-wordmark text-[clamp(2.05rem,1.2rem+2.6vw,3.2rem)] leading-[1.55]',
               )}
             >
               {t('landing.heroTitle')}

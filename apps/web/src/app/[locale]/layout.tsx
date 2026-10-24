@@ -22,8 +22,15 @@ import '../globals.css';
 const sans = IBM_Plex_Sans_Arabic({ subsets: ['arabic', 'latin'], weight: ['400', '500', '600', '700'], variable: '--font-plex-arabic', display: 'swap' });
 // The logo face: the English name beside the mark stays in Reem Kufi whatever the headings use.
 const logo = Reem_Kufi({ subsets: ['arabic', 'latin'], weight: ['700'], variable: '--font-reem-kufi', display: 'swap' });
-// KAF FODA, the face «يُسر» is drawn in: the main page titles and the opening line, in Arabic (Arabic letters only).
-const wordmark = localFont({ src: '../../fonts/kaf-foda-bold.ttf', weight: '700', variable: '--font-kaf-foda', display: 'swap' });
+// Palestine: the main page titles and the opening line, in Arabic. Its Latin letters are blank, so
+// the face covers Arabic and digits only and anything else falls back to the text face.
+const wordmark = localFont({
+  src: '../../fonts/palestine-regular.otf',
+  weight: '400',
+  variable: '--font-palestine',
+  display: 'swap',
+  declarations: [{ prop: 'unicode-range', value: 'U+0020-0040, U+0600-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFF' }],
+});
 const mono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-plex-mono', display: 'swap' });
 
 export function generateStaticParams() {
