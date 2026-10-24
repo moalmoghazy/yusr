@@ -27,7 +27,9 @@ hands. A small gift, held carefully, that changes the meaning of someone's day.
   in Ruqʿa), so the mark stays legible in a tab or a notification.
 - The mark's drop is `DROP_PATH` in `brand.ts`, its point turned up to the left.
 - **Animated**: the website's «من نحن» page (`/about`) draws the mark live and replays on click;
-  the ḍamma moves towards the pointer wherever it is on the page.
+  the ḍamma moves towards the pointer wherever it is on the page. In the website's header (Arabic)
+  «يُسر» slides out of the mark, rests while a gold glow (`--highlight`) rises behind it, and slides
+  back in, every 7 s (`Logo animated`, `.logo-word` / `.logo-glow`; still under reduced motion).
 - **In the app**: the case covers loop like the website's (the mark appears, its ḍamma falls like a drop,
   it turns into the category's motif and back) and the home's pattern drifts behind the opening
   (`apps/mobile/src/lib/motion.ts`: one shared clock per loop, still under reduced motion).
@@ -51,7 +53,8 @@ In Arabic the main page and section titles (every `h1`/`h2` with `font-display` 
 `font-wordmark`), chosen by the owner on 2026-10-24. It has one weight, already heavy, so it is never
 synthetically bolded. Its Latin letters, ḍamma and shadda are blank: the web limits it to Arabic and
 digits (`unicode-range`) so Latin falls back to IBM Plex Sans Arabic, and English titles keep the
-heading face. The web self-hosts it (`apps/web/src/fonts`), mobile bundles it
+heading face. Exceptions stay in the heading face (bold IBM Plex Sans Arabic): the homepage's «من
+الطلب حتى إثبات الصرف» and case titles (`title-plain` on the web; the case screen on mobile). The web self-hosts it (`apps/web/src/fonts`), mobile bundles it
 (`apps/mobile/assets/fonts`). Amiri is the fallback where it isn't shipped (the prototype).
 
 «Yusr» (and «يُسر» when `brand.wordmark = 'typeset'`) is set in **Reem Kufi**, the *logo face*

@@ -20,7 +20,7 @@ export function SiteHeader({ locale, theme, donor }: { locale: Locale; theme: Th
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur-md">
       <div className="container-page flex h-16 items-center justify-between gap-3">
         <Link href={href(locale)} className="rounded-control outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
-          <Logo locale={locale} size={30} />
+          <Logo locale={locale} size={30} animated />
         </Link>
         <nav aria-label={t('nav.menu')} className="hidden items-center gap-1 md:flex">
           {links.map((link) => (

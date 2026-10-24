@@ -73,7 +73,7 @@ export default async function CasePage({ params, searchParams }: { params: Param
             {item.zakatEligible && <ZakatBadge locale={locale} />}
             {!open && <StatusBadge status={item.status} locale={locale} />}
           </div>
-          <h1 id="case-title" className="font-display text-[clamp(1.7rem,1.2rem+1.6vw,2.4rem)] font-bold leading-snug">
+          <h1 id="case-title" className="title-plain font-display text-[clamp(1.7rem,1.2rem+1.6vw,2.4rem)] font-bold leading-snug">
             {l(item.title)}
           </h1>
           <dl className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">

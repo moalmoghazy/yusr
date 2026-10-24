@@ -92,12 +92,19 @@ export function Logo({
   inverse = false,
   className,
   wordmark: style = brand.wordmark,
+  animated = false,
 }: {
   locale: Locale;
   size?: number;
   inverse?: boolean;
   className?: string;
   wordmark?: 'typeset' | 'lettered';
+  /**
+   * The header's loop (Arabic lettered lockup): «يُسر» slides out of the mark, rests with a golden glow
+   * behind it, and slides back in (`.logo-word` / `.logo-glow` in the web stylesheet; still under
+   * reduced motion, and the word simply shows without the stylesheet).
+   */
+  animated?: boolean;
 }) {
   const maskId = `ysr-lockup-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
   const ink = inverse ? '#FFFFFF' : 'var(--primary)';
@@ -114,8 +121,38 @@ export function Logo({
         height={round(layout.height * scale)}
         className={cn('shrink-0', className)}
         focusable="false"
+        overflow={animated ? 'visible' : undefined}
       >
-        <WordmarkShapes word={wordmark} ink={ink} drop="var(--highlight)" />
+        {animated ? (
+          <>
+            <defs>
+              <radialGradient id={`${maskId}-glow`}>
+                <stop offset="0" style={{ stopColor: 'var(--highlight)', stopOpacity: 0.55 }} />
+                <stop offset="1" style={{ stopColor: 'var(--highlight)', stopOpacity: 0 }} />
+              </radialGradient>
+              {/* The word is only seen left of the mark, so it seems to come out of it and go back in. */}
+              <clipPath id={`${maskId}-clip`}>
+                <rect x={-120} y={-20} width={120 + brand.logo.bounds.x + 1} height={110} />
+              </clipPath>
+            </defs>
+            <ellipse
+              className="logo-glow"
+              cx={round(wordmark.bounds.x + wordmark.bounds.width / 2)}
+              cy={round(wordmark.bounds.y + wordmark.bounds.height / 2)}
+              rx={round(wordmark.bounds.width * 0.62)}
+              ry={round(wordmark.bounds.height * 0.95)}
+              fill={`url(#${maskId}-glow)`}
+              style={{ opacity: 0 }}
+            />
+            <g clipPath={`url(#${maskId}-clip)`}>
+              <g className="logo-word" style={{ ['--logo-word-travel' as string]: `${round(-wordmark.bounds.x + brand.logo.bounds.x + 2)}px` }}>
+                <WordmarkShapes word={wordmark} ink={ink} drop="var(--highlight)" />
+              </g>
+            </g>
+          </>
+        ) : (
+          <WordmarkShapes word={wordmark} ink={ink} drop="var(--highlight)" />
+        )}
         <g transform={`translate(${layout.markX} 0)`}>
           <MarkShapes logo={brand.logo} bowl={ink} drop="var(--highlight)" size={size} maskId={maskId} />
         </g>

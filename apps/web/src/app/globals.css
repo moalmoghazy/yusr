@@ -17,8 +17,9 @@
   --y-font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-/* Main page and section titles speak in the logo's face, in Arabic (unlayered, so it wins over the utility). */
-html[lang='ar'] :is(h1, h2).font-display,
+/* Main page and section titles in Palestine, in Arabic (unlayered, so it wins over the utility). Titles
+   marked .title-plain (case titles, «من الطلب حتى إثبات الصرف») keep the heading face. */
+html[lang='ar'] :is(h1, h2).font-display:not(.title-plain),
 html[lang='ar'] .font-wordmark {
   font-family: var(--y-font-wordmark);
   /* One weight, already heavy: no synthetic bold on top. */
@@ -698,5 +699,59 @@ html[lang='ar'] .font-wordmark {
   }
   to {
     opacity: 1;
+  }
+}
+
+/*
+ * The header logo (Arabic): «يُسر» slides out of the mark, rests while a golden glow rises behind it,
+ * then slides back into the mark, and again (7s). The glow uses --highlight, so it suits light and dark.
+ * Under reduced motion the word simply shows and the glow stays off.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .logo-word {
+    animation: logo-word 7s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  }
+
+  .logo-glow {
+    animation: logo-glow 7s ease-in-out infinite;
+  }
+}
+
+@keyframes logo-word {
+  0%,
+  8% {
+    transform: translateX(var(--logo-word-travel));
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  28%,
+  64% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  84%,
+  100% {
+    transform: translateX(var(--logo-word-travel));
+    opacity: 0;
+  }
+}
+
+@keyframes logo-glow {
+  0%,
+  26% {
+    opacity: 0;
+  }
+  40%,
+  54% {
+    opacity: 0.85;
+  }
+  66%,
+  100% {
+    opacity: 0;
   }
 }

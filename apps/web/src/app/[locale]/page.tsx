@@ -218,7 +218,7 @@ function HowItWorks({ locale }: { locale: Locale }) {
       className="scroll-mt-24 flex flex-col gap-4 rounded-card border border-border/70 bg-card/75 p-5 shadow-sm backdrop-blur-sm"
     >
       <div className="flex flex-col gap-1">
-        <h2 id="how-title" className="font-display text-lg font-bold">
+        <h2 id="how-title" className="title-plain font-display text-lg font-bold">
           {t('landing.howTitle')}
         </h2>
         <p className="text-sm text-muted-foreground">{t('landing.howBody')}</p>

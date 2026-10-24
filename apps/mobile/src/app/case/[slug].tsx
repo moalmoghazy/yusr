@@ -128,7 +128,8 @@ function Header({ item }: { item: CaseDetail }) {
         {item.verifiedAt && <Pill icon="shield-check" text={t('case.verified')} bg={theme.colors.primarySoft} fg={theme.colors.primarySoftForeground} />}
         {item.zakatEligible && <Pill icon="coins" text={t('case.zakatEligible')} bg={theme.colors.highlightSoft} fg={theme.colors.highlightSoftForeground} />}
       </View>
-      <Text variant="heading" accessibilityRole="header">
+      {/* Case titles keep the text face in bold, not the titles' Palestine (as on the website). */}
+      <Text variant="heading" accessibilityRole="header" style={{ fontFamily: theme.fonts.bold }}>
         {l(item.title)}
       </Text>
       <View style={styles.meta}>
