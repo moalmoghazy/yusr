@@ -28,8 +28,8 @@ hands. A small gift, held carefully, that changes the meaning of someone's day.
 - The mark's drop is `DROP_PATH` in `brand.ts`, its point turned up to the left.
 - **Animated**: the website's «من نحن» page (`/about`) draws the mark live and replays on click;
   the ḍamma moves towards the pointer wherever it is on the page. In the website's header (Arabic)
-  «يُسر» slides out of the mark, rests while a gold glow (`--highlight`) rises behind it, and slides
-  back in, every 7 s (`Logo animated`, `.logo-word` / `.logo-glow`; still under reduced motion).
+  «يُسر» slides out of the mark, rests, and slides back in, every 7 s (`Logo animated`, `.logo-word`;
+  still under reduced motion).
 - **In the app**: the case covers loop like the website's (the mark appears, its ḍamma falls like a drop,
   it turns into the category's motif and back) and the home's pattern drifts behind the opening
   (`apps/mobile/src/lib/motion.ts`: one shared clock per loop, still under reduced motion).

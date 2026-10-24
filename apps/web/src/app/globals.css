@@ -703,17 +703,12 @@ html[lang='ar'] .font-wordmark {
 }
 
 /*
- * The header logo (Arabic): «يُسر» slides out of the mark, rests while a golden glow rises behind it,
- * then slides back into the mark, and again (7s). The glow uses --highlight, so it suits light and dark.
- * Under reduced motion the word simply shows and the glow stays off.
+ * The header logo (Arabic): «يُسر» slides out of the mark, rests, then slides back into the mark, and
+ * again (7s). Under reduced motion the word simply shows.
  */
 @media (prefers-reduced-motion: no-preference) {
   .logo-word {
     animation: logo-word 7s cubic-bezier(0.65, 0, 0.35, 1) infinite;
-  }
-
-  .logo-glow {
-    animation: logo-glow 7s ease-in-out infinite;
   }
 }
 
@@ -737,21 +732,6 @@ html[lang='ar'] .font-wordmark {
   84%,
   100% {
     transform: translateX(var(--logo-word-travel));
-    opacity: 0;
-  }
-}
-
-@keyframes logo-glow {
-  0%,
-  26% {
-    opacity: 0;
-  }
-  40%,
-  54% {
-    opacity: 0.85;
-  }
-  66%,
-  100% {
     opacity: 0;
   }
 }
