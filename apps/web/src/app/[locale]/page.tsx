@@ -269,10 +269,11 @@ function StatsBand({ locale, stats }: { locale: Locale; stats: PlatformStats }) 
   ];
   return (
     <section className="border-y border-border bg-card" aria-label={t('landing.stats.raised')}>
-      <dl className="container-page grid grid-cols-2 gap-x-6 gap-y-8 py-10 lg:grid-cols-4">
-        {items.map(([icon, value, label]) => (
-          <div key={label} className="flex flex-col gap-1">
-            <dt className="order-2 inline-flex items-center gap-2 text-base text-muted-foreground sm:text-lg">
+      <dl className="container-page grid grid-cols-6 gap-x-4 gap-y-8 py-10 sm:gap-x-6 lg:grid-cols-4">
+        {/* Below lg the amount takes the whole first row («مليون ج.م» in KAF FODA sweeps wide), the rest share the next. */}
+        {items.map(([icon, value, label], index) => (
+          <div key={label} className={cn('flex flex-col gap-1 lg:col-span-1', index === 0 ? 'col-span-6' : 'col-span-2')}>
+            <dt className="order-2 inline-flex items-center gap-1.5 text-[0.95rem] text-muted-foreground sm:gap-2 sm:text-lg">
               <Icon name={icon} size={19} className="text-primary" />
               {label}
             </dt>

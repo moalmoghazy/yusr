@@ -17,9 +17,9 @@
   --y-font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-/* The stats band's numbers (page.tsx, StatsBand) in KAF FODA's digits, in Arabic. */
+/* The stats band's figures (page.tsx, StatsBand) in KAF FODA, in Arabic: «١٫٢ مليون ج.م». */
 html[lang='ar'] .stat-digits {
-  font-family: var(--font-kaf-digits), var(--y-font-display);
+  font-family: var(--font-kaf-stats), var(--y-font-display);
 }
 
 /* Main page and section titles in Palestine, in Arabic (unlayered, so it wins over the utility). Titles
