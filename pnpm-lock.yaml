@@ -103,9 +103,6 @@ importers:
 
   apps/mobile:
     dependencies:
-      '@expo-google-fonts/amiri':
-        specifier: ^0.4.1
-        version: 0.4.1
       '@expo-google-fonts/ibm-plex-mono':
         specifier: ^0.4.1
         version: 0.4.1
@@ -1820,9 +1817,6 @@ packages:
   '@eslint/plugin-kit@0.7.3':
     resolution: {integrity: sha512-IkO+/KEUvwbVpiURZg+P7zF74z5Jxe0UgJxVni+RtoHQ6IZieXaO02kmadomap/q+l6bc/jdPGGqTjhuZnuz1Q==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
-
-  '@expo-google-fonts/amiri@0.4.1':
-    resolution: {integrity: sha512-JTZUZ4olyqGeXu5UBWVEerrbym/MD9U3wU8qzSg8z4qEtHFKAI3uPg2DuytfeRmJ6EppaHLYsYqpGerMOrpJeA==}
 
   '@expo-google-fonts/ibm-plex-mono@0.4.1':
     resolution: {integrity: sha512-/yYz1mPZq8Nd4tSiH0SBDPEdJUqiOGBwVgSrQvLuw7SPh6C7ezBzmi6eFyHY4QaQwjHDmOLSBKsxzq8ZDFXVAg==}
@@ -8076,8 +8070,6 @@ snapshots:
     dependencies:
       '@eslint/core': 1.2.1
       levn: 0.4.1
-
-  '@expo-google-fonts/amiri@0.4.1': {}
 
   '@expo-google-fonts/ibm-plex-mono@0.4.1': {}
 

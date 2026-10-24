@@ -17,7 +17,6 @@
     "update": "eas update"
   },
   "dependencies": {
-    "@expo-google-fonts/amiri": "^0.4.1",
     "@expo-google-fonts/ibm-plex-mono": "^0.4.1",
     "@expo-google-fonts/ibm-plex-sans-arabic": "^0.4.1",
     "@expo-google-fonts/reem-kufi": "^0.4.1",

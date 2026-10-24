@@ -42,10 +42,15 @@ its counter open. It was traced from the approved artwork onto the mark's 64-uni
 it holds beside the mark, so word and mark always line up as approved. It needs no font, so it
 looks the same everywhere. Don't re-set it in another face.
 
-For lines that speak in the logo's voice — the homepage's opening line «كن سببًا في يُسر أحدهم
-اليوم» — use **Amiri** bold, the free face nearest the lettering (`WORDMARK_FACE`,
-`typography.fonts.wordmark`, `--y-font-wordmark`, `font-wordmark`). Arabic only; English keeps the
-heading face.
+The lettering is drawn in **KAF FODA** (by Foda, @WE_KAF; `WORDMARK_FONT`,
+`typography.fonts.wordmark`, `--y-font-wordmark`, `font-wordmark`). In Arabic it also sets the main
+page and section titles (every `h1`/`h2` with `font-display` on the web, `display` and `heading`
+text on mobile) and the homepage's opening line «كن سببًا في يُسر أحدهم اليوم». It has Arabic letters
+only (no digits, no Latin), so digits fall back to IBM Plex Sans Arabic and English titles keep the
+heading face. The web self-hosts it (`apps/web/src/fonts`), mobile bundles it
+(`apps/mobile/assets/fonts`). Its file is marked for personal use; the owner chose on 2026-10-24 to
+publish it and holds the licensing decision. Amiri is the fallback where it isn't shipped (the
+prototype).
 
 «Yusr» (and «يُسر» when `brand.wordmark = 'typeset'`) is set in **Reem Kufi**, the *logo face*
 (`typography.fonts.logo`, `--y-font-logo`, `font-logo`), kept apart from the heading face so
@@ -88,13 +93,13 @@ accessible foreground, in both schemes).
 | Face | Use |
 |---|---|
 | **Reem Kufi** | The logo face: «Yusr» beside the mark, and nothing else |
-| **Amiri** (bold) | Lines in the logo's voice, Arabic only: the homepage's opening line |
+| **KAF FODA** | The face «يُسر» is drawn in; Arabic main titles and the homepage's opening line |
 | **IBM Plex Sans Arabic** | Everything else, Arabic and Latin (it carries both); in **bold** for headings — hero titles, section titles, big numbers |
 | **IBM Plex Mono** | Case references, receipt numbers, code |
 
 Scale (px): 12 · 14 · 16 · 18 · 21 · 25 · 31 · 39 · 50. Arabic body text uses a line height of
 1.8 (Latin 1.6); Arabic headings at least 1.4 (Arabic needs room for its dots and marks above and
-below the line), the Arabic hero (Amiri) 1.45 (Latin 1.15). Numbers use Arabic-Indic digits in Arabic (١٢٣) and are tabular where
+below the line), the Arabic hero 1.45 (Latin 1.15). Numbers use Arabic-Indic digits in Arabic (١٢٣) and are tabular where
 they line up.
 
 **Switching the heading face.** Headings use the text family's bold (`DISPLAY_FACES.plexArabic`,

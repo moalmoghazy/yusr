@@ -64,12 +64,7 @@ export default function Home() {
               {t('landing.eyebrow')}
             </Text>
           </View>
-          <Text
-            variant="display"
-            accessibilityRole="header"
-            // In Arabic the opening line speaks in the logo's voice (Amiri, nearest its lettering).
-            style={locale === 'ar' ? { fontFamily: theme.fonts.wordmark, fontSize: 34, lineHeight: 52 } : undefined}
-          >
+          <Text variant="display" accessibilityRole="header">
             {t('landing.heroTitle')}
           </Text>
           <Text muted>{t('landing.heroBody')}</Text>

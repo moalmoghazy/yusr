@@ -12,9 +12,14 @@
   /* Headings: the text family in bold (DISPLAY_FACES.plexArabic); to switch, see docs/BRAND.md → Type. */
   --y-font-display: var(--font-plex-arabic), 'IBM Plex Sans', 'Segoe UI', Tahoma, sans-serif;
   --y-font-logo: var(--font-reem-kufi), var(--font-plex-arabic), 'Segoe UI', Tahoma, sans-serif;
-  /* Lines in the logo's voice: Amiri, the free face nearest the approved lettering (WORDMARK_FACE). */
-  --y-font-wordmark: var(--font-amiri), var(--font-plex-arabic), 'Segoe UI', Tahoma, serif;
+  /* The face «يُسر» is drawn in (KAF FODA, WORDMARK_FONT); it has no digits, so they fall back to Plex. */
+  --y-font-wordmark: var(--font-kaf-foda), var(--font-plex-arabic), 'Segoe UI', Tahoma, sans-serif;
   --y-font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* Main page and section titles speak in the logo's face, in Arabic (unlayered, so it wins over the utility). */
+html[lang='ar'] :is(h1, h2).font-display {
+  font-family: var(--y-font-wordmark);
 }
 
 @layer base {

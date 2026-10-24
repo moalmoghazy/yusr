@@ -32,7 +32,9 @@ export function Text({ variant = 'body', weight, color, muted, align = 'auto', s
     mono: theme.fontSize.sm,
   }[variant];
   const resolved: Weight = weight ?? (variant === 'title' || variant === 'heading' ? 'bold' : variant === 'label' ? 'semibold' : 'regular');
-  const family = variant === 'display' ? theme.fonts.display : variant === 'mono' ? theme.fonts.mono : theme.fonts[resolved];
+  // Screen titles and the opening line speak in the face «يُسر» is drawn in, in Arabic (it has Arabic letters only).
+  const titled = rtl && (variant === 'display' || variant === 'heading');
+  const family = titled ? theme.fonts.wordmark : variant === 'display' ? theme.fonts.display : variant === 'mono' ? theme.fonts.mono : theme.fonts[resolved];
   return (
     <NativeText
       {...props}

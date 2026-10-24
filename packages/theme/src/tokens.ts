@@ -244,8 +244,14 @@ export type DisplayFace = keyof typeof DISPLAY_FACES;
 export const DEFAULT_DISPLAY_FACE: DisplayFace = 'plexArabic';
 /** «يُسر» beside the mark is set in this face, whatever the headings use. */
 export const LOGO_FACE: DisplayFace = 'reemKufi';
-/** For lines set in the logo's voice, such as the homepage's opening line (Arabic only). */
+/** Fallback for lines in the logo's voice where the wordmark font is not shipped (the prototype). */
 export const WORDMARK_FACE: DisplayFace = 'amiri';
+/**
+ * The face the approved «يُسر» is drawn in: KAF FODA (by Foda, @WE_KAF), Arabic letters only, no
+ * digits or Latin. Used for the main page titles and the homepage's opening line, in Arabic. Not on
+ * Google Fonts: the web self-hosts it (apps/web/src/fonts) and mobile bundles it (assets/fonts).
+ */
+export const WORDMARK_FONT = { family: 'KAF FODA', native: 'KafFoda_700Bold' } as const;
 
 /** The CSS font stack for a heading face, falling back to the text face. */
 export function displayStack(face: DisplayFace): string {
@@ -268,7 +274,7 @@ export const defaultTypography: Typography = {
   fonts: {
     display: displayStack(DEFAULT_DISPLAY_FACE),
     logo: displayStack(LOGO_FACE),
-    wordmark: displayStack(WORDMARK_FACE),
+    wordmark: `"${WORDMARK_FONT.family}", ${displayStack(WORDMARK_FACE)}`,
     sans: '"IBM Plex Sans Arabic", "IBM Plex Sans", "Segoe UI", Tahoma, Arial, sans-serif',
     mono: '"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
   },
@@ -276,7 +282,7 @@ export const defaultTypography: Typography = {
   nativeFonts: {
     display: DISPLAY_FACES[DEFAULT_DISPLAY_FACE].native,
     logo: DISPLAY_FACES[LOGO_FACE].native,
-    wordmark: DISPLAY_FACES[WORDMARK_FACE].native,
+    wordmark: WORDMARK_FONT.native,
     regular: 'IBMPlexSansArabic_400Regular',
     medium: 'IBMPlexSansArabic_500Medium',
     semibold: 'IBMPlexSansArabic_600SemiBold',
