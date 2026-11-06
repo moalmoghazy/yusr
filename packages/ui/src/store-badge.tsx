@@ -36,7 +36,7 @@ export interface StoreBadgeProps {
 }
 
 /**
- * A store badge in Yusr's colours: an outlined pill with the store's logo in an emerald chip. On hover
+ * A store badge in Yusr's colours: an outlined pill with the store's logo in a turquoise chip. On hover
  * or focus it becomes the store's own badge: black, white lettering, the logo in its real colours.
  */
 export function StoreBadge({ store, name, caption, href, label, className }: StoreBadgeProps) {

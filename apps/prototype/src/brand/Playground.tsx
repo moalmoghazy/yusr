@@ -27,9 +27,10 @@ import { Icon } from '../ui/icons';
 import { DocSectionHead } from '../ui/page-nav';
 import { Badge, Button, cx } from '../ui/primitives';
 
-/** The two colors each preset was derived from (emerald is the hand-tuned default). */
+/** The two colors each preset was derived from (turquoise is the hand-tuned default). */
 const PRESET_SOURCE: Readonly<Record<PresetName, { primary: string; highlight: string }>> = {
-  emerald: { primary: teal[600], highlight: gold[400] },
+  turquoise: { primary: teal[600], highlight: gold[400] },
+  emerald: { primary: '#13725F', highlight: '#E0A42F' },
   nile: { primary: '#1B5E8C', highlight: '#D9A441' },
   olive: { primary: '#56702B', highlight: '#C47A3A' },
   rosewood: { primary: '#8A2F52', highlight: '#D8A94B' },
@@ -63,7 +64,7 @@ type Mode = PresetName | 'custom';
 let remembered = { primary: '#1B5E8C', highlight: '#D9A441', radius: 1 };
 
 function modeOf(theme: Theme): Mode {
-  if (theme === defaultTheme) return 'emerald';
+  if (theme === defaultTheme) return 'turquoise';
   return (PRESET_NAMES as string[]).includes(theme.name) ? (theme.name as PresetName) : 'custom';
 }
 
@@ -275,8 +276,8 @@ export function Playground({ index }: { index: string }) {
                 variant="outline"
                 size="sm"
                 icon="refresh"
-                onClick={() => choosePreset('emerald', DEFAULT_DISPLAY_FACE)}
-                disabled={mode === 'emerald' && face === DEFAULT_DISPLAY_FACE}
+                onClick={() => choosePreset('turquoise', DEFAULT_DISPLAY_FACE)}
+                disabled={mode === 'turquoise' && face === DEFAULT_DISPLAY_FACE}
               >
                 {t('proto.brand.reset')}
               </Button>

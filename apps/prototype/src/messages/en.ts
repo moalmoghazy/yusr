@@ -186,7 +186,7 @@ export const protoEn: Widen<typeof protoAr> = {
       appIcon: 'App icon',
       mono: 'Monochrome',
       palette: 'Color',
-      paletteBody: 'Calm emerald for trust, slate blue for information, and a rare gold for moments of completion.',
+      paletteBody: 'Pharaonic turquoise for trust, burnt clay as a second voice, slate blue for information, and a rare sand gold for moments of completion.',
       semantic: 'Semantic roles and their contrast',
       contrast: 'Contrast',
       typography: 'Type',
@@ -265,7 +265,7 @@ export const protoEn: Widen<typeof protoAr> = {
       backgroundsBody:
         '1920 × 1200 px, generated from the brand file: the pattern shows at the edges and clears behind the logo, and the logo is drawn without fonts, so it looks the same anywhere. Files in packages/theme/assets/backgrounds.',
       backgroundTones: {
-        brand: 'Emerald',
+        brand: 'Turquoise',
         light: 'Light',
         dark: 'Dark',
       },
@@ -314,7 +314,8 @@ export const protoEn: Widen<typeof protoAr> = {
       },
       progressNote: 'Always rounded down: a case never shows 100% until it is actually funded.',
       presetNames: {
-        emerald: 'Emerald',
+        turquoise: 'Turquoise & sand',
+        emerald: 'Emerald (previous)',
         nile: 'Nile',
         olive: 'Olive',
         rosewood: 'Rosewood',

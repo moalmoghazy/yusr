@@ -103,8 +103,8 @@ function checkoutPage(input: { locale: 'ar' | 'en'; provider: string; amount: st
 <html lang="${input.locale}" dir="${ar ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${text.title} · ${escapeHtml(input.provider)}</title>
 <style>
-:root{color-scheme:light dark;--p:#13725F;--g:#E0A42F;--bg:#F4F6F5;--card:#fff;--fg:#10201C;--mut:#5B6B66}
-@media (prefers-color-scheme:dark){:root{--bg:#0B1513;--card:#13201D;--fg:#E7F0ED;--mut:#9DB0AA}}
+:root{color-scheme:light dark;--p:#00707A;--g:#D9A441;--bg:#F8F5EE;--card:#fff;--fg:#132326;--mut:#56625F}
+@media (prefers-color-scheme:dark){:root{--bg:#081315;--card:#0F1D20;--fg:#E4F0EF;--mut:#93A9AA}}
 body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,"Segoe UI",Tahoma,sans-serif;padding:16px}
 main{width:min(420px,100%);background:var(--card);border-radius:20px;padding:28px;box-shadow:0 12px 40px rgba(0,0,0,.08)}
 .tag{display:inline-block;background:var(--g);color:#1F1300;border-radius:99px;padding:2px 10px;font-size:13px;font-weight:600}

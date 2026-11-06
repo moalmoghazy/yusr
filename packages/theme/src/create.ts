@@ -132,7 +132,9 @@ export function themeFromBrandColors(input: BrandColorInput, base: Theme = defau
 
 /** Ready-made alternatives that show how far a two-color swap goes. */
 export const presets = {
-  emerald: defaultTheme,
+  turquoise: defaultTheme,
+  /** The brand before November 2026 («فيروز ورمل» replaced it). */
+  emerald: themeFromBrandColors({ name: 'emerald', primary: '#13725F', highlight: '#E0A42F' }),
   nile: themeFromBrandColors({ name: 'nile', primary: '#1B5E8C', highlight: '#D9A441' }),
   olive: themeFromBrandColors({ name: 'olive', primary: '#56702B', highlight: '#C47A3A' }),
   rosewood: themeFromBrandColors({ name: 'rosewood', primary: '#8A2F52', highlight: '#D8A94B' }),

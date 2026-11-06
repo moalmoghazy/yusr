@@ -93,7 +93,7 @@ export function LogoSection({ index }: { index: string }) {
           <UsageTile label={t('proto.brand.mono')} stage={{ background: 'var(--muted)' }}>
             <span className="mono-row">
               <span className="mono-chip" style={{ background: '#FFFFFF' }}>
-                <LogoMark size={44} bowl="#10201C" drop="#10201C" />
+                <LogoMark size={44} bowl="#132326" drop="#132326" />
               </span>
               <span className="mono-chip" style={{ background: light.primary }}>
                 <LogoMark size={44} bowl="#FFFFFF" drop="#FFFFFF" />

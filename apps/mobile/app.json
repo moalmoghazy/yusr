@@ -23,7 +23,7 @@
       "package": "org.yusr.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#13725F"
+        "backgroundColor": "#00707A"
       },
       "intentFilters": [
         {
@@ -63,9 +63,9 @@
         {
           "image": "./assets/splash-mark.png",
           "imageWidth": 120,
-          "backgroundColor": "#F4F7F6",
+          "backgroundColor": "#F8F5EE",
           "dark": {
-            "backgroundColor": "#0A1311"
+            "backgroundColor": "#081315"
           }
         }
       ],

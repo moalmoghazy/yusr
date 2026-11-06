@@ -36,14 +36,14 @@ export function toNativeTheme(theme: Theme, scheme: ColorScheme): NativeTheme {
     space: (steps: number) => steps * 4,
     shadow: {
       card: {
-        shadowColor: dark ? '#000000' : '#0F5B4D',
+        shadowColor: dark ? '#000000' : '#055A62',
         shadowOpacity: dark ? 0.5 : 0.1,
         shadowRadius: 12,
         shadowOffset: { width: 0, height: 6 },
         elevation: 3,
       },
       raised: {
-        shadowColor: dark ? '#000000' : '#0F5B4D',
+        shadowColor: dark ? '#000000' : '#055A62',
         shadowOpacity: dark ? 0.6 : 0.18,
         shadowRadius: 24,
         shadowOffset: { width: 0, height: 14 },

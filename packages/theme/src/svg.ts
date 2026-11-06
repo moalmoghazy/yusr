@@ -119,7 +119,7 @@ export interface LogoBackgroundOptions {
   /** Canvas size in px (default 1920 × 1200). */
   width?: number;
   height?: number;
-  /** brand: the white lockup on a deep emerald glow; light / dark: the lockup in its own colours. */
+  /** brand: the white lockup on a deep turquoise glow; light / dark: the lockup in its own colours. */
   tone?: BackgroundTone;
   /** Width of the lockup as a share of the canvas width. */
   logoShare?: number;
@@ -139,13 +139,13 @@ export function logoBackgroundSvg(options: LogoBackgroundOptions = {}, theme: Th
   const look = {
     brand: {
       centre: mix(light.primary, '#FFFFFF', 0.05),
-      edge: mix(light.primary, '#03110E', 0.66),
+      edge: mix(light.primary, '#021416', 0.66),
       ink: '#FFFFFF',
       drop: light.highlight,
       stroke: '#FFFFFF',
       strokeOpacity: 0.085,
       fill: light.highlight,
-      // Strong enough to read as gold (not olive) over the emerald.
+      // Strong enough to read as gold (not olive) over the turquoise.
       fillOpacity: 0.42,
     },
     light: {

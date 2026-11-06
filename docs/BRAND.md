@@ -19,7 +19,7 @@ hands. A small gift, held carefully, that changes the meaning of someone's day.
 | `packages/theme/assets/logo-mark-inverse.svg` | The mark on the primary colour or photos |
 | `packages/theme/assets/logo-ar.svg`, `logo-en.svg` | Mark + name: the Arabic in the approved lettering, the Latin set in Reem Kufi |
 | `packages/theme/assets/app-icon.svg` | 1024 × 1024 app icon (rendered to PNG for iOS / Android) |
-| `packages/theme/assets/backgrounds/*.svg` | 1920 × 1200 screen backgrounds: emerald, light and dark |
+| `packages/theme/assets/backgrounds/*.svg` | 1920 × 1200 screen backgrounds: turquoise, light and dark |
 
 - The geometry lives in `brand.ts` (`LOGO_VARIANTS`); `<LogoMark>` on the web and on mobile both
   draw from it, so there is one logo, not copies.
@@ -68,7 +68,7 @@ the Arabic name, left of the Latin one.
 
 `logoBackgroundSvg({ tone })` draws a 1920 × 1200 background (any size): the lockup centred on a
 soft glow, with «روضة العطاء» coming in towards the edges and clearing behind the logo. Three
-tones — `brand` (white on emerald), `light`, `dark` — follow the theme, so a rebrand repaints
+tones — `brand` (white on turquoise), `light`, `dark` — follow the theme, so a rebrand repaints
 them. The name is drawn (no font needed), so the SVG exports to a PNG anywhere for a wallpaper, an
 event screen or a video call.
 
@@ -78,21 +78,25 @@ Every text / background pair the components render is checked by `packages/theme
 body text on page surfaces at 7:1 (WCAG AAA), everything else at 4.5:1 (AA) — for the default
 theme and for any theme derived from brand colours.
 
+The palette is «فيروز ورمل» (turquoise and sand), adopted on 2026-11-06. The emerald it replaced
+is kept as the `emerald` preset in `@yusr/theme`.
+
 | Token | Light | Dark | Role |
 |---|---|---|---|
-| `primary` | `#13725F` | `#3DBA99` | Brand emerald: actions, links, progress |
-| `primary-hover` | `#0F5B4D` | `#5ACBAD` | Pressed / hover |
-| `highlight` | `#E0A42F` | `#E9B75A` | The golden ḍamma: the logo drop, milestones, "funded" |
-| `background` | `#F4F7F6` | `#0A1311` | Page |
-| `card` | `#FFFFFF` | `#101C19` | Surfaces |
-| `foreground` | `#10201C` | `#E6EFEC` | Text |
-| `muted-foreground` | `#55645F` | `#98ABA5` | Secondary text |
+| `primary` | `#00707A` | `#3FC6CF` | Brand turquoise: actions, links, progress |
+| `primary-hover` | `#055A62` | `#62D3DA` | Pressed / hover |
+| `secondary` | `#9C5A2E` | `#E3A37B` | Burnt clay: outline actions, a second voice |
+| `highlight` | `#D9A441` | `#E7BE6A` | The sand-gold ḍamma: the logo drop, milestones, "funded" |
+| `background` | `#F8F5EE` | `#081315` | Page (papyrus) |
+| `card` | `#FFFFFF` | `#0F1D20` | Surfaces |
+| `foreground` | `#132326` | `#E4F0EF` | Text |
+| `muted-foreground` | `#56625F` | `#93A9AA` | Secondary text |
 | `destructive` | `#C8323A` | `#F06B70` | Errors, critical deadlines |
 | `success` | `#1E7A48` | `#5CCB8C` | Paid, verified |
 
 Category tones give each kind of need its own colour, used on covers, badges and charts:
 medical — rose `#E5484D`, debt relief — slate `#556C9D`, education — sky `#2A86D6`, orphans'
-care — gold `#C98A1B`, urgent relief — teal `#1F8C74` (each with a soft background and an
+care — gold `#C08A2A`, urgent relief — turquoise `#0F8A93` (each with a soft background and an
 accessible foreground, in both schemes).
 
 ## Type
