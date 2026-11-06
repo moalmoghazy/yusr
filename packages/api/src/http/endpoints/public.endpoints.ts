@@ -1,5 +1,13 @@
 /** Donor-facing API: the catalog, giving (guest checkout included), receipts and case submission. */
-import { caseFiltersSchema, createDonationSchema, liveQuerySchema, presignUploadSchema, quoteDonationSchema, submitCaseSchema } from '@yusr/core/schemas';
+import {
+  caseFiltersSchema,
+  createDonationSchema,
+  liveQuerySchema,
+  presignUploadSchema,
+  quoteDonationSchema,
+  showcaseQuerySchema,
+  submitCaseSchema,
+} from '@yusr/core/schemas';
 import { endpoint, header } from '../endpoint';
 
 export const publicEndpoints = [
@@ -42,6 +50,35 @@ export const publicEndpoints = [
     returns: 'CaseDetail',
     cache: { seconds: 15 },
     handle: ({ services, params }) => services.cases.detail(params['slug']!),
+  }),
+
+  endpoint({
+    id: 'partners.showcase',
+    method: 'GET',
+    path: '/partners',
+    version: '1',
+    access: 'public',
+    tag: 'Catalog',
+    summary: '«شركاء يُسر»: active partner associations, the most recently joined first',
+    description: 'Name, registration number, region, joining date and published cases only. Contact details and «كود يُسر» never appear here.',
+    query: showcaseQuerySchema,
+    returns: 'PublicPartner[]',
+    cache: { seconds: 300 },
+    handle: ({ services, query }) => services.partners.showcase(query.limit),
+  }),
+
+  endpoint({
+    id: 'stories.list',
+    method: 'GET',
+    path: '/stories',
+    version: '1',
+    access: 'public',
+    tag: 'Catalog',
+    summary: '«قصص نجاح»: closed cases, the most recently closed first, with the day follow-up confirmed the help arrived',
+    query: showcaseQuerySchema,
+    returns: 'SuccessStory[]',
+    cache: { seconds: 60 },
+    handle: ({ services, query }) => services.cases.stories(query.limit),
   }),
 
   endpoint({

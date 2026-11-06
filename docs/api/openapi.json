@@ -767,6 +767,108 @@
         }
       }
     },
+    "/v1/partners": {
+      "get": {
+        "operationId": "partners.showcase",
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "«شركاء يُسر»: active partner associations, the most recently joined first",
+        "description": "Name, registration number, region, joining date and published cases only. Contact details and «كود يُسر» never appear here.\n\nOpen to guests; a Bearer token is read when sent.\n\nCached for guests for 300s.",
+        "security": [
+          {},
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 8,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 24
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PublicPartner[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "PublicPartner[] (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/stories": {
+      "get": {
+        "operationId": "stories.list",
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "«قصص نجاح»: closed cases, the most recently closed first, with the day follow-up confirmed the help arrived",
+        "description": "Open to guests; a Bearer token is read when sent.\n\nCached for guests for 60s.",
+        "security": [
+          {},
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 8,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 24
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SuccessStory[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "SuccessStory[] (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/donations/live": {
       "get": {
         "operationId": "donations.live",

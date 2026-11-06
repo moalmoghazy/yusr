@@ -102,7 +102,8 @@ export interface PartnersRepo {
   insert(row: PartnerRow): Promise<void>;
   update(id: Id, patch: Partial<Omit<PartnerRow, 'id' | 'createdBy' | 'createdAt'>>): Promise<void>;
   /** Cases submitted per partner id. */
-  caseCounts(): Promise<Map<Id, number>>;
+  /** Cases per partner, all statuses or only those given. */
+  caseCounts(statuses?: readonly CaseStatus[]): Promise<Map<Id, number>>;
   /** Join requests from associations, newest first (0009). */
   applications(limit: number): Promise<PartnerApplicationRow[]>;
   applicationById(id: Id, lock?: LockMode): Promise<PartnerApplicationRow | null>;

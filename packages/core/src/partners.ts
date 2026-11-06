@@ -34,6 +34,20 @@ export interface Partner {
   updatedAt: string;
 }
 
+/**
+ * A partner as donors see it in the home page's «شركاء يُسر»: public facts only (name, رقم الإشهار,
+ * region, when it joined and how many of its cases were published). No contact details, no code.
+ */
+export interface PublicPartner {
+  name: string;
+  registrationNumber: string;
+  region: string;
+  /** The day its contract with Yusr was signed (YYYY-MM-DD). */
+  joinedOn: string;
+  /** Its published, funded and closed cases. */
+  casesCount: number;
+}
+
 /** A request to join from an association (the website's «انضم كجمعية شريكة»), until staff handle it. */
 export const PARTNER_APPLICATION_STATUSES = ['new', 'contacted', 'approved', 'rejected'] as const;
 export type PartnerApplicationStatus = (typeof PARTNER_APPLICATION_STATUSES)[number];

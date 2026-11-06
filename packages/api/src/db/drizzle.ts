@@ -293,11 +293,11 @@ function createTx(x: Executor): Tx & { raw: Executor } {
           .set({ ...patch, updatedAt: new Date() })
           .where(eq(t.partners.id, id));
       },
-      caseCounts: async () => {
+      caseCounts: async (statuses) => {
         const rows = await x
           .select({ partnerId: t.cases.partnerId, count: sql<number>`count(*)::int` })
           .from(t.cases)
-          .where(sql`${t.cases.partnerId} IS NOT NULL`)
+          .where(statuses ? and(isNotNull(t.cases.partnerId), inArray(t.cases.status, [...statuses])) : isNotNull(t.cases.partnerId))
           .groupBy(t.cases.partnerId);
         return new Map(rows.map((row) => [row.partnerId!, row.count]));
       },

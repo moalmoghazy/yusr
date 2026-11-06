@@ -26,6 +26,7 @@ import {
   type Page,
   type PayeeType,
   type PublicDonation,
+  type SuccessStory,
   type TimelineEvent,
 } from '@yusr/core';
 import type { SubmitCaseInput } from '@yusr/core/schemas';
@@ -106,6 +107,24 @@ export class CasesService {
     const statuses: CaseStatus[] = filters.includeFunded ? ['published', 'funded', 'closed'] : ['published'];
     const page = await this.deps.db.read.cases.search({ ...filters, statuses });
     return { items: page.items.map(toCaseSummary), total: page.total, nextCursor: page.nextCursor };
+  }
+
+  /**
+   * «قصص نجاح» on the home page: closed cases (paid out with proof), the most recently closed first,
+   * each with the day Yusr's follow-up last confirmed the help arrived. Follow-up notes stay private.
+   */
+  async stories(limit: number): Promise<SuccessStory[]> {
+    const { db } = this.deps;
+    const page = await db.read.cases.search({ statuses: ['closed'], sort: 'newest', limit: 50 });
+    const closed = page.items
+      .filter((item): item is CaseRow & { closedAt: Date } => item.closedAt !== null)
+      .sort((a, b) => b.closedAt.getTime() - a.closedAt.getTime())
+      .slice(0, limit);
+    const followups = await db.read.cases.followups(closed.map((item) => item.id));
+    return closed.map((item) => {
+      const confirmed = followups.find((row) => row.caseId === item.id && row.outcome === 'confirmed');
+      return { ...toCaseSummary(item), closedAt: item.closedAt.toISOString(), confirmedAt: confirmed?.recordedAt.toISOString() ?? null };
+    });
   }
 
   async detail(slug: string): Promise<CaseDetail> {

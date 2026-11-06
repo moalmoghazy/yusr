@@ -99,6 +99,8 @@ export function createHttpClient(options: HttpClientOptions): YusrClient {
       }
     },
     liveDonations: (limit = 12) => request('GET', `/donations/live?limit=${limit}`),
+    partnerShowcase: (limit = 8) => request('GET', `/partners?limit=${limit}`),
+    successStories: (limit = 8) => request('GET', `/stories?limit=${limit}`),
     createDonation: (body, opts) => request('POST', '/donations', body, { 'Idempotency-Key': opts?.idempotencyKey ?? newIdempotencyKey() }),
     getDonation: (id, receiptToken) => request('GET', `/donations/${seg(id)}`, undefined, receiptToken ? { 'X-Receipt-Token': receiptToken } : {}),
     myDonations: () => request('GET', '/me/donations'),

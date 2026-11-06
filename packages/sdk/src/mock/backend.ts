@@ -67,6 +67,7 @@ import {
   type PartnerApplicationStatus,
   type PartnerCredentials,
   type PartnerStatus,
+  type PublicPartner,
   type PaymentMethod,
   type Payout,
   type Permission,
@@ -77,6 +78,7 @@ import {
   type Role,
   type SubmitCaseRequest,
   type SubmitCaseResult,
+  type SuccessStory,
   type TeamMember,
   type TimelineEvent,
   type UploadTicket,
@@ -1244,6 +1246,35 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
   const partnerCases = (registrationNumber: string) =>
     [...state.cases.values()].filter((item) => item.submittedBy.association?.registrationNumber === registrationNumber).length;
   const withCount = (partner: Omit<Partner, 'casesCount'>): Partner => ({ ...partner, casesCount: partnerCases(partner.registrationNumber) });
+  /** «شركاء يُسر»: public facts only, the most recently joined first. */
+  const partnerShowcase = (limit = 8): PublicPartner[] => {
+    const publicCount = (registrationNumber: string) =>
+      [...state.cases.values()].filter((item) => isPubliclyVisible(item.status) && item.submittedBy.association?.registrationNumber === registrationNumber)
+        .length;
+    return partners
+      .filter((partner) => partner.status === 'active')
+      .sort((a, b) => b.contractSignedOn.localeCompare(a.contractSignedOn) || Date.parse(b.createdAt) - Date.parse(a.createdAt))
+      .slice(0, limit)
+      .map((partner) => ({
+        name: partner.name,
+        registrationNumber: partner.registrationNumber,
+        region: partner.region,
+        joinedOn: partner.contractSignedOn,
+        casesCount: publicCount(partner.registrationNumber),
+      }));
+  };
+  /** «قصص نجاح»: closed cases, the most recently closed first, with the latest confirming follow-up. */
+  const successStories = (limit = 8): SuccessStory[] =>
+    [...state.cases.values()]
+      .filter((item) => item.status === 'closed')
+      .map((item) => ({ item, closedAt: item.history.findLast((change) => change.to === 'closed')?.at ?? null }))
+      .filter((entry): entry is { item: AdminCase; closedAt: string } => entry.closedAt !== null)
+      .sort((a, b) => Date.parse(b.closedAt) - Date.parse(a.closedAt))
+      .slice(0, limit)
+      .map(({ item, closedAt }) => {
+        const confirmed = followupLog.filter((entry) => entry.caseId === item.id && entry.outcome === 'confirmed').at(-1);
+        return { ...toSummary(item), closedAt, confirmedAt: confirmed?.recordedAt ?? null };
+      });
   const mustPartner = (id: string) => {
     const partner = partners.find((entry) => entry.id === id);
     if (!partner) throw new DomainError('NOT_FOUND', 'Partner not found');
@@ -2051,6 +2082,8 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
     listCases: async (filters) => read.cases(filters),
     getCase: async (slug) => read.caseBySlug(slug),
     liveDonations: async (limit) => read.live(limit),
+    partnerShowcase: async (limit) => partnerShowcase(limit),
+    successStories: async (limit) => successStories(limit),
     createDonation: async (request) => createDonation(request, { userId: ME, displayName: CURRENT_DONOR.name, region: CURRENT_DONOR.region }),
     getDonation: async (id) => mustDonation(id),
     myDonations: async () => read.myDonations(),

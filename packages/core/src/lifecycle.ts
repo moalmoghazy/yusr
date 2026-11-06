@@ -74,6 +74,8 @@ export function isDonatable(status: CaseStatus): boolean {
 }
 
 /** Statuses visible on the public catalog and case pages. */
+export const PUBLIC_CASE_STATUSES = ['published', 'funded', 'closed'] as const satisfies readonly CaseStatus[];
+
 export function isPubliclyVisible(status: CaseStatus): boolean {
-  return status === 'published' || status === 'funded' || status === 'closed';
+  return (PUBLIC_CASE_STATUSES as readonly CaseStatus[]).includes(status);
 }

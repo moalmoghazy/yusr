@@ -68,7 +68,14 @@ export const DEMO_PARTNERS: readonly PartnerAssociation[] = [
   { name: 'جمعية الرحمة لتنمية المجتمع (تجريبية)', registrationNumber: '0001/2026', contactName: 'منسق الحالات', contactPhone: '+201000000001' },
   { name: 'جمعية سنابل الخير (تجريبية)', registrationNumber: '0002/2026', contactName: 'منسق الحالات', contactPhone: '+201000000002' },
   { name: 'جمعية يد العون الخيرية (تجريبية)', registrationNumber: '0003/2026', contactName: 'منسق الحالات', contactPhone: '+201000000003' },
+  // Joined recently, no cases yet: they fill the home page's «شركاء يُسر».
+  { name: 'جمعية نور الأمل للتنمية (تجريبية)', registrationNumber: '0004/2026', contactName: 'منسق الحالات', contactPhone: '+201000000004' },
+  { name: 'جمعية بسمة لرعاية الأيتام (تجريبية)', registrationNumber: '0005/2026', contactName: 'منسق الحالات', contactPhone: '+201000000005' },
+  { name: 'جمعية الخير والبركة بالمنصورة (تجريبية)', registrationNumber: '0006/2026', contactName: 'منسق الحالات', contactPhone: '+201000000006' },
 ];
+
+/** The partners that carry the seed cases (the first three); the others joined after them. */
+const CASE_PARTNERS = DEMO_PARTNERS.slice(0, 3);
 
 /**
  * The demo partners in the approved-partner registry, with fixed «كود يُسر» so the submission form can be
@@ -79,6 +86,9 @@ export const DEMO_PARTNER_REGISTRY: ReadonlyArray<{ registrationNumber: string; 
   { registrationNumber: '0001/2026', region: 'EG-C', contractSignedOn: '2026-01-15', yusrCode: 'YSR-RAHMA226' },
   { registrationNumber: '0002/2026', region: 'EG-GZ', contractSignedOn: '2026-02-01', yusrCode: 'YSR-SANABE26' },
   { registrationNumber: '0003/2026', region: 'EG-ALX', contractSignedOn: '2026-03-10', yusrCode: 'YSR-YADAWN26' },
+  { registrationNumber: '0004/2026', region: 'EG-MNF', contractSignedOn: '2026-09-14', yusrCode: 'YSR-NAWRAS26' },
+  { registrationNumber: '0005/2026', region: 'EG-SHG', contractSignedOn: '2026-10-05', yusrCode: 'YSR-BASMA826' },
+  { registrationNumber: '0006/2026', region: 'EG-DK', contractSignedOn: '2026-10-28', yusrCode: 'YSR-BARAKA26' },
 ];
 
 /** The demo partner behind a seed case (stable per case). */
@@ -98,7 +108,7 @@ export function demoPartnerFor(slug: string): PartnerAssociation {
     0,
     SEED_CASES.findIndex((seed) => seed.slug === slug),
   );
-  return DEMO_PARTNERS[index % DEMO_PARTNERS.length]!;
+  return CASE_PARTNERS[index % CASE_PARTNERS.length]!;
 }
 
 const P = (ar: string[], en: string[]): Localized => ({ ar: ar.join('\n\n'), en: en.join('\n\n') });
@@ -1008,6 +1018,121 @@ export const SEED_CASES: readonly SeedCase[] = [
         note: 'تواصلنا مع ولي الأمر: المضخة تعمل، وتلقت الأسرة التدريب على استخدامها. نعاود الاتصال بعد أسبوعين.',
         by: 'u_aya',
         nextDueInDays: -2,
+      },
+    ],
+  },
+  {
+    slug: 'loom-debt-fayoum',
+    ref: 10410,
+    category: 'debt_relief',
+    status: 'closed',
+    region: 'EG-FYM',
+    currency: 'EGP',
+    goal: 38_000,
+    raised: 38_000,
+    zakat: true,
+    createdDaysAgo: 62,
+    publishedDaysAgo: 55,
+    fundedDaysAgo: 49,
+    closedDaysAgo: 43,
+    title: { ar: 'سداد دين نول خزف أنقذ ورشة أسرة في الفيوم', en: 'Paying off a pottery kiln debt that saved a family workshop in Faiyum' },
+    summary: {
+      ar: 'سُدد الدين للمورّد بإيصال مختوم، وعادت الورشة تعمل.',
+      en: 'The debt was paid to the supplier against a stamped receipt, and the workshop is working again.',
+    },
+    story: P(
+      [
+        'اشترى «حسن» فرن خزف بالتقسيط، ثم مرض ثلاثة أشهر فتراكمت الأقساط وهدّد المورّد بسحب الفرن، وهو مصدر رزق الأسرة الوحيد. سدّدت الجمعية المبلغ للمورّد مباشرة، وعاد حسن إلى العمل.',
+      ],
+      [
+        'Hassan bought a pottery kiln in instalments, then fell ill for three months; the instalments piled up and the supplier threatened to take back the kiln, the family’s only income. The association paid the supplier directly, and Hassan is back at work.',
+      ],
+    ),
+    beneficiary: { ar: 'حسن (اسم مستعار) وأسرته، ٥ أفراد', en: 'Hassan (pseudonym) and his family of 5' },
+    plan: [
+      {
+        payeeType: 'creditor',
+        payee: { ar: 'مورّد الأفران — الفيوم', en: 'Kiln supplier — Faiyum' },
+        purpose: { ar: 'باقي أقساط الفرن', en: 'Remaining kiln instalments' },
+        amount: 38_000,
+      },
+    ],
+    documents: [
+      { kind: 'debt_proof', pages: 2 },
+      { kind: 'field_report', pages: 1 },
+      { kind: 'disbursement_proof', pages: 1 },
+    ],
+    submittedBy: { name: 'منسق الحالات', relation: 'volunteer' },
+    auditorId: 'u_mahmoud',
+    payout: 'paid',
+    followups: [
+      {
+        daysAgo: 40,
+        kind: 'payee_check',
+        outcome: 'confirmed',
+        note: 'أكد المورّد استلام المبلغ وإغلاق حساب الأسرة لديه.',
+        by: 'u_youssef',
+      },
+      {
+        daysAgo: 30,
+        kind: 'field_visit',
+        outcome: 'confirmed',
+        note: 'زيارة للورشة: الفرن يعمل، والأسرة عادت للإنتاج والبيع في السوق الأسبوعي.',
+        by: 'u_mahmoud',
+        nextDueInDays: 60,
+      },
+    ],
+  },
+  {
+    slug: 'winter-blankets-minya',
+    ref: 10401,
+    category: 'relief',
+    status: 'closed',
+    region: 'EG-MN',
+    currency: 'EGP',
+    goal: 52_000,
+    raised: 52_000,
+    zakat: false,
+    createdDaysAgo: 80,
+    publishedDaysAgo: 74,
+    fundedDaysAgo: 70,
+    closedDaysAgo: 64,
+    title: { ar: 'بطاطين ومراتب لـ٨٠ أسرة بعد سيول المنيا', en: 'Blankets and mattresses for 80 families after the Minya floods' },
+    summary: {
+      ar: 'وُزعت البطاطين والمراتب على ٨٠ أسرة بكشوف موقعة.',
+      en: 'Blankets and mattresses reached 80 families against signed lists.',
+    },
+    story: P(
+      ['غمرت السيول بيوت قريتين في المنيا وأتلفت الأغطية والمراتب قبل الشتاء. اشترت الجمعية من مورّد محلي، ووزعت على ٨٠ أسرة بكشوف موقعة من كل أسرة.'],
+      [
+        'Floods swept through two villages in Minya and ruined bedding just before winter. The association bought from a local supplier and handed out to 80 families against lists each family signed.',
+      ],
+    ),
+    beneficiary: { ar: '٨٠ أسرة في قريتين', en: '80 families in two villages' },
+    plan: [
+      {
+        payeeType: 'vendor',
+        payee: { ar: 'مورّد مفروشات — المنيا', en: 'Bedding supplier — Minya' },
+        purpose: { ar: '١٦٠ بطانية و٨٠ مرتبة', en: '160 blankets and 80 mattresses' },
+        amount: 52_000,
+      },
+    ],
+    documents: [
+      { kind: 'field_report', pages: 3 },
+      { kind: 'invoice', pages: 1 },
+      { kind: 'disbursement_proof', pages: 4 },
+    ],
+    submittedBy: { name: 'منسق الحالات', relation: 'volunteer' },
+    auditorId: 'u_aya',
+    payout: 'paid',
+    followups: [
+      {
+        daysAgo: 60,
+        kind: 'beneficiary_call',
+        outcome: 'confirmed',
+        note: 'اتصلنا بعينة من ١٠ أسر: كلها استلمت البطاطين والمراتب.',
+        by: 'u_aya',
+        nextDueInDays: 120,
       },
     ],
   },

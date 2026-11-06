@@ -270,9 +270,11 @@ export class MemoryDatabase implements Database {
           }
         }
       },
-      caseCounts: async () => {
+      caseCounts: async (statuses) => {
         const counts = new Map<Id, number>();
-        for (const item of s().cases.values()) if (item.partnerId) counts.set(item.partnerId, (counts.get(item.partnerId) ?? 0) + 1);
+        for (const item of s().cases.values()) {
+          if (item.partnerId && (!statuses || statuses.includes(item.status))) counts.set(item.partnerId, (counts.get(item.partnerId) ?? 0) + 1);
+        }
         return counts;
       },
       applications: async (limit) =>

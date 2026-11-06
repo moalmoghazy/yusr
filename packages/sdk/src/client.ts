@@ -1,7 +1,5 @@
 import type { CreatePartnerInput, EditCaseInput, PartnerApplicationInput, RecordFollowupInput, UpdatePartnerInput } from '@yusr/core/schemas';
 import type {
-  FollowupCase,
-  FollowupLog,
   AdminCase,
   AdminDonation,
   AdminOverview,
@@ -14,9 +12,12 @@ import type {
   ChecklistItem,
   CreateDonationRequest,
   CreateDonationResponse,
+  DocumentKind,
   DonationReceipt,
   DonorNotification,
   DonorRow,
+  FollowupCase,
+  FollowupLog,
   LedgerLine,
   LiveDonation,
   Locale,
@@ -29,13 +30,14 @@ import type {
   PartnerStatus,
   Payout,
   PlatformStats,
+  PublicPartner,
   Refund,
   Role,
   SentMessage,
-  DocumentKind,
-  SubmitCaseRequest,
   SignInProvider,
+  SubmitCaseRequest,
   SubmitCaseResult,
+  SuccessStory,
   TeamMember,
   UploadTicket,
   VerificationTask,
@@ -48,6 +50,10 @@ export interface YusrClient {
   listCases(filters?: CaseFilters): Promise<Page<CaseSummary>>;
   getCase(slug: string): Promise<CaseDetail | null>;
   liveDonations(limit?: number): Promise<LiveDonation[]>;
+  /** «شركاء يُسر»: active partner associations, the most recently joined first. */
+  partnerShowcase(limit?: number): Promise<PublicPartner[]>;
+  /** «قصص نجاح»: closed cases, the most recently closed first. */
+  successStories(limit?: number): Promise<SuccessStory[]>;
   createDonation(request: CreateDonationRequest, options?: { idempotencyKey?: string }): Promise<CreateDonationResponse>;
   getDonation(id: string, receiptToken?: string): Promise<DonationReceipt>;
   myDonations(): Promise<DonationReceipt[]>;

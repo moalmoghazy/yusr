@@ -119,6 +119,16 @@ export interface CaseSummary {
   createdAt: string;
 }
 
+/**
+ * A closed case told on the home page as a success story («قصص نجاح»): paid out with proof, and,
+ * when Yusr's follow-up after payout confirmed the help arrived, the day it did (never the call's notes).
+ */
+export interface SuccessStory extends CaseSummary {
+  closedAt: string;
+  /** The latest follow-up that confirmed the help reached the beneficiary; null when none yet. */
+  confirmedAt: string | null;
+}
+
 export interface CaseDocumentPublic {
   id: string;
   kind: DocumentKind;

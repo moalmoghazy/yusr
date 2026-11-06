@@ -11,12 +11,14 @@
 import { randomBytes } from 'node:crypto';
 import {
   DomainError,
+  PUBLIC_CASE_STATUSES,
   generateYusrCode,
   type Partner,
   type PartnerApplication,
   type PartnerApplicationStatus,
   type PartnerCredentials,
   type PartnerStatus,
+  type PublicPartner,
 } from '@yusr/core';
 import type { CreatePartnerInput, PartnerApplicationInput, UpdatePartnerInput } from '@yusr/core/schemas';
 import { primaryRole, requirePermission, type CallContext } from '../common/actor';
@@ -75,6 +77,24 @@ export class PartnersService {
   /** HMAC-SHA256 of a canonical code: unique in the registry, and what submissions are compared with. */
   codeHash(code: string): string {
     return yusrCodeHash(this.deps.config.codePepper, code);
+  }
+
+  // ------------------------------------------------------------------ public
+  /** «شركاء يُسر» on the home page: active partners, the most recently joined first. Public facts only. */
+  async showcase(limit: number): Promise<PublicPartner[]> {
+    const { db } = this.deps;
+    const [rows, counts] = await Promise.all([db.read.partners.list(), db.read.partners.caseCounts(PUBLIC_CASE_STATUSES)]);
+    return rows
+      .filter((row) => row.status === 'active')
+      .sort((a, b) => b.contractSignedOn.localeCompare(a.contractSignedOn) || b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit)
+      .map((row) => ({
+        name: row.name,
+        registrationNumber: row.registrationNumber,
+        region: row.region,
+        joinedOn: row.contractSignedOn,
+        casesCount: counts.get(row.id) ?? 0,
+      }));
   }
 
   // ------------------------------------------------------------------ staff (partners:manage)

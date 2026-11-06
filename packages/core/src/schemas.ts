@@ -334,6 +334,8 @@ export const quoteDonationSchema = donationFields.pick({ caseId: true, amountMin
 const limit = (max: number, fallback: number) => z.coerce.number().int().min(1).max(max).default(fallback);
 
 export const liveQuerySchema = z.object({ limit: limit(50, 12) });
+/** The home page's «شركاء يُسر» and «قصص نجاح» rows. */
+export const showcaseQuerySchema = z.object({ limit: limit(24, 8) });
 export const listQuerySchema = z.object({ limit: limit(100, 50) });
 export const adminCasesQuerySchema = z.object({ status: z.enum(CASE_STATUSES).optional(), q: z.string().trim().max(100).optional() });
 export const ledgerQuerySchema = z.object({

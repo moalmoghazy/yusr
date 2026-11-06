@@ -409,8 +409,9 @@ describe('operations', () => {
     }
     assert.equal((await call('GET', '/v1/admin/partners')).status, 401);
     const demo = await adminFor(sara).partners();
-    assert.equal(demo.length, 3, 'the three demo partners are in the registry');
-    assert.ok(demo.every((partner) => partner.status === 'active' && partner.casesCount > 0));
+    assert.equal(demo.length, DEMO_PARTNERS.length, 'every demo partner is in the registry');
+    assert.ok(demo.every((partner) => partner.status === 'active'));
+    assert.equal(demo.filter((partner) => partner.casesCount > 0).length, 3, 'three carry the seed cases, the others joined recently');
     assert.deepEqual(demo.map((partner) => partner.yusrCode).sort(), DEMO_PARTNER_REGISTRY.map((entry) => entry.yusrCode).sort());
 
     const created = await adminFor(youssef).createPartner({
@@ -433,7 +434,16 @@ describe('operations', () => {
     const catalog = await call('GET', '/v1/cases?limit=50&includeFunded=true');
     const first = catalog.json.items[0];
     const page = await call('GET', `/v1/cases/${first.slug}`);
-    for (const body of [catalog.text, page.text, (await call('GET', '/v1/openapi.json')).text, (await call('GET', '/v1/stats')).text]) {
+    const showcase = await call('GET', '/v1/partners?limit=24');
+    const stories = await call('GET', '/v1/stories');
+    for (const body of [
+      catalog.text,
+      page.text,
+      showcase.text,
+      stories.text,
+      (await call('GET', '/v1/openapi.json')).text,
+      (await call('GET', '/v1/stats')).text,
+    ]) {
       for (const code of codes) assert.ok(!body.includes(code), 'no code in public responses');
     }
     assert.ok(
@@ -441,6 +451,35 @@ describe('operations', () => {
       'the public partner is a registry entry',
     );
     assert.ok(!page.text.includes(DEMO_PARTNERS[0]!.contactPhone));
+  });
+
+  it('shows «شركاء يُسر» and «قصص نجاح» on the home page with public facts only', async () => {
+    const partners = await clientFor().partnerShowcase(24);
+    assert.ok(partners.length >= DEMO_PARTNERS.length);
+    const joined = partners.map((partner) => partner.joinedOn);
+    assert.deepEqual(joined, [...joined].sort().reverse(), 'the most recently joined first');
+    for (const partner of partners) {
+      assert.deepEqual(Object.keys(partner).sort(), ['casesCount', 'joinedOn', 'name', 'region', 'registrationNumber']);
+    }
+    const showcase = await call('GET', '/v1/partners?limit=24');
+    for (const partner of DEMO_PARTNERS) assert.ok(!showcase.text.includes(partner.contactPhone), 'no contact phone');
+    assert.equal((await clientFor().partnerShowcase(2)).length, 2);
+
+    const stories = await clientFor().successStories(8);
+    assert.ok(stories.length >= 3);
+    assert.ok(stories.every((story) => story.status === 'closed'));
+    const closed = stories.map((story) => Date.parse(story.closedAt));
+    assert.deepEqual(
+      closed,
+      [...closed].sort((a, b) => b - a),
+      'the most recently closed first',
+    );
+    assert.ok(
+      stories.every((story) => story.confirmedAt),
+      'each demo story has a confirming follow-up',
+    );
+    const text = (await call('GET', '/v1/stories')).text;
+    assert.ok(!text.includes('تواصلنا مع ولي الأمر'), 'follow-up notes stay private');
   });
 
   it('accepts an association’s case with its رقم الإشهار and «كود يُسر», without an account', async () => {
