@@ -370,7 +370,7 @@ function PartnersMarquee({ locale, partners }: { locale: Locale; partners: Publi
         </h2>
         <p className="text-sm text-muted-foreground">{t('landing.partnersBody')}</p>
       </div>
-      <div className="partners-marquee" style={{ ['--partners-duration' as string]: `${pass.length * 4.5}s` }}>
+      <div className="partners-marquee" style={{ ['--partners-duration' as string]: `${pass.length * 7}s` }}>
         <ul className="partners-track">
           {items.map((partner, index) => (
             // Only the first of each partner is read out; the repeats are for the eye.
@@ -383,30 +383,30 @@ function PartnersMarquee({ locale, partners }: { locale: Locale; partners: Publi
             >
               <span className="relative shrink-0">
                 {partner.isNew && <span className="partners-new">{t('landing.partners.new')}</span>}
-                <span className="partners-logo grid size-14 place-items-center overflow-hidden rounded-2xl border border-border bg-white">
+                <span className="partners-logo grid size-28 place-items-center overflow-hidden rounded-[1.75rem] border border-border bg-white">
                   {partner.logoVersion ? (
                     // eslint-disable-next-line @next/next/no-img-element -- a tiny logo from our own route; next/image adds nothing here
                     <img
                       src={`/partner-logos/${encodeURIComponent(partner.id)}?v=${partner.logoVersion}`}
                       alt=""
-                      width={56}
-                      height={56}
+                      width={112}
+                      height={112}
                       loading="lazy"
                       decoding="async"
                       className="size-full object-contain"
                     />
                   ) : (
-                    <span aria-hidden className="font-display text-xl font-bold text-primary">
+                    <span aria-hidden className="font-display text-[2.5rem] font-bold text-primary">
                       {initial(partner.name)}
                     </span>
                   )}
                 </span>
               </span>
-              <span className="partners-text flex min-w-0 flex-col gap-0.5">
-                <span className="whitespace-nowrap font-bold leading-snug" dir="auto">
+              <span className="partners-text flex min-w-0 flex-col gap-1">
+                <span className="whitespace-nowrap text-[2rem] font-bold leading-snug" dir="auto">
                   {partner.name}
                 </span>
-                <span className="whitespace-nowrap text-xs text-muted-foreground">
+                <span className="whitespace-nowrap text-[1.5rem] text-muted-foreground">
                   {t('landing.partners.registration')}{' '}
                   <span dir="ltr" className="font-mono">
                     {partner.registrationNumber}
