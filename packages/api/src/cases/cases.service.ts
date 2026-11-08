@@ -123,7 +123,7 @@ export class CasesService {
     const followups = await db.read.cases.followups(closed.map((item) => item.id));
     return closed.map((item) => {
       const confirmed = followups.find((row) => row.caseId === item.id && row.outcome === 'confirmed');
-      return { ...toCaseSummary(item), closedAt: item.closedAt.toISOString(), confirmedAt: confirmed?.recordedAt.toISOString() ?? null };
+      return { ...toCaseSummary(item), story: item.story, closedAt: item.closedAt.toISOString(), confirmedAt: confirmed?.recordedAt.toISOString() ?? null };
     });
   }
 

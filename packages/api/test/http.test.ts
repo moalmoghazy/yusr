@@ -467,7 +467,10 @@ describe('operations', () => {
 
     const stories = await clientFor().successStories(8);
     assert.ok(stories.length >= 3);
-    assert.ok(stories.every((story) => story.status === 'closed'));
+    assert.ok(
+      stories.every((story) => story.status === 'closed' && story.story.ar.length > 0),
+      'closed, with their story',
+    );
     const closed = stories.map((story) => Date.parse(story.closedAt));
     assert.deepEqual(
       closed,

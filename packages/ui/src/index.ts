@@ -18,6 +18,7 @@ export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 export { Logo, LogoMark, type LogoMarkProps } from './logo';
 export { DonationProgress, ProgressBar, type DonationProgressProps, type ProgressBarProps, type ProgressSize } from './progress';
 export { CaseCover, type CaseCoverProps } from './case-cover';
+export { StoryScene, type StorySceneProps } from './story-scene';
 export { CategoryBadge, RegionLabel, StatusBadge, VerifiedBadge, ZakatBadge } from './case-badges';
 export { CountdownBadge, type CountdownBadgeProps } from './countdown';
 export { CaseCard, type CardLinkProps, type CaseCardProps, type LinkComponent } from './case-card';

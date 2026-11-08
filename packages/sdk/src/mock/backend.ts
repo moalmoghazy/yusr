@@ -1312,7 +1312,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       .slice(0, limit)
       .map(({ item, closedAt }) => {
         const confirmed = followupLog.filter((entry) => entry.caseId === item.id && entry.outcome === 'confirmed').at(-1);
-        return { ...toSummary(item), closedAt, confirmedAt: confirmed?.recordedAt ?? null };
+        return { ...toSummary(item), story: item.story, closedAt, confirmedAt: confirmed?.recordedAt ?? null };
       });
   const mustPartner = (id: string) => {
     const partner = partners.find((entry) => entry.id === id);

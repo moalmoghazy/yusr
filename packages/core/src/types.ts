@@ -124,6 +124,8 @@ export interface CaseSummary {
  * when Yusr's follow-up after payout confirmed the help arrived, the day it did (never the call's notes).
  */
 export interface SuccessStory extends CaseSummary {
+  /** The case's story, as on its page (the home page tells it in the «قصص نجاح» reel). */
+  story: Localized;
   closedAt: string;
   /** The latest follow-up that confirmed the help reached the beneficiary; null when none yet. */
   confirmedAt: string | null;

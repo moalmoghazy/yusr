@@ -10,11 +10,12 @@ import {
   type PublicPartner,
   type SuccessStory,
 } from '@yusr/core';
-import { Badge, buttonClasses, CaseCard, CaseCover, cn, DonationProgress, Icon, LogoMark, textFor, type CaseCardProps, type IconName } from '@yusr/ui';
+import { buttonClasses, CaseCard, cn, DonationProgress, Icon, LogoMark, textFor, type CaseCardProps, type IconName } from '@yusr/ui';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { FeaturedRotator } from '@/components/featured-rotator';
 import { HowReveal } from '@/components/how-reveal';
+import { StoryReel, type ReelStory } from '@/components/story-reel';
 import { SupervisionBadge } from '@/components/supervision-badge';
 import { catalog, fresh } from '@/lib/api';
 import { href } from '@/lib/i18n';
@@ -30,7 +31,7 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
     api.liveDonations(5),
     api.listCases({ featuredOnly: true, limit: 6 }),
     // The two showcase rows are extras: an API that does not serve them yet just hides them.
-    api.successStories(3).catch((): SuccessStory[] => []),
+    api.successStories(6).catch((): SuccessStory[] => []),
     // Never cached: what staff change in «شركاء الموقع» in the hub shows here on the next visit.
     fresh(locale)
       .partnerShowcase(24)
@@ -290,49 +291,28 @@ function SuccessStories({ locale, stories }: { locale: Locale; stories: SuccessS
           <Icon name="arrow-forward" size={16} />
         </Link>
       </SectionHead>
-      <ul className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-        {stories.map((story) => (
-          <li key={story.id}>
-            <article className="group relative flex h-full flex-col overflow-hidden rounded-card border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-              <div className="relative">
-                <CaseCover category={story.category} seed={story.coverSeed} className="aspect-[16/7] w-full" />
-                <span className="absolute start-3 top-3">
-                  <Badge tone="success" icon="check">
-                    {t('landing.stories.paid')}
-                  </Badge>
-                </span>
-              </div>
-              <div className="flex flex-1 flex-col gap-3 p-5">
-                <p className="text-xs font-semibold text-muted-foreground">
-                  {t(`categories.${story.category}`)} · {regionName(story.region, l)}
-                </p>
-                <h3 className="text-lg font-bold leading-snug">
-                  <Link
-                    href={href(locale, `/cases/${story.slug}`)}
-                    className="outline-none after:absolute after:inset-0 group-hover:text-primary focus-visible:underline"
-                  >
-                    {l(story.title)}
-                  </Link>
-                </h3>
-                <p className="text-sm text-muted-foreground">{l(story.summary)}</p>
-                <div className="mt-auto flex flex-col gap-2 border-t border-border pt-3 text-sm">
-                  <p className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="font-bold text-primary">{t('landing.stories.raised', { amount: f.money(story.raisedMinor, story.currency) })}</span>
-                    <span className="text-muted-foreground">{t('units.donors', { count: story.donorsCount })}</span>
-                  </p>
-                  <p className="text-xs text-muted-foreground">{t('landing.stories.closedOn', { date: f.date(story.closedAt, 'medium') })}</p>
-                  {story.confirmedAt && (
-                    <p className="inline-flex items-start gap-1.5 rounded-control bg-primary-soft px-3 py-2 text-xs font-semibold text-primary-soft-foreground">
-                      <Icon name="shield-check" size={15} className="mt-px shrink-0" />
-                      {t('landing.stories.confirmed', { date: f.date(story.confirmedAt, 'medium') })}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </article>
-          </li>
-        ))}
-      </ul>
+      <StoryReel
+        labels={{
+          read: t('landing.stories.read'),
+          previous: t('landing.stories.previous'),
+          next: t('landing.stories.next'),
+          show: t('landing.stories.blurred'),
+        }}
+        stories={stories.map((story): ReelStory => ({
+          id: story.id,
+          category: story.category,
+          href: href(locale, `/cases/${story.slug}`),
+          meta: `${t(`categories.${story.category}`)} · ${regionName(story.region, l)}`,
+          title: l(story.title),
+          // An API from before stories carried their text answers with the summary only.
+          story: l(story.story ?? story.summary),
+          outcome: l(story.summary),
+          raised: t('landing.stories.raised', { amount: f.money(story.raisedMinor, story.currency) }),
+          donors: t('units.donors', { count: story.donorsCount }),
+          closed: t('landing.stories.closedOn', { date: f.date(story.closedAt, 'medium') }),
+          confirmed: story.confirmedAt ? t('landing.stories.confirmed', { date: f.date(story.confirmedAt, 'medium') }) : null,
+        }))}
+      />
     </section>
   );
 }

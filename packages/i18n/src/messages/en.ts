@@ -368,7 +368,10 @@ export const en: Messages = {
     storiesBody:
       'Cases that were fully funded, paid to the right institution against a published receipt, then followed up by us to make sure the help arrived.',
     stories: {
-      paid: 'Paid out with a receipt',
+      read: 'Read the full story',
+      previous: 'Previous story',
+      next: 'Next story',
+      blurred: 'Faces blurred for privacy',
       raised: '{amount} raised',
       closedOn: 'Completed on {date}',
       confirmed: 'We confirmed the help arrived on {date}',
