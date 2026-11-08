@@ -543,6 +543,29 @@ export async function seedDemo(tx: Tx, options: { now: Date; cipher: FieldCipher
     });
     summary.donations += 1;
   }
+
+  // ------------------------------------------------------------------ «اطلب الاطلاع على الوثائق» (the hub's inbox)
+  // Two visitors waiting for a case's documents on WhatsApp, and one already answered. Invented names and numbers.
+  const asked = SEED_CASES.filter((seed) => seed.status === 'published').slice(0, 3);
+  const askers: ReadonlyArray<[string, string]> = [
+    ['منى سامي', '+201022223333'],
+    ['خالد عبد الرحمن', '+201155554444'],
+    ['سارة فؤاد', '+201277776666'],
+  ];
+  for (const [position, seed] of asked.entries()) {
+    const [name, whatsapp] = askers[position]!;
+    const sent = position === 2;
+    await tx.cases.insertDocumentRequest({
+      id: stableId(`document-request:${seed.slug}`),
+      caseId: stableId(`case:${seed.slug}`),
+      name,
+      whatsapp,
+      status: sent ? 'sent' : 'new',
+      handledBy: sent ? staffId('u_youssef') : null,
+      handledAt: sent ? new Date(now.getTime() - 20 * HOUR) : null,
+      createdAt: new Date(now.getTime() - (position * 9 + 2) * HOUR),
+    });
+  }
   return summary;
 }
 

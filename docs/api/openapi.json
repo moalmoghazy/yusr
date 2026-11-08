@@ -39,6 +39,9 @@
       "name": "Operations · Follow-up"
     },
     {
+      "name": "Operations · Document requests"
+    },
+    {
       "name": "Operations · Finance"
     },
     {
@@ -1500,6 +1503,84 @@
                   "region",
                   "contactName",
                   "contactPhone"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "{ received: true }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "{ received: true } (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/cases/{slug}/document-requests": {
+      "post": {
+        "operationId": "cases.requestDocuments",
+        "tags": [
+          "Submissions"
+        ],
+        "summary": "Ask to see a case’s documents; the team sends them on WhatsApp as view-once images",
+        "description": "No account needed. Asking again from the same number while a request waits adds nothing.\n\nOpen to guests; a Bearer token is read when sent.\n\nRate limit: 5 per 3600s per IP.",
+        "security": [
+          {},
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 80
+                  },
+                  "whatsapp": {
+                    "type": "string",
+                    "pattern": "^\\+[1-9]\\d{7,14}$"
+                  },
+                  "viewOnly": {
+                    "type": "boolean",
+                    "const": true
+                  }
+                },
+                "required": [
+                  "name",
+                  "whatsapp",
+                  "viewOnly"
                 ]
               }
             }
@@ -3481,6 +3562,127 @@
               "application/json": {
                 "schema": {
                   "description": "FollowupLog (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/document-requests": {
+      "get": {
+        "operationId": "admin.documentRequests.inbox",
+        "tags": [
+          "Operations · Document requests"
+        ],
+        "summary": "Requests to see case documents, newest first, with how many still wait",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `documents:share`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "x-permission": "documents:share",
+        "responses": {
+          "200": {
+            "description": "DocumentRequestInbox",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "DocumentRequestInbox (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/document-requests/{id}/status": {
+      "post": {
+        "operationId": "admin.documentRequests.status",
+        "tags": [
+          "Operations · Document requests"
+        ],
+        "summary": "Mark a request as sent (documents went out on WhatsApp) or declined",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `documents:share`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "sent",
+                      "declined"
+                    ]
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "documents:share",
+        "responses": {
+          "200": {
+            "description": "DocumentRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "DocumentRequest (see @yusr/core)"
                 }
               }
             }

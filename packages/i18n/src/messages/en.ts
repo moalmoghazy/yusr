@@ -139,6 +139,7 @@ export const en: Messages = {
     'settings:manage': 'Platform settings',
     'partners:manage': 'Manage partner associations',
     'cases:follow_up': 'Log follow-up after payout',
+    'documents:share': 'Send documents to those who ask to view them',
   },
   donationType: {
     sadaqah: 'Sadaqah',
@@ -233,8 +234,23 @@ export const en: Messages = {
     donorsTab: 'Donors',
     beneficiary: 'Beneficiary',
     redactedNotice:
-      'We show copies with personal details redacted to protect the beneficiary’s dignity and privacy. The originals are kept by the partner association, available for inspection, and were reviewed by the Yusr team before publishing.',
+      'We show copies with personal details redacted to protect the beneficiary’s dignity, reviewed by the Yusr team before publishing. As a donor you have the right to see the documents themselves: press “Request to view” and we send them to you on WhatsApp.',
     redacted: 'Redacted',
+    requestDocs: {
+      button: 'Request to view',
+      title: 'Request to view the documents',
+      body: 'As a donor you have the right to see this case’s documents. Leave your name and WhatsApp number and the Yusr team sends them to you there.',
+      name: 'Your name',
+      whatsapp: 'WhatsApp number',
+      whatsappHint: 'Used only to send you the documents, and never shown on a public page.',
+      viewOnly: 'Documents are sent as images for viewing only. Saving them or taking screenshots is not allowed, to protect the case’s privacy.',
+      agree: 'I agree to view only, without saving, photographing or sharing the documents.',
+      send: 'Send request',
+      cancel: 'Cancel',
+      close: 'Close',
+      sentTitle: 'We have your request',
+      sentBody: 'The Yusr team will send you the documents on WhatsApp as view-once images.',
+    },
     verifiedBy: 'Verified by',
     disbursementPlan: 'Disbursement plan',
     planTotal: 'Total paid to providers',
@@ -707,6 +723,7 @@ export const en: Messages = {
           beneficiaries:
             'From associations, about beneficiaries: case details and documents, and the national ID encrypted, with the beneficiary’s written consent collected by the association.',
           join: 'From associations asking to join: the association’s details and its contact person, used only to contact them.',
+          documents: 'When you ask to see a case’s documents: your name and WhatsApp number, used only to send you the documents.',
         },
       },
       use: {
@@ -725,7 +742,7 @@ export const en: Messages = {
           consent:
             'Beneficiaries’ health, financial and legal data, and children’s data, are sensitive. We process them only with explicit written consent (a guardian’s consent for minors), and only as much as reviewing the case requires.',
           never:
-            'We never publish them or use them in marketing: stories use pseudonyms and no photos, and published documents have identifying details hidden.',
+            'We never publish them or use them in marketing: stories use pseudonyms and no photos, and published documents have identifying details hidden. Donors who ask to see a case’s documents receive them on WhatsApp as view-only images.',
         },
       },
       share: {
@@ -842,7 +859,7 @@ export const en: Messages = {
     description: 'Yusr is a giving platform built for fair distribution and lasting, genuine giving that reaches people in need with transparency and dignity.',
     question: 'Who are we?',
     lead: 'Yusr is a giving platform. Our aim is fair distribution and lasting, genuine giving that reaches people in need — with transparency, and with dignity.',
-    body: 'We believe trust is built on clarity, and that real kindness needs no noise. So we work with registered associations that research every case in the field before it is published, review each file, follow every pound from the moment it is given until it is paid directly to the hospital, the school or the creditor, and keep the names, faces and private lives of the people we serve to ourselves. We want giving to be easy for the giver, dignified for the receiver, and honest at every step in between.',
+    body: 'We believe trust is built on clarity, and that real kindness needs no noise. So we work with registered associations that research every case in the field before it is published, review each file, follow every pound from the moment it is given until it is paid directly to the hospital, the school or the creditor, and protect the names and privacy of the people we serve, while donors keep the full right to see the documents that make giving easier, more trusted and safer. We want giving to be easy for the giver, dignified for the receiver, and honest at every step in between.',
     values: {
       fair: { title: 'Fair distribution', body: 'Those in greatest need first, by clear criteria.' },
       lasting: { title: 'Lasting giving', body: 'We follow every case until it is complete — not once and done.' },
@@ -985,6 +1002,31 @@ export const en: Messages = {
       partners: 'Partner associations',
       followups: 'Follow-up after payout',
       showcase: 'Site partners',
+      documentRequests: 'View requests',
+    },
+    documentRequests: {
+      title: 'Requests to view documents',
+      subtitle:
+        'Visitors who asked, on a case page, to see its documents. Send each one the documents on WhatsApp as “view once” images, then mark the request sent. The number is for the team only and never appears on a public page.',
+      empty: 'No requests yet.',
+      waiting: {
+        zero: 'None waiting',
+        one: 'One waiting',
+        two: 'Two waiting',
+        few: '{count} waiting',
+        many: '{count} waiting',
+        other: '{count} waiting',
+      },
+      statuses: { new: 'New', sent: 'Documents sent', declined: 'Declined' },
+      requestedOn: 'Asked {date}',
+      openWhatsApp: 'Message on WhatsApp',
+      markSent: 'Mark sent',
+      decline: 'Decline',
+      handled: '{name} · {date}',
+      openCase: 'Case page',
+      viewOnce: 'Send each image with WhatsApp’s “view once” option, so it cannot be saved or forwarded, and WhatsApp blocks screenshots of it on most phones.',
+      message:
+        'Hello {name}, this is the Yusr team about your request to see the documents of case {reference}. We are sending them now as view-once images, for viewing only and not to be saved or captured, to protect the case’s privacy.',
     },
     showcase: {
       title: 'Site partners',

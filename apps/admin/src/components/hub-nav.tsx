@@ -8,6 +8,8 @@ export interface HubNavItem {
   href: string;
   label: string;
   icon: IconName;
+  /** Items waiting on this page (shown as a counter). */
+  count?: string;
 }
 
 export function HubNav({ items, label }: { items: HubNavItem[]; label: string }) {
@@ -28,6 +30,11 @@ export function HubNav({ items, label }: { items: HubNavItem[]; label: string })
           >
             <Icon name={item.icon} size={18} />
             {item.label}
+            {item.count !== undefined && (
+              <span className="ms-auto inline-grid min-w-5 place-items-center rounded-full bg-highlight px-1.5 text-xs font-bold tabular-nums text-highlight-foreground">
+                {item.count}
+              </span>
+            )}
           </Link>
         );
       })}

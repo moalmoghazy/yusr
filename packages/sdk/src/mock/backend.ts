@@ -65,6 +65,8 @@ import {
   type Page,
   type Partner,
   type PartnerApplication,
+  type DocumentRequest,
+  type DocumentRequestStatus,
   type PartnerApplicationStatus,
   type PartnerCredentials,
   type PartnerLogoType,
@@ -92,6 +94,7 @@ import type {
   CreatePartnerInput,
   EditCaseInput,
   PartnerApplicationInput,
+  DocumentRequestInput,
   PartnerLogoInput,
   PartnerShowcaseInput,
   RecordFollowupInput,
@@ -1243,6 +1246,24 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
     });
     return { received: true };
   };
+  /** «اطلب الاطلاع على الوثائق», newest last. The WhatsApp number stays in the hub. */
+  const documentRequests: DocumentRequest[] = [];
+  const requestDocuments = (slug: string, input: DocumentRequestInput): { received: true } => {
+    const item = [...state.cases.values()].find((entry) => entry.slug === slug);
+    if (!item || !isPubliclyVisible(item.status)) throw new DomainError('NOT_FOUND', 'Case not found');
+    if (documentRequests.some((entry) => entry.case.id === item.id && entry.whatsapp === input.whatsapp && entry.status === 'new')) return { received: true };
+    documentRequests.push({
+      id: `document_request_${String(documentRequests.length + 1).padStart(4, '0')}`,
+      case: { id: item.id, slug: item.slug, reference: item.reference, title: item.title },
+      name: input.name.trim(),
+      whatsapp: input.whatsapp,
+      status: 'new',
+      handledBy: null,
+      handledAt: null,
+      createdAt: iso(clock()),
+    });
+    return { received: true };
+  };
   const partners: Array<Omit<Partner, 'casesCount'>> = DEMO_PARTNERS.map((partner, index) => {
     const registry = DEMO_PARTNER_REGISTRY.find((entry) => entry.registrationNumber === partner.registrationNumber)!;
     const at = `${registry.contractSignedOn}T10:00:00.000Z`;
@@ -1867,6 +1888,21 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
         logAudit(actorRef, `partner.application_${status}`, 'partner_application', applicationId, next.name, { status: current.status }, { status });
         return toApplication(next);
       },
+      documentRequests: (limit = 100) => {
+        ensure('documents:share');
+        return { items: [...documentRequests].reverse().slice(0, limit), waiting: documentRequests.filter((entry) => entry.status === 'new').length };
+      },
+      setDocumentRequestStatus: (requestId: string, status: Exclude<DocumentRequestStatus, 'new'>) => {
+        ensure('documents:share');
+        const index = documentRequests.findIndex((entry) => entry.id === requestId);
+        const current = documentRequests[index];
+        if (!current) throw new DomainError('NOT_FOUND', 'Request not found');
+        if (current.status === status) return current;
+        const next = { ...current, status, handledBy: { id: actor.id, name: actor.name }, handledAt: iso(clock()) };
+        documentRequests.splice(index, 1, next);
+        logAudit(actorRef, `documents.request_${status}`, 'document_request', requestId, current.case.reference, { status: current.status }, { status });
+        return next;
+      },
       followups: () => {
         ensure('cases:read');
         return [...state.cases.values()]
@@ -1960,6 +1996,8 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       followups: wrap(sync.followups),
       caseFollowups: wrap(sync.caseFollowups),
       recordFollowup: wrap(sync.recordFollowup),
+      documentRequests: wrap(sync.documentRequests),
+      setDocumentRequestStatus: wrap(sync.setDocumentRequestStatus),
     };
   };
 
@@ -2178,6 +2216,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
     presignUpload: async (input) => presignUpload(input),
     submitCase: async (request) => submitCase(request),
     applyAsPartner: async (request) => applyAsPartner(request),
+    requestDocuments: async (slug, request) => requestDocuments(slug, request),
   };
 
   return {

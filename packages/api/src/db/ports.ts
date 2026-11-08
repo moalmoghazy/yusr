@@ -23,6 +23,7 @@ import type {
   OutboxInput,
   OutboxRow,
   PartnerApplicationRow,
+  DocumentRequestRow,
   PartnerRow,
   PaymentAttemptRow,
   PayoutRow,
@@ -91,6 +92,15 @@ export interface CasesRepo {
   followups(caseIds: readonly Id[]): Promise<CaseFollowupRow[]>;
   /** Refused unless the case is funded or closed. */
   insertFollowup(row: CaseFollowupRow): Promise<void>;
+  /** Requests to see documents (0012), newest first. */
+  documentRequests(limit: number): Promise<DocumentRequestRow[]>;
+  documentRequestById(id: Id, lock?: LockMode): Promise<DocumentRequestRow | null>;
+  /** The request still waiting from this number on this case, if any. */
+  openDocumentRequest(caseId: Id, whatsapp: string): Promise<DocumentRequestRow | null>;
+  /** How many requests still wait (the hub's counter). */
+  waitingDocumentRequests(): Promise<number>;
+  insertDocumentRequest(row: DocumentRequestRow): Promise<void>;
+  updateDocumentRequest(id: Id, patch: Pick<DocumentRequestRow, 'status' | 'handledBy' | 'handledAt'>): Promise<void>;
 }
 
 /** The approved-partner registry. Renaming a partner renames it on its cases too (a trigger in SQL). */

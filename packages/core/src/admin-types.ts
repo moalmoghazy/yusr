@@ -127,7 +127,7 @@ export interface Refund {
   createdAt: string;
 }
 
-export type AuditEntity = 'case' | 'donation' | 'payout' | 'refund' | 'user' | 'verification' | 'partner' | 'partner_application';
+export type AuditEntity = 'case' | 'donation' | 'payout' | 'refund' | 'user' | 'verification' | 'partner' | 'partner_application' | 'document_request';
 
 export interface AuditEntry {
   id: string;

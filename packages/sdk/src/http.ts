@@ -108,6 +108,7 @@ export function createHttpClient(options: HttpClientOptions): YusrClient {
     presignUpload: (body) => request('POST', '/uploads', body),
     submitCase: (body) => request('POST', '/cases', body),
     applyAsPartner: (body) => request('POST', '/partner-applications', body),
+    requestDocuments: (slug, body) => request('POST', `/cases/${seg(slug)}/document-requests`, body),
   };
 }
 
@@ -155,6 +156,8 @@ export function createHttpAdminClient(options: HttpClientOptions): AdminClient {
     followups: () => request('GET', '/admin/followups'),
     caseFollowups: (caseId) => request('GET', `/admin/cases/${seg(caseId)}/followups`),
     recordFollowup: (caseId, input) => post(`/admin/cases/${seg(caseId)}/followups`, input),
+    documentRequests: (limit = 100) => request('GET', `/admin/document-requests?limit=${limit}`),
+    setDocumentRequestStatus: (requestId, status) => post(`/admin/document-requests/${seg(requestId)}/status`, { status }),
   };
 }
 

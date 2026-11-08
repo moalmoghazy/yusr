@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { CHECKLIST_ITEMS, SUBMITTER_RELATIONS } from './admin-types';
 import { CONTACT_CHANNELS } from './contact';
 import { DEDICATION_MAX_LENGTH } from './donation';
+import { DOCUMENT_REQUEST_STATUSES } from './document-requests';
 import { FOLLOWUP_KINDS, FOLLOWUP_OUTCOMES } from './followups';
 import {
   isYusrCode,
@@ -181,6 +182,19 @@ export type PartnerApplicationInput = z.infer<typeof partnerApplicationSchema>;
 
 export const partnerApplicationStatusSchema = z.object({
   status: z.enum(PARTNER_APPLICATION_STATUSES).exclude(['new']),
+});
+
+/** «اطلب الاطلاع على الوثائق» (public, no account): who asks, the WhatsApp number, and agreement to view-only. */
+export const documentRequestSchema = z.object({
+  name: z.string().trim().min(2).max(80),
+  whatsapp: phoneSchema,
+  /** The requester accepts that the documents arrive as view-once images, not to be saved or captured. */
+  viewOnly: z.literal(true, { error: 'Accept the viewing terms' }),
+});
+export type DocumentRequestInput = z.infer<typeof documentRequestSchema>;
+
+export const documentRequestStatusSchema = z.object({
+  status: z.enum(DOCUMENT_REQUEST_STATUSES).exclude(['new']),
 });
 
 export const submitCaseSchema = z

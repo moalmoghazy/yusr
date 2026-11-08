@@ -20,6 +20,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { DonatePanel } from '@/components/donate-panel';
+import { DocumentRequestDialog, RequestDocumentsButton } from '@/components/document-request';
 import { ShareCase } from '@/components/share-case';
 import { catalog } from '@/lib/api';
 import { href, isLocale } from '@/lib/i18n';
@@ -156,14 +157,18 @@ export default async function CasePage({ params, searchParams }: { params: Param
                     {t('case.verifiedBy')}: {l(document.verifiedBy)}
                   </p>
                   {document.redacted && (
-                    <Badge tone="slate" icon="eye-off" className="self-start">
-                      {t('case.redacted')}
-                    </Badge>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge tone="slate" icon="eye-off">
+                        {t('case.redacted')}
+                      </Badge>
+                      <RequestDocumentsButton label={t('case.requestDocs.button')} />
+                    </div>
                   )}
                 </div>
               </li>
             ))}
           </ul>
+          <DocumentRequestDialog locale={locale} slug={item.slug} />
         </Section>
 
         <Section id="verification" title={t('case.verification')}>

@@ -28,6 +28,8 @@ export const PERMISSIONS = [
   'partners:manage',
   /** Log follow-up calls and visits on funded and closed cases (reading the board needs only cases:read). */
   'cases:follow_up',
+  /** Answer donors' requests to see a case's documents (sent over WhatsApp as view-once images). */
+  'documents:share',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -54,6 +56,7 @@ export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Permission[]>> = {
     'crm:read',
     'partners:manage',
     'cases:follow_up',
+    'documents:share',
   ],
   financial_officer: ['cases:read', 'cases:close', 'finance:read', 'finance:reconcile', 'finance:refunds', 'finance:payouts', 'finance:approve', 'crm:read'],
   super_admin: PERMISSIONS,

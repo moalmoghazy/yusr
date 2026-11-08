@@ -20,6 +20,7 @@ import {
   type Localized,
   type PartnerAssociation,
   type PartnerApplicationStatus,
+  type DocumentRequestStatus,
   type PartnerLogoType,
   type PartnerStatus,
   type SubmitterRelation,
@@ -287,6 +288,24 @@ export const caseDocuments = pgTable(
     createdAt: created(),
   },
   (t) => [index('case_documents_case_idx').on(t.caseId)],
+);
+
+/** Requests to see a case's documents (0012_document_requests.sql); the WhatsApp number is staff only. */
+export const documentRequests = pgTable(
+  'document_requests',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    caseId: uuid('case_id')
+      .notNull()
+      .references(() => cases.id),
+    name: text('name').notNull(),
+    whatsapp: text('whatsapp').notNull(),
+    status: text('status').$type<DocumentRequestStatus>().notNull().default('new'),
+    handledBy: uuid('handled_by').references(() => users.id),
+    handledAt: at('handled_at'),
+    createdAt: created(),
+  },
+  (t) => [index('document_requests_inbox_idx').on(t.createdAt)],
 );
 
 /** Follow-up calls and visits on funded and closed cases (0010_case_followups.sql); append-only. */

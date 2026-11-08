@@ -48,6 +48,7 @@ import type {
   NotificationRow,
   OutboxRow,
   PartnerApplicationRow,
+  DocumentRequestRow,
   PartnerRow,
   PaymentAttemptRow,
   PayoutRow,
@@ -89,6 +90,7 @@ interface State {
   transitions: CaseTransitionRow[];
   documents: Map<Id, CaseDocumentRow>;
   followups: CaseFollowupRow[];
+  documentRequests: Map<Id, DocumentRequestRow>;
   lines: Map<Id, DisbursementLineRow>;
   tasks: Map<Id, VerificationTaskRow>;
   donations: Map<Id, DonationRow>;
@@ -136,6 +138,7 @@ function emptyState(): State {
     transitions: [],
     documents: new Map(),
     followups: [],
+    documentRequests: new Map(),
     lines: new Map(),
     tasks: new Map(),
     donations: new Map(),
@@ -473,6 +476,28 @@ export class MemoryDatabase implements Database {
         const status = s().cases.get(row.caseId)?.status;
         if (status !== 'funded' && status !== 'closed') throw new DomainError('VALIDATION_FAILED', 'Only funded or closed cases take follow-ups');
         s().followups.push(clone(row));
+      },
+      documentRequests: async (limit) =>
+        cloneAll([...s().documentRequests.values()].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, limit)),
+      documentRequestById: async (id) => clone(s().documentRequests.get(id) ?? null),
+      openDocumentRequest: async (caseId, whatsapp) =>
+        clone([...s().documentRequests.values()].find((row) => row.caseId === caseId && row.whatsapp === whatsapp && row.status === 'new') ?? null),
+      waitingDocumentRequests: async () => [...s().documentRequests.values()].filter((row) => row.status === 'new').length,
+      insertDocumentRequest: async (row) => {
+        if (s().documentRequests.has(row.id)) throw new DomainError('VALIDATION_FAILED', 'This record already exists');
+        if (!s().cases.has(row.caseId)) throw new DomainError('NOT_FOUND', `case ${row.caseId} not found`);
+        // Like document_requests_open_idx in 0012.
+        if ([...s().documentRequests.values()].some((other) => other.caseId === row.caseId && other.whatsapp === row.whatsapp && other.status === 'new')) {
+          throw new DomainError('VALIDATION_FAILED', 'A request from this number is already waiting');
+        }
+        s().documentRequests.set(row.id, clone(row));
+      },
+      updateDocumentRequest: async (id, patch) => {
+        const current = s().documentRequests.get(id);
+        if (!current) throw new DomainError('NOT_FOUND', `document request ${id} not found`);
+        // Like document_requests_handled in 0012.
+        if ((patch.status === 'new') !== (patch.handledAt === null)) throw new DomainError('VALIDATION_FAILED', 'handled requests carry handledAt');
+        s().documentRequests.set(id, { ...current, ...clone(patch) });
       },
     };
   }

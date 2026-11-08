@@ -1,5 +1,6 @@
 import type {
   CreatePartnerInput,
+  DocumentRequestInput,
   EditCaseInput,
   PartnerApplicationInput,
   PartnerLogoInput,
@@ -21,6 +22,9 @@ import type {
   CreateDonationRequest,
   CreateDonationResponse,
   DocumentKind,
+  DocumentRequest,
+  DocumentRequestInbox,
+  DocumentRequestStatus,
   DonationReceipt,
   DonorNotification,
   DonorRow,
@@ -74,6 +78,8 @@ export interface YusrClient {
   submitCase(request: SubmitCaseRequest): Promise<SubmitCaseResult>;
   /** An association asks to become a partner («انضم كجمعية شريكة»); the team contacts it. */
   applyAsPartner(request: PartnerApplicationInput): Promise<{ received: true }>;
+  /** «اطلب الاطلاع على الوثائق»: the team sends the case's documents to this WhatsApp number as view-once images. */
+  requestDocuments(slug: string, request: DocumentRequestInput): Promise<{ received: true }>;
 }
 
 export interface LedgerQuery {
@@ -137,6 +143,9 @@ export interface AdminClient {
   caseFollowups(caseId: string): Promise<FollowupLog>;
   /** Logs a call or visit (cases:follow_up); append-only. */
   recordFollowup(caseId: string, input: RecordFollowupInput): Promise<FollowupLog>;
+  /** Requests to see case documents, newest first, with how many still wait (documents:share). */
+  documentRequests(limit?: number): Promise<DocumentRequestInbox>;
+  setDocumentRequestStatus(requestId: string, status: Exclude<DocumentRequestStatus, 'new'>): Promise<DocumentRequest>;
 }
 
 /** Sign-in and sessions (phone OTP, Google/Apple, rotation, logout). */

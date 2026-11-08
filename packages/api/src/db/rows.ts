@@ -19,6 +19,7 @@ import type {
   PaymentMethod,
   PartnerAssociation,
   PartnerApplicationStatus,
+  DocumentRequestStatus,
   PartnerLogoType,
   PartnerStatus,
   PaymentProvider,
@@ -165,6 +166,18 @@ export interface PartnerApplicationRow {
   contactEmail: string | null;
   message: string | null;
   status: PartnerApplicationStatus;
+  handledBy: Id | null;
+  handledAt: Timestamp | null;
+  createdAt: Timestamp;
+}
+
+/** A request to see a case's documents (0012_document_requests.sql). The number is staff only. */
+export interface DocumentRequestRow {
+  id: Id;
+  caseId: Id;
+  name: string;
+  whatsapp: string;
+  status: DocumentRequestStatus;
   handledBy: Id | null;
   handledAt: Timestamp | null;
   createdAt: Timestamp;

@@ -19,7 +19,7 @@ const UPDATED = '2026-10-23';
 /** The policy in the project guide (15-3), worded for donors and matched to what the site actually does. */
 const SECTIONS = [
   { key: 'who', points: ['yusr', 'partner'] },
-  { key: 'collect', points: ['donate', 'account', 'auto', 'beneficiaries', 'join'] },
+  { key: 'collect', points: ['donate', 'account', 'auto', 'beneficiaries', 'join', 'documents'] },
   { key: 'use', points: ['donation', 'safety', 'improve', 'marketing'] },
   { key: 'sensitive', points: ['consent', 'never'] },
   { key: 'share', points: ['partner', 'gateway', 'providers', 'authorities', 'noSale'] },

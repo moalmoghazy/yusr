@@ -19,3 +19,4 @@ export * from './share';
 export * from './contact';
 export * from './partners';
 export * from './followups';
+export * from './document-requests';

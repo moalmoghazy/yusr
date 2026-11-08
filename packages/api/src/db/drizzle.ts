@@ -274,6 +274,30 @@ function createTx(x: Executor): Tx & { raw: Executor } {
       insertFollowup: async (row) => {
         await x.insert(t.caseFollowups).values(row);
       },
+      documentRequests: async (limit) => x.select().from(t.documentRequests).orderBy(desc(t.documentRequests.createdAt)).limit(limit),
+      documentRequestById: async (id, lock) =>
+        first(await locked(x.select().from(t.documentRequests).where(eq(t.documentRequests.id, id)).limit(1).$dynamic(), lock)),
+      openDocumentRequest: async (caseId, whatsapp) =>
+        first(
+          await x
+            .select()
+            .from(t.documentRequests)
+            .where(and(eq(t.documentRequests.caseId, caseId), eq(t.documentRequests.whatsapp, whatsapp), eq(t.documentRequests.status, 'new')))
+            .limit(1),
+        ),
+      waitingDocumentRequests: async () => {
+        const [row] = await x
+          .select({ count: sql<number>`count(*)::int` })
+          .from(t.documentRequests)
+          .where(eq(t.documentRequests.status, 'new'));
+        return row?.count ?? 0;
+      },
+      insertDocumentRequest: async (row) => {
+        await x.insert(t.documentRequests).values(row);
+      },
+      updateDocumentRequest: async (id, patch) => {
+        await x.update(t.documentRequests).set(patch).where(eq(t.documentRequests.id, id));
+      },
     },
 
     // ------------------------------------------------------------------ approved partners

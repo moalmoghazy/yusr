@@ -2,15 +2,15 @@ import { canSeeSentMessages, type Permission } from '@yusr/core';
 import { buttonClasses, Icon, Logo, textFor, type IconName } from '@yusr/ui';
 import type { ReactNode } from 'react';
 import { signOut, switchLocale } from '@/app/actions';
-import { HubNav } from '@/components/hub-nav';
+import { HubNav, type HubNavItem } from '@/components/hub-nav';
 import { onDemoData } from '@/lib/env';
 import { hubLocale } from '@/lib/i18n';
-import { currentStaff } from '@/lib/session';
+import { adminApi, currentStaff } from '@/lib/session';
 
 /** Each section shows when the staff member holds any of its permissions (the API re-checks every call). */
 const SECTIONS: ReadonlyArray<{
   href: string;
-  key: 'overview' | 'cases' | 'verification' | 'followups' | 'finance' | 'crm' | 'partners' | 'showcase' | 'audit';
+  key: 'overview' | 'cases' | 'verification' | 'followups' | 'documentRequests' | 'finance' | 'crm' | 'partners' | 'showcase' | 'audit';
   icon: IconName;
   anyOf: readonly Permission[];
 }> = [
@@ -18,6 +18,7 @@ const SECTIONS: ReadonlyArray<{
   { href: '/cases', key: 'cases', icon: 'kanban', anyOf: ['cases:read'] },
   { href: '/verification', key: 'verification', icon: 'clipboard-check', anyOf: ['verifications:assign', 'verifications:perform'] },
   { href: '/followups', key: 'followups', icon: 'eye', anyOf: ['cases:read'] },
+  { href: '/document-requests', key: 'documentRequests', icon: 'file-text', anyOf: ['documents:share'] },
   { href: '/finance', key: 'finance', icon: 'landmark', anyOf: ['finance:read'] },
   { href: '/people', key: 'crm', icon: 'users', anyOf: ['cases:read'] },
   { href: '/partners', key: 'partners', icon: 'hand-heart', anyOf: ['partners:manage'] },
@@ -27,11 +28,14 @@ const SECTIONS: ReadonlyArray<{
 
 export default async function HubLayout({ children }: { children: ReactNode }) {
   const [staff, locale] = await Promise.all([currentStaff(), hubLocale()]);
-  const { t } = textFor(locale);
-  const items = SECTIONS.filter((section) => section.anyOf.some((permission) => staff.permissions.has(permission))).map((section) => ({
+  const { t, f } = textFor(locale);
+  // «طلبات الاطلاع»: how many visitors still wait for documents, as a counter on the nav item.
+  const waiting = staff.permissions.has('documents:share') ? await documentRequestsWaiting() : 0;
+  const items: HubNavItem[] = SECTIONS.filter((section) => section.anyOf.some((permission) => staff.permissions.has(permission))).map((section) => ({
     href: section.href,
     icon: section.icon,
     label: t(`admin.nav.${section.key}`),
+    count: section.key === 'documentRequests' && waiting > 0 ? f.number(waiting) : undefined,
   }));
   // «الرسائل المرسلة»: demo data only, for super admins and content moderators.
   if (onDemoData() && canSeeSentMessages(staff.claims.roles)) items.push({ href: '/messages', icon: 'send', label: t('admin.messages.nav') });
@@ -72,4 +76,13 @@ export default async function HubLayout({ children }: { children: ReactNode }) {
       <main className="min-w-0 p-4 md:p-8">{children}</main>
     </div>
   );
+}
+
+/** The nav counter must never take the hub down: on any failure it is simply not shown. */
+async function documentRequestsWaiting(): Promise<number> {
+  try {
+    return (await (await adminApi()).documentRequests(1)).waiting;
+  } catch {
+    return 0;
+  }
 }

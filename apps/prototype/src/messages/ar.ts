@@ -131,6 +131,7 @@ export const protoAr = {
         verification: 'زيارة',
         partner: 'جمعية شريكة',
         partner_application: 'طلب انضمام',
+        document_request: 'طلب اطلاع على الوثائق',
       },
       fields: {
         status: 'الحالة',
