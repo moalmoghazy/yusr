@@ -905,3 +905,47 @@ html[lang='ar'] .font-wordmark {
     opacity: 0;
   }
 }
+
+/* ------------------------------------------------------------------ «آخر الأخبار» (news-ticker.tsx)
+   Each item comes in from the left and leaves to the right, in both languages, fading as it moves. */
+@media (prefers-reduced-motion: no-preference) {
+  .news-item[data-state='in'] {
+    animation: news-in 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .news-item[data-state='out'] {
+    animation: news-out 0.6s ease-in both;
+  }
+
+  .news-pulse {
+    animation: news-pulse 1.8s ease-in-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .news-item[data-state='out'] {
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+}
+
+@keyframes news-in {
+  from {
+    opacity: 0;
+    translate: -2.5rem 0;
+  }
+}
+
+@keyframes news-out {
+  to {
+    opacity: 0;
+    translate: 2.5rem 0;
+  }
+}
+
+@keyframes news-pulse {
+  50% {
+    opacity: 0.35;
+    scale: 0.7;
+  }
+}

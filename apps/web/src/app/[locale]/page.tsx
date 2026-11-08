@@ -15,6 +15,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { FeaturedRotator } from '@/components/featured-rotator';
 import { HowReveal } from '@/components/how-reveal';
+import { NewsTicker, type NewsItem } from '@/components/news-ticker';
 import { StoryReel, type ReelStory } from '@/components/story-reel';
 import { SupervisionBadge } from '@/components/supervision-badge';
 import { catalog, fresh } from '@/lib/api';
@@ -25,7 +26,7 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
   const locale = await pageLocale(params);
   const { t } = textFor(locale);
   const api = catalog(locale);
-  const [stats, urgent, feed, chosen, stories, partners] = await Promise.all([
+  const [stats, urgent, feed, chosen, stories, partners, settled] = await Promise.all([
     api.stats(),
     api.listCases({ urgentOnly: true, sort: 'urgent', limit: 3 }),
     api.liveDonations(5),
@@ -36,6 +37,8 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
     fresh(locale)
       .partnerShowcase(24)
       .catch((): PublicPartner[] => []),
+    // «آخر الأخبار»: recently funded cases (closed ones come with the stories above).
+    api.listCases({ includeFunded: true, sort: 'newest', limit: 24 }).catch(() => null),
   ]);
   // «يحدث الآن»: the cases moderators chose in the hub (most recently chosen first), else the most urgent one.
   const featured = chosen.items.length
@@ -86,6 +89,7 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
               </Link>
             </div>
             {partners.length > 0 && <PartnersMarquee locale={locale} partners={partners} />}
+            <LatestNews locale={locale} stories={stories} funded={(settled?.items ?? []).filter((item) => item.status === 'funded')} now={now} />
           </div>
           <LiveBoard locale={locale} feed={feed} featured={featured} now={now} />
         </div>
@@ -315,6 +319,32 @@ function SuccessStories({ locale, stories }: { locale: Locale; stories: SuccessS
       />
     </section>
   );
+}
+
+/** How many items «آخر الأخبار» cycles through. */
+const NEWS_ITEMS = 6;
+
+/**
+ * «آخر الأخبار» under «شركاء يُسر»: the latest cases that were fully funded or closed (paid out with a
+ * receipt), newest first, told as one-line news with how it ended.
+ */
+function LatestNews({ locale, stories, funded, now }: { locale: Locale; stories: SuccessStory[]; funded: CaseSummary[]; now: number }) {
+  const { t, f, l } = textFor(locale);
+  const items = [
+    ...stories.map((story) => ({ item: story as CaseSummary, at: story.closedAt, headline: t('landing.news.closed', { title: l(story.title) }) })),
+    ...funded.filter((item) => item.fundedAt).map((item) => ({ item, at: item.fundedAt!, headline: t('landing.news.funded', { title: l(item.title) }) })),
+  ]
+    .sort((a, b) => Date.parse(b.at) - Date.parse(a.at))
+    .slice(0, NEWS_ITEMS)
+    .map(({ item, at, headline }): NewsItem => ({
+      id: item.id,
+      href: href(locale, `/cases/${item.slug}`),
+      headline,
+      detail: l(item.summary),
+      meta: `${regionName(item.region, l)} · ${f.relative(at, now)}`,
+    }));
+  if (items.length === 0) return null;
+  return <NewsTicker items={items} label={t('landing.news.title')} />;
 }
 
 /** How many logos one pass of the row holds at least (short lists repeat), so it never runs out. */

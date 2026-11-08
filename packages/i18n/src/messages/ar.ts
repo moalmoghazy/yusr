@@ -436,6 +436,11 @@ export const ar = {
       closedOn: 'اكتملت في {date}',
       confirmed: 'تأكدنا من وصول الدعم في {date}',
     },
+    news: {
+      title: 'آخر الأخبار',
+      closed: 'تم بحمد الله: {title}',
+      funded: 'اكتمل تمويل: {title}',
+    },
     partnersTitle: 'شركاء يُسر',
     partnersBody: 'جمعيات أهلية مشهرة لدى وزارة التضامن الاجتماعي، وقّعنا معها عقدًا قبل أن نعرض حالاتها.',
     partners: {

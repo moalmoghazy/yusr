@@ -376,6 +376,11 @@ export const en: Messages = {
       closedOn: 'Completed on {date}',
       confirmed: 'We confirmed the help arrived on {date}',
     },
+    news: {
+      title: 'Latest news',
+      closed: 'Done: {title}',
+      funded: 'Fully funded: {title}',
+    },
     partnersTitle: 'Yusr partners',
     partnersBody: 'Associations registered with the Ministry of Social Solidarity, under contract with us before any of their cases goes up.',
     partners: {
