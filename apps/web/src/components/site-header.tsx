@@ -17,7 +17,7 @@ export function SiteHeader({ locale, theme, donor }: { locale: Locale; theme: Th
     { href: href(locale, '/about'), label: t('nav.about') },
   ];
   return (
-    <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-border/70 bg-background/70 backdrop-blur-[6px]">
       <div className="container-page flex h-16 items-center justify-between gap-3">
         <Link href={href(locale)} className="rounded-control outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
           {/* Arabic: the lettered lockup is wide and short, so it gets a larger mark size than the English one. */}
