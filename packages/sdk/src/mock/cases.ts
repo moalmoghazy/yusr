@@ -82,13 +82,19 @@ const CASE_PARTNERS = DEMO_PARTNERS.slice(0, 3);
  * tried on the demo (they are printed in docs/GUIDE.ar.md). Demo only: real codes are issued by the
  * platform and never written down in code.
  */
-export const DEMO_PARTNER_REGISTRY: ReadonlyArray<{ registrationNumber: string; region: string; contractSignedOn: string; yusrCode: string }> = [
+export const DEMO_PARTNER_REGISTRY: ReadonlyArray<{
+  registrationNumber: string;
+  region: string;
+  contractSignedOn: string;
+  yusrCode: string;
+  newBadge?: boolean;
+}> = [
   { registrationNumber: '0001/2026', region: 'EG-C', contractSignedOn: '2026-01-15', yusrCode: 'YSR-RAHMA226' },
   { registrationNumber: '0002/2026', region: 'EG-GZ', contractSignedOn: '2026-02-01', yusrCode: 'YSR-SANABE26' },
   { registrationNumber: '0003/2026', region: 'EG-ALX', contractSignedOn: '2026-03-10', yusrCode: 'YSR-YADAWN26' },
-  { registrationNumber: '0004/2026', region: 'EG-MNF', contractSignedOn: '2026-09-14', yusrCode: 'YSR-NAWRAS26' },
-  { registrationNumber: '0005/2026', region: 'EG-SHG', contractSignedOn: '2026-10-05', yusrCode: 'YSR-BASMA826' },
-  { registrationNumber: '0006/2026', region: 'EG-DK', contractSignedOn: '2026-10-28', yusrCode: 'YSR-BARAKA26' },
+  { registrationNumber: '0004/2026', region: 'EG-MNF', contractSignedOn: '2026-09-14', yusrCode: 'YSR-NAWRAS26', newBadge: true },
+  { registrationNumber: '0005/2026', region: 'EG-SHG', contractSignedOn: '2026-10-05', yusrCode: 'YSR-BASMA826', newBadge: true },
+  { registrationNumber: '0006/2026', region: 'EG-DK', contractSignedOn: '2026-10-28', yusrCode: 'YSR-BARAKA26', newBadge: true },
 ];
 
 /** The demo partner behind a seed case (stable per case). */

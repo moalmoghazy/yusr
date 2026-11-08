@@ -7,7 +7,15 @@ import { CHECKLIST_ITEMS, SUBMITTER_RELATIONS } from './admin-types';
 import { CONTACT_CHANNELS } from './contact';
 import { DEDICATION_MAX_LENGTH } from './donation';
 import { FOLLOWUP_KINDS, FOLLOWUP_OUTCOMES } from './followups';
-import { isYusrCode, normalizeRegistrationNumber, normalizeYusrCode, PARTNER_APPLICATION_STATUSES, PARTNER_STATUSES } from './partners';
+import {
+  isYusrCode,
+  normalizeRegistrationNumber,
+  normalizeYusrCode,
+  PARTNER_APPLICATION_STATUSES,
+  PARTNER_LOGO_MAX_BYTES,
+  PARTNER_LOGO_TYPES,
+  PARTNER_STATUSES,
+} from './partners';
 import {
   CASE_CATEGORIES,
   CASE_STATUSES,
@@ -137,6 +145,22 @@ export type CreatePartnerInput = z.infer<typeof createPartnerSchema>;
 
 export const updatePartnerSchema = createPartnerSchema.partial().refine((patch) => Object.keys(patch).length > 0, { message: 'Nothing to change' });
 export type UpdatePartnerInput = z.infer<typeof updatePartnerSchema>;
+
+/** A logo for «شركاء يُسر», as base64 (checked against its type by partnerLogoProblem on the server). */
+export const partnerLogoSchema = z.object({
+  contentType: z.enum(PARTNER_LOGO_TYPES),
+  dataBase64: z
+    .string()
+    .max(Math.ceil((PARTNER_LOGO_MAX_BYTES * 4) / 3) + 4)
+    .regex(/^[A-Za-z0-9+/]+={0,2}$/, 'Not base64'),
+});
+export type PartnerLogoInput = z.infer<typeof partnerLogoSchema>;
+
+/** Whether a partner shows in «شركاء يُسر» on the website, and with the «جديد» badge. */
+export const partnerShowcaseSchema = z
+  .object({ showcased: z.boolean().optional(), newBadge: z.boolean().optional() })
+  .refine((patch) => patch.showcased !== undefined || patch.newBadge !== undefined, { message: 'Nothing to change' });
+export type PartnerShowcaseInput = z.infer<typeof partnerShowcaseSchema>;
 
 export const partnerStatusSchema = z.object({
   status: z.enum(PARTNER_STATUSES),

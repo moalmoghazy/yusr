@@ -19,6 +19,7 @@ import type {
   PaymentMethod,
   PartnerAssociation,
   PartnerApplicationStatus,
+  PartnerLogoType,
   PartnerStatus,
   PaymentProvider,
   Role,
@@ -142,6 +143,12 @@ export interface PartnerRow {
   /** «كود يُسر», AES-256-GCM with the partner id as associated data. */
   codeCipher: Uint8Array;
   codeIssuedAt: Timestamp;
+  /** Logo for «شركاء يُسر» (0011): bytes, type and when it was uploaded, all set or all null. */
+  logo: Uint8Array | null;
+  logoType: PartnerLogoType | null;
+  logoUpdatedAt: Timestamp | null;
+  showcased: boolean;
+  newBadge: boolean;
   createdBy: Id;
   createdAt: Timestamp;
   updatedAt: Timestamp;

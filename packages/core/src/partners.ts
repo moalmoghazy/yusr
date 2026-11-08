@@ -9,6 +9,12 @@
  */
 
 export const PARTNER_STATUSES = ['active', 'suspended'] as const;
+
+/** Image types a partner's logo may have (the hub shrinks photos to WebP before upload). */
+export const PARTNER_LOGO_TYPES = ['image/svg+xml', 'image/webp', 'image/png', 'image/jpeg'] as const;
+export type PartnerLogoType = (typeof PARTNER_LOGO_TYPES)[number];
+/** The largest logo the API keeps, in bytes. */
+export const PARTNER_LOGO_MAX_BYTES = 150 * 1024;
 export type PartnerStatus = (typeof PARTNER_STATUSES)[number];
 
 /** A partner as staff with `partners:manage` see it in the control hub. */
@@ -29,6 +35,12 @@ export interface Partner {
   yusrCode: string;
   codeIssuedAt: string;
   casesCount: number;
+  /** Its logo for the home page's «شركاء يُسر», or null; `version` changes with every upload. */
+  logo: { type: PartnerLogoType; version: string } | null;
+  /** Shown in «شركاء يُسر» on the website (active partners only). */
+  showcased: boolean;
+  /** The small «جديد» badge on its logo there. */
+  newBadge: boolean;
   createdBy: { id: string; name: string };
   createdAt: string;
   updatedAt: string;
@@ -39,6 +51,7 @@ export interface Partner {
  * region, when it joined and how many of its cases were published). No contact details, no code.
  */
 export interface PublicPartner {
+  id: string;
   name: string;
   registrationNumber: string;
   region: string;
@@ -46,6 +59,36 @@ export interface PublicPartner {
   joinedOn: string;
   /** Its published, funded and closed cases. */
   casesCount: number;
+  /** Changes with every new logo (for cache busting); null when it has none. */
+  logoVersion: string | null;
+  /** Staff switched on the «جديد» badge for it. */
+  isNew: boolean;
+}
+
+/**
+ * Checks an uploaded logo's bytes against its declared type. SVG must be plain drawing: no scripts,
+ * event handlers, external references or embedded HTML (it is also served with a sandboxing CSP).
+ */
+export function partnerLogoProblem(type: PartnerLogoType, bytes: Uint8Array): string | null {
+  if (bytes.length === 0) return 'The file is empty';
+  if (bytes.length > PARTNER_LOGO_MAX_BYTES) return `The logo is larger than ${PARTNER_LOGO_MAX_BYTES / 1024} KB`;
+  const starts = (...values: number[]) => values.every((value, index) => bytes[index] === value);
+  switch (type) {
+    case 'image/png':
+      return starts(0x89, 0x50, 0x4e, 0x47) ? null : 'Not a PNG file';
+    case 'image/jpeg':
+      return starts(0xff, 0xd8, 0xff) ? null : 'Not a JPEG file';
+    case 'image/webp':
+      return starts(0x52, 0x49, 0x46, 0x46) && String.fromCharCode(...bytes.slice(8, 12)) === 'WEBP' ? null : 'Not a WebP file';
+    case 'image/svg+xml': {
+      const text = new TextDecoder().decode(bytes);
+      if (!/<svg[\s>]/i.test(text)) return 'Not an SVG file';
+      if (/<script|<foreignObject|<iframe|<object|<embed|\bon[a-z]+\s*=|javascript:|<!ENTITY|xlink:href\s*=\s*["'](?!#)|\bhref\s*=\s*["'](?!#)/i.test(text)) {
+        return 'The SVG has scripts or external links';
+      }
+      return null;
+    }
+  }
 }
 
 /** A request to join from an association (the website's «انضم كجمعية شريكة»), until staff handle it. */

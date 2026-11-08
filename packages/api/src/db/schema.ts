@@ -20,6 +20,7 @@ import {
   type Localized,
   type PartnerAssociation,
   type PartnerApplicationStatus,
+  type PartnerLogoType,
   type PartnerStatus,
   type SubmitterRelation,
 } from '@yusr/core';
@@ -165,6 +166,12 @@ export const partners = pgTable('partners', {
   /** «كود يُسر», AES-256-GCM, so staff can read it again to hand it over. */
   codeCipher: bytea('code_cipher').notNull(),
   codeIssuedAt: at('code_issued_at').notNull().defaultNow(),
+  /** Logo for «شركاء يُسر» (0011_partner_showcase.sql). */
+  logo: bytea('logo'),
+  logoType: text('logo_type').$type<PartnerLogoType>(),
+  logoUpdatedAt: at('logo_updated_at'),
+  showcased: boolean('showcased').notNull().default(true),
+  newBadge: boolean('new_badge').notNull().default(false),
   createdBy: uuid('created_by')
     .notNull()
     .references(() => users.id),

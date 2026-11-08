@@ -8,7 +8,7 @@ import {
   showcaseQuerySchema,
   submitCaseSchema,
 } from '@yusr/core/schemas';
-import { endpoint, header } from '../endpoint';
+import { endpoint, header, reply } from '../endpoint';
 
 export const publicEndpoints = [
   endpoint({
@@ -63,8 +63,29 @@ export const publicEndpoints = [
     description: 'Name, registration number, region, joining date and published cases only. Contact details and «كود يُسر» never appear here.',
     query: showcaseQuerySchema,
     returns: 'PublicPartner[]',
-    cache: { seconds: 300 },
+    // No response cache: staff changes in the hub («شركاء الموقع») must show on the site at once.
     handle: ({ services, query }) => services.partners.showcase(query.limit),
+  }),
+
+  endpoint({
+    id: 'partners.logo',
+    method: 'GET',
+    path: '/partners/:id/logo',
+    version: '1',
+    access: 'public',
+    tag: 'Catalog',
+    summary: "A showcased partner's logo (SVG, WebP, PNG or JPEG)",
+    description: 'Link it with `?v=<logoVersion>` from GET /partners: each upload gets a new version, so the image may be cached for a year.',
+    handle: async ({ services, params, request }) => {
+      const logo = await services.partners.publicLogo(params['id']!);
+      const versioned = request.query['v'] === logo.version;
+      return reply.content(Buffer.from(logo.bytes), logo.type, {
+        'cache-control': versioned ? 'public, max-age=31536000, immutable' : 'public, max-age=60',
+        // An SVG opened on its own can run nothing and load nothing.
+        'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+        'x-content-type-options': 'nosniff',
+      });
+    },
   }),
 
   endpoint({

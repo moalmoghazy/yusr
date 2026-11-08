@@ -30,6 +30,7 @@ import {
   convertMinor,
   formatReceiptNumber,
   generateYusrCode,
+  partnerLogoProblem,
   isPubliclyVisible,
   normalizeRegistrationNumber,
   normalizeYusrCode,
@@ -66,6 +67,7 @@ import {
   type PartnerApplication,
   type PartnerApplicationStatus,
   type PartnerCredentials,
+  type PartnerLogoType,
   type PartnerStatus,
   type PublicPartner,
   type PaymentMethod,
@@ -86,8 +88,17 @@ import {
   type VolunteerRow,
 } from '@yusr/core';
 import { canSeeSentMessages, maskRecipient, type ContactChannel, type SentMessage } from '@yusr/core';
-import type { CreatePartnerInput, EditCaseInput, PartnerApplicationInput, RecordFollowupInput, UpdatePartnerInput } from '@yusr/core/schemas';
+import type {
+  CreatePartnerInput,
+  EditCaseInput,
+  PartnerApplicationInput,
+  PartnerLogoInput,
+  PartnerShowcaseInput,
+  RecordFollowupInput,
+  UpdatePartnerInput,
+} from '@yusr/core/schemas';
 import type { AdminClient, LedgerQuery, YusrClient } from '../client';
+import { DEMO_PARTNER_LOGOS } from './partner-logos';
 import { DEMO_PARTNER_REGISTRY, DEMO_PARTNERS, demoPartnerFor, SEED_CASES, seedAmounts, type SeedCase } from './cases';
 import { CURRENT_DONOR, DONORS, STAFF, VOLUNTEERS, type SeedDonor } from './people';
 import { createRandom, type Random } from './random';
@@ -102,6 +113,12 @@ const BASELINE = { raisedMinor: 18_240_000_00, casesFunded: 1_274, donors: 46_18
 const SYSTEM_NAME: Localized = { ar: 'المنصة', en: 'Platform' };
 const CONTENT_TEAM: Localized = { ar: 'فريق المحتوى', en: 'Content team' };
 /** The partner association: it verifies the case in the field and pays the provider. */
+/** Decodes base64 in Node and in the browser (the prototype). */
+function base64Bytes(value: string): Uint8Array {
+  const binary = globalThis.atob(value);
+  return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+}
+
 const PARTNER_LABEL: Localized = { ar: 'الجمعية الشريكة', en: 'Partner association' };
 
 const DOCUMENT_TITLES: Record<DocumentKind, Localized> = {
@@ -162,6 +179,8 @@ export interface LedgerBalance {
 export interface MockBackend {
   read: ReturnType<typeof createReadApi>;
   client: YusrClient;
+  /** A showcased partner's logo file, like GET /partners/:id/logo (null when it has none or is hidden). */
+  partnerLogo(id: string): { type: PartnerLogoType; bytes: Uint8Array; version: string } | null;
   admin(actor: Actor): AdminClient;
   createDonation(request: CreateDonationRequest, context?: CreateContext): CreateDonationResponse;
   completePayment(donationId: string, outcome: 'success' | 'failure'): AdminDonation;
@@ -1238,11 +1257,28 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       status: 'active',
       yusrCode: registry.yusrCode,
       codeIssuedAt: at,
+      logo: DEMO_PARTNER_LOGOS[partner.registrationNumber] ? { type: 'image/svg+xml', version: Date.parse(at).toString(36) } : null,
+      showcased: true,
+      newBadge: registry.newBadge ?? false,
       createdBy: { id: youssef.id, name: youssef.name.ar },
       createdAt: at,
       updatedAt: at,
     };
   });
+  /** Logo files by partner id (the API keeps them in the partner's row). */
+  const partnerLogos = new Map<string, { type: PartnerLogoType; bytes: Uint8Array }>(
+    partners.flatMap((partner) => {
+      const svg = DEMO_PARTNER_LOGOS[partner.registrationNumber];
+      return svg ? [[partner.id, { type: 'image/svg+xml' as const, bytes: new TextEncoder().encode(svg) }] as const] : [];
+    }),
+  );
+  /** A showcased partner's logo, like GET /partners/:id/logo (null when it has none or is hidden). */
+  const partnerLogo = (id: string): { type: PartnerLogoType; bytes: Uint8Array; version: string } | null => {
+    const partner = partners.find((entry) => entry.id === id);
+    const file = partnerLogos.get(id);
+    if (!partner || partner.status !== 'active' || !partner.showcased || !partner.logo || !file) return null;
+    return { ...file, version: partner.logo.version };
+  };
   const partnerCases = (registrationNumber: string) =>
     [...state.cases.values()].filter((item) => item.submittedBy.association?.registrationNumber === registrationNumber).length;
   const withCount = (partner: Omit<Partner, 'casesCount'>): Partner => ({ ...partner, casesCount: partnerCases(partner.registrationNumber) });
@@ -1252,15 +1288,18 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       [...state.cases.values()].filter((item) => isPubliclyVisible(item.status) && item.submittedBy.association?.registrationNumber === registrationNumber)
         .length;
     return partners
-      .filter((partner) => partner.status === 'active')
+      .filter((partner) => partner.status === 'active' && partner.showcased)
       .sort((a, b) => b.contractSignedOn.localeCompare(a.contractSignedOn) || Date.parse(b.createdAt) - Date.parse(a.createdAt))
       .slice(0, limit)
       .map((partner) => ({
+        id: partner.id,
         name: partner.name,
         registrationNumber: partner.registrationNumber,
         region: partner.region,
         joinedOn: partner.contractSignedOn,
         casesCount: publicCount(partner.registrationNumber),
+        logoVersion: partner.logo?.version ?? null,
+        isNew: partner.newBadge,
       }));
   };
   /** «قصص نجاح»: closed cases, the most recently closed first, with the latest confirming follow-up. */
@@ -1709,6 +1748,9 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
           status: 'active',
           yusrCode: newCode(),
           codeIssuedAt: at,
+          logo: null,
+          showcased: true,
+          newBadge: true,
           createdBy: { id: actor.id, name: actor.name },
           createdAt: at,
           updatedAt: at,
@@ -1766,6 +1808,48 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
         const next = { ...current, yusrCode: newCode(), codeIssuedAt: at, updatedAt: at };
         partners.splice(partners.indexOf(current), 1, next);
         logAudit(actorRef, 'partner.code_regenerated', 'partner', partnerId, next.name, { codeIssuedAt: current.codeIssuedAt }, { codeIssuedAt: at });
+        return withCount(next);
+      },
+      setPartnerLogo: (partnerId: string, input: PartnerLogoInput) => {
+        ensure('partners:manage');
+        const current = mustPartner(partnerId);
+        const bytes = base64Bytes(input.dataBase64);
+        const problem = partnerLogoProblem(input.contentType, bytes);
+        if (problem) throw new DomainError('VALIDATION_FAILED', problem, { field: 'logo' });
+        const at = clock();
+        partnerLogos.set(partnerId, { type: input.contentType, bytes });
+        const next = { ...current, logo: { type: input.contentType, version: at.toString(36) }, updatedAt: iso(at) };
+        partners.splice(partners.indexOf(current), 1, next);
+        logAudit(
+          actorRef,
+          'partner.logo_set',
+          'partner',
+          partnerId,
+          next.name,
+          { logoType: current.logo?.type ?? null },
+          { logoType: input.contentType, bytes: bytes.length },
+        );
+        return withCount(next);
+      },
+      removePartnerLogo: (partnerId: string) => {
+        ensure('partners:manage');
+        const current = mustPartner(partnerId);
+        partnerLogos.delete(partnerId);
+        const next = { ...current, logo: null, updatedAt: iso(clock()) };
+        partners.splice(partners.indexOf(current), 1, next);
+        logAudit(actorRef, 'partner.logo_removed', 'partner', partnerId, next.name, { logoType: current.logo?.type ?? null }, { logo: null });
+        return withCount(next);
+      },
+      setPartnerShowcase: (partnerId: string, patch: PartnerShowcaseInput) => {
+        ensure('partners:manage');
+        const current = mustPartner(partnerId);
+        const change = {
+          ...(patch.showcased !== undefined ? { showcased: patch.showcased } : {}),
+          ...(patch.newBadge !== undefined ? { newBadge: patch.newBadge } : {}),
+        };
+        const next = { ...current, ...change, updatedAt: iso(clock()) };
+        partners.splice(partners.indexOf(current), 1, next);
+        logAudit(actorRef, 'partner.showcase_updated', 'partner', partnerId, next.name, { showcased: current.showcased, newBadge: current.newBadge }, change);
         return withCount(next);
       },
       partnerApplications: (limit = 100) => {
@@ -1868,6 +1952,9 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       updatePartner: wrap(sync.updatePartner),
       setPartnerStatus: wrap(sync.setPartnerStatus),
       regeneratePartnerCode: wrap(sync.regeneratePartnerCode),
+      setPartnerLogo: wrap(sync.setPartnerLogo),
+      removePartnerLogo: wrap(sync.removePartnerLogo),
+      setPartnerShowcase: wrap(sync.setPartnerShowcase),
       partnerApplications: wrap(sync.partnerApplications),
       setPartnerApplicationStatus: wrap(sync.setPartnerApplicationStatus),
       followups: wrap(sync.followups),
@@ -2096,6 +2183,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
   return {
     read,
     client,
+    partnerLogo,
     admin: toAsyncAdmin,
     createDonation,
     completePayment,

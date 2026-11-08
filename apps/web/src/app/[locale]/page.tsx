@@ -16,7 +16,7 @@ import type { ReactNode } from 'react';
 import { FeaturedRotator } from '@/components/featured-rotator';
 import { HowReveal } from '@/components/how-reveal';
 import { SupervisionBadge } from '@/components/supervision-badge';
-import { catalog } from '@/lib/api';
+import { catalog, fresh } from '@/lib/api';
 import { href } from '@/lib/i18n';
 import { pageLocale, type LocaleParams } from '@/lib/page';
 
@@ -31,7 +31,10 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
     api.listCases({ featuredOnly: true, limit: 6 }),
     // The two showcase rows are extras: an API that does not serve them yet just hides them.
     api.successStories(3).catch((): SuccessStory[] => []),
-    api.partnerShowcase(6).catch((): PublicPartner[] => []),
+    // Never cached: what staff change in «شركاء الموقع» in the hub shows here on the next visit.
+    fresh(locale)
+      .partnerShowcase(24)
+      .catch((): PublicPartner[] => []),
   ]);
   // «يحدث الآن»: the cases moderators chose in the hub (most recently chosen first), else the most urgent one.
   const featured = chosen.items.length
@@ -81,7 +84,7 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
                 {t('landing.heroSecondary')}
               </Link>
             </div>
-            <HowItWorks locale={locale} />
+            {partners.length > 0 && <PartnersMarquee locale={locale} partners={partners} />}
           </div>
           <LiveBoard locale={locale} feed={feed} featured={featured} now={now} />
         </div>
@@ -178,7 +181,7 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
         </ul>
       </section>
 
-      {partners.length > 0 && <PartnersShowcase locale={locale} partners={partners} now={now} />}
+      <HowItWorks locale={locale} />
 
       {/* ---------------------------------------------------------------- associations: join as a partner */}
       <section className="container-page pb-6" aria-labelledby="cta-title">
@@ -225,40 +228,39 @@ const METHOD_ICON: Partial<Record<string, IconName>> = {
 const HOW_STEPS = ['submit', 'verify', 'publish', 'disburse', 'follow'] as const;
 
 /**
- * «كيف نعمل» inside the hero: the five stages a case passes, shown one after another, with a glowing
+ * «من الطلب حتى إثبات الصرف»: the five stages a case passes, shown one after another, with a glowing
  * gold line running from each step to the next (globals.css, `.how-*`). Without motion it is all shown.
  */
 function HowItWorks({ locale }: { locale: Locale }) {
   const { t, f } = textFor(locale);
   return (
-    <HowReveal
-      labelledBy="how-title"
-      className="scroll-mt-24 flex flex-col gap-4 rounded-card border border-border/70 bg-card/75 p-5 shadow-sm backdrop-blur-sm"
-    >
-      <div className="flex flex-col gap-1">
-        <h2 id="how-title" className="title-plain font-display text-lg font-bold">
-          {t('landing.howTitle')}
-        </h2>
-        <p className="text-sm text-muted-foreground">{t('landing.howBody')}</p>
-      </div>
-      <ol className="flex flex-col">
-        {HOW_STEPS.map((step, index) => (
-          <li key={step} className="how-step relative flex gap-3 pb-5 last:pb-0" style={{ ['--step' as string]: index }}>
-            <span className="how-dot relative z-10 grid size-9 shrink-0 place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground tabular-nums">
-              {f.number(index + 1)}
-            </span>
-            {index < HOW_STEPS.length - 1 && (
-              <span aria-hidden className="how-line">
-                <span className="how-line-fill" />
+    <HowReveal labelledBy="how-title" className="container-page scroll-mt-24 py-14">
+      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-12">
+        <div className="flex flex-col gap-3 lg:sticky lg:top-28">
+          <h2 id="how-title" className="font-display text-3xl font-bold">
+            {t('landing.howTitle')}
+          </h2>
+          <p className="text-muted-foreground">{t('landing.howBody')}</p>
+        </div>
+        <ol className="flex flex-col rounded-card border border-border bg-card p-5 shadow-sm md:p-6">
+          {HOW_STEPS.map((step, index) => (
+            <li key={step} className="how-step relative flex gap-3 pb-5 last:pb-0" style={{ ['--step' as string]: index }}>
+              <span className="how-dot relative z-10 grid size-9 shrink-0 place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground tabular-nums">
+                {f.number(index + 1)}
               </span>
-            )}
-            <div className="flex flex-col gap-0.5 pt-1.5">
-              <h3 className="font-bold leading-snug">{t(`landing.howSteps.${step}.title`)}</h3>
-              <p className="text-sm text-muted-foreground">{t(`landing.howSteps.${step}.body`)}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
+              {index < HOW_STEPS.length - 1 && (
+                <span aria-hidden className="how-line">
+                  <span className="how-line-fill" />
+                </span>
+              )}
+              <div className="flex flex-col gap-0.5 pt-1.5">
+                <h3 className="font-bold leading-snug">{t(`landing.howSteps.${step}.title`)}</h3>
+                <p className="text-sm text-muted-foreground">{t(`landing.howSteps.${step}.body`)}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
     </HowReveal>
   );
 }
@@ -335,60 +337,74 @@ function SuccessStories({ locale, stories }: { locale: Locale; stories: SuccessS
   );
 }
 
-/** A partner counts as newly joined for this long after signing. */
-const NEW_PARTNER_DAYS = 60;
+/** How many logos one pass of the row holds at least (short lists repeat), so it never runs out. */
+const MARQUEE_MIN_ITEMS = 8;
 
-/** «شركاء يُسر»: the approved associations, the most recently joined first. Public facts only. */
-function PartnersShowcase({ locale, partners, now }: { locale: Locale; partners: PublicPartner[]; now: number }) {
-  const { t, f, l } = textFor(locale);
+/**
+ * «شركاء يُسر» in the hero: the partners' logos, each with its name and its registration number at the
+ * Ministry of Social Solidarity, drifting left to right and fading in and out at the edges
+ * (globals.css, `.partners-*`). They are muted until the pointer rests on one, which brings back its
+ * colours; resting on the row stops it. With reduced motion it is a still row to swipe through.
+ */
+function PartnersMarquee({ locale, partners }: { locale: Locale; partners: PublicPartner[] }) {
+  const { t } = textFor(locale);
+  const pass: PublicPartner[] = [];
+  while (pass.length < Math.max(MARQUEE_MIN_ITEMS, partners.length)) pass.push(...partners);
+  // Two identical passes: moving by exactly one pass, then starting over, looks endless.
+  const items = [...pass, ...pass];
   return (
-    <section className="border-y border-border bg-card" aria-labelledby="partners-title">
-      <div className="container-page py-14">
-        <SectionHead id="partners-title" title={t('landing.partnersTitle')} body={t('landing.partnersBody')} />
-        {/* A row to swipe through on phones; a grid from tablet width up. */}
-        <ul className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3">
-          {partners.map((partner) => {
-            const joined = `${partner.joinedOn}T12:00:00Z`;
-            const fresh = now - Date.parse(joined) < NEW_PARTNER_DAYS * 86_400_000;
-            return (
-              <li
-                key={partner.registrationNumber}
-                className="flex w-[85%] shrink-0 snap-start items-start gap-4 rounded-card border border-border bg-background p-4 sm:w-auto"
-              >
-                <span
-                  aria-hidden
-                  className="grid size-12 shrink-0 place-items-center rounded-full bg-primary-soft font-display text-lg font-bold text-primary-soft-foreground"
-                >
-                  {initial(partner.name)}
+    <section aria-labelledby="partners-title" className="mt-2 flex flex-col gap-3">
+      <div className="flex flex-col gap-0.5">
+        <h2 id="partners-title" className="title-plain font-display text-lg font-bold">
+          {t('landing.partnersTitle')}
+        </h2>
+        <p className="text-sm text-muted-foreground">{t('landing.partnersBody')}</p>
+      </div>
+      <div className="partners-marquee" style={{ ['--partners-duration' as string]: `${pass.length * 4.5}s` }}>
+        <ul className="partners-track">
+          {items.map((partner, index) => (
+            // Only the first of each partner is read out; the repeats are for the eye.
+            <li
+              key={`${partner.id}-${index}`}
+              dir={locale === 'ar' ? 'rtl' : 'ltr'}
+              className="partners-item"
+              aria-hidden={index >= partners.length || undefined}
+              data-repeat={index >= partners.length || undefined}
+            >
+              <span className="relative shrink-0">
+                {partner.isNew && <span className="partners-new">{t('landing.partners.new')}</span>}
+                <span className="partners-logo grid size-14 place-items-center overflow-hidden rounded-2xl border border-border bg-white">
+                  {partner.logoVersion ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- a tiny logo from our own route; next/image adds nothing here
+                    <img
+                      src={`/partner-logos/${encodeURIComponent(partner.id)}?v=${partner.logoVersion}`}
+                      alt=""
+                      width={56}
+                      height={56}
+                      loading="lazy"
+                      decoding="async"
+                      className="size-full object-contain"
+                    />
+                  ) : (
+                    <span aria-hidden className="font-display text-xl font-bold text-primary">
+                      {initial(partner.name)}
+                    </span>
+                  )}
                 </span>
-                <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-bold leading-snug" dir="auto">
-                      {partner.name}
-                    </h3>
-                    {fresh && <Badge tone="gold">{t('landing.partners.new')}</Badge>}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {t('landing.partners.registration')}{' '}
-                    <span dir="ltr" className="font-mono">
-                      {partner.registrationNumber}
-                    </span>{' '}
-                    · {regionName(partner.region, l)}
-                  </p>
-                  <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-                    <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                      <Icon name="calendar" size={15} />
-                      <time dateTime={partner.joinedOn}>{t('landing.partners.joined', { date: f.date(joined, 'medium') })}</time>
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 font-semibold text-primary">
-                      <Icon name="heart" size={15} />
-                      {partner.casesCount > 0 ? t('units.cases', { count: partner.casesCount }) : t('landing.partners.firstCasesSoon')}
-                    </span>
-                  </p>
-                </div>
-              </li>
-            );
-          })}
+              </span>
+              <span className="partners-text flex min-w-0 flex-col gap-0.5">
+                <span className="whitespace-nowrap font-bold leading-snug" dir="auto">
+                  {partner.name}
+                </span>
+                <span className="whitespace-nowrap text-xs text-muted-foreground">
+                  {t('landing.partners.registration')}{' '}
+                  <span dir="ltr" className="font-mono">
+                    {partner.registrationNumber}
+                  </span>
+                </span>
+              </span>
+            </li>
+          ))}
         </ul>
       </div>
     </section>

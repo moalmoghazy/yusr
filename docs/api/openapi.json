@@ -774,7 +774,7 @@
           "Catalog"
         ],
         "summary": "«شركاء يُسر»: active partner associations, the most recently joined first",
-        "description": "Name, registration number, region, joining date and published cases only. Contact details and «كود يُسر» never appear here.\n\nOpen to guests; a Bearer token is read when sent.\n\nCached for guests for 300s.",
+        "description": "Name, registration number, region, joining date and published cases only. Contact details and «كود يُسر» never appear here.\n\nOpen to guests; a Bearer token is read when sent.",
         "security": [
           {},
           {
@@ -804,6 +804,47 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/partners/{id}/logo": {
+      "get": {
+        "operationId": "partners.logo",
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "A showcased partner's logo (SVG, WebP, PNG or JPEG)",
+        "description": "Link it with `?v=<logoVersion>` from GET /partners: each upload gets a new version, so the image may be cached for a year.\n\nOpen to guests; a Bearer token is read when sent.",
+        "security": [
+          {},
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Done"
           },
           "default": {
             "description": "Error",
@@ -4761,6 +4802,235 @@
             }
           }
         ],
+        "x-permission": "partners:manage",
+        "responses": {
+          "200": {
+            "description": "Partner",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Partner (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/partners/{id}/logo": {
+      "put": {
+        "operationId": "admin.partners.setLogo",
+        "tags": [
+          "Operations · Partners"
+        ],
+        "summary": "Upload or replace the logo shown in «شركاء يُسر» (base64; SVG without scripts, WebP, PNG or JPEG; up to 150 KB)",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `partners:manage`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "contentType": {
+                    "type": "string",
+                    "enum": [
+                      "image/svg+xml",
+                      "image/webp",
+                      "image/png",
+                      "image/jpeg"
+                    ]
+                  },
+                  "dataBase64": {
+                    "type": "string",
+                    "maxLength": 204804,
+                    "pattern": "^[A-Za-z0-9+/]+={0,2}$"
+                  }
+                },
+                "required": [
+                  "contentType",
+                  "dataBase64"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "partners:manage",
+        "responses": {
+          "200": {
+            "description": "Partner",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Partner (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "admin.partners.logo",
+        "tags": [
+          "Operations · Partners"
+        ],
+        "summary": "The partner's logo file, shown on the site or not (for the hub's preview)",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `partners:manage`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-permission": "partners:manage",
+        "responses": {
+          "200": {
+            "description": "Done"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "admin.partners.removeLogo",
+        "tags": [
+          "Operations · Partners"
+        ],
+        "summary": "Remove the logo (the site shows the first letter of the name instead)",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `partners:manage`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-permission": "partners:manage",
+        "responses": {
+          "200": {
+            "description": "Partner",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Partner (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/partners/{id}/showcase": {
+      "patch": {
+        "operationId": "admin.partners.showcase",
+        "tags": [
+          "Operations · Partners"
+        ],
+        "summary": "Show or hide the partner in «شركاء يُسر», and switch its «جديد» badge",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `partners:manage`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "showcased": {
+                    "type": "boolean"
+                  },
+                  "newBadge": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
         "x-permission": "partners:manage",
         "responses": {
           "200": {

@@ -8,10 +8,12 @@ import {
   listQuerySchema,
   partnerApplicationSchema,
   partnerApplicationStatusSchema,
+  partnerLogoSchema,
+  partnerShowcaseSchema,
   partnerStatusSchema,
   updatePartnerSchema,
 } from '@yusr/core/schemas';
-import { endpoint } from '../endpoint';
+import { endpoint, reply } from '../endpoint';
 
 const PARTNERS = 'Operations · Partners';
 
@@ -80,6 +82,62 @@ export const partnerOperations = [
     permission: 'partners:manage',
     returns: 'Partner',
     handle: ({ services, ctx, params }) => services.partners.regenerateCode(params['id']!, ctx),
+  }),
+  endpoint({
+    id: 'admin.partners.setLogo',
+    method: 'PUT',
+    path: '/admin/partners/:id/logo',
+    version: '1',
+    access: 'staff',
+    tag: PARTNERS,
+    summary: 'Upload or replace the logo shown in «شركاء يُسر» (base64; SVG without scripts, WebP, PNG or JPEG; up to 150 KB)',
+    body: partnerLogoSchema,
+    permission: 'partners:manage',
+    returns: 'Partner',
+    handle: ({ services, ctx, params, body }) => services.partners.setLogo(params['id']!, body, ctx),
+  }),
+  endpoint({
+    id: 'admin.partners.logo',
+    method: 'GET',
+    path: '/admin/partners/:id/logo',
+    version: '1',
+    access: 'staff',
+    tag: PARTNERS,
+    summary: "The partner's logo file, shown on the site or not (for the hub's preview)",
+    permission: 'partners:manage',
+    handle: async ({ services, ctx, params }) => {
+      const logo = await services.partners.staffLogo(params['id']!, ctx);
+      return reply.content(Buffer.from(logo.bytes), logo.type, {
+        'cache-control': 'private, no-store',
+        'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+        'x-content-type-options': 'nosniff',
+      });
+    },
+  }),
+  endpoint({
+    id: 'admin.partners.removeLogo',
+    method: 'DELETE',
+    path: '/admin/partners/:id/logo',
+    version: '1',
+    access: 'staff',
+    tag: PARTNERS,
+    summary: 'Remove the logo (the site shows the first letter of the name instead)',
+    permission: 'partners:manage',
+    returns: 'Partner',
+    handle: ({ services, ctx, params }) => services.partners.removeLogo(params['id']!, ctx),
+  }),
+  endpoint({
+    id: 'admin.partners.showcase',
+    method: 'PATCH',
+    path: '/admin/partners/:id/showcase',
+    version: '1',
+    access: 'staff',
+    tag: PARTNERS,
+    summary: 'Show or hide the partner in «شركاء يُسر», and switch its «جديد» badge',
+    body: partnerShowcaseSchema,
+    permission: 'partners:manage',
+    returns: 'Partner',
+    handle: ({ services, ctx, params, body }) => services.partners.setShowcase(params['id']!, body, ctx),
   }),
   endpoint({
     id: 'admin.partners.applications',

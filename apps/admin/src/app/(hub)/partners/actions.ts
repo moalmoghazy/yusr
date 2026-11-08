@@ -35,6 +35,7 @@ export async function createPartner(_previous: PartnerActionResult, form: FormDa
   }, '');
   if (!result?.ok) return result;
   revalidatePath('/partners');
+  revalidatePath('/showcase');
   return { ok: true, message: t('admin.partners.created'), code };
 }
 

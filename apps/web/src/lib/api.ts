@@ -25,6 +25,16 @@ export const catalog = cache((locale: Locale): YusrClient =>
   }),
 );
 
+/** Shared like `catalog` but never cached: for what staff expect to see on the site at once («شركاء يُسر»). */
+export const fresh = cache((locale: Locale): YusrClient =>
+  createHttpClient({
+    baseUrl: apiUrl(),
+    locale,
+    timeoutMs: apiTimeoutMs(),
+    fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }),
+  }),
+);
+
 export const live = cache(async (locale: Locale): Promise<YusrClient> => {
   const [incoming, jar] = await Promise.all([headers(), cookies()]);
   const edge = apiEdge(incoming);

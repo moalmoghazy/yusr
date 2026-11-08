@@ -459,7 +459,7 @@ describe('operations', () => {
     const joined = partners.map((partner) => partner.joinedOn);
     assert.deepEqual(joined, [...joined].sort().reverse(), 'the most recently joined first');
     for (const partner of partners) {
-      assert.deepEqual(Object.keys(partner).sort(), ['casesCount', 'joinedOn', 'name', 'region', 'registrationNumber']);
+      assert.deepEqual(Object.keys(partner).sort(), ['casesCount', 'id', 'isNew', 'joinedOn', 'logoVersion', 'name', 'region', 'registrationNumber']);
     }
     const showcase = await call('GET', '/v1/partners?limit=24');
     for (const partner of DEMO_PARTNERS) assert.ok(!showcase.text.includes(partner.contactPhone), 'no contact phone');
@@ -480,6 +480,60 @@ describe('operations', () => {
     );
     const text = (await call('GET', '/v1/stories')).text;
     assert.ok(!text.includes('تواصلنا مع ولي الأمر'), 'follow-up notes stay private');
+  });
+
+  it('lets the hub manage «شركاء يُسر»: logos, hiding and the «جديد» badge, live on the site', async () => {
+    const staff = adminFor(youssef);
+    const guest = clientFor();
+    const [first] = await guest.partnerShowcase(24);
+    assert.ok(first?.logoVersion, 'demo partners have logos');
+    assert.ok(
+      (await guest.partnerShowcase(24)).some((partner) => partner.isNew),
+      'the newest demo partners wear «جديد»',
+    );
+
+    // The logo: its type, a sandboxing CSP, and a long cache only for the current version.
+    const logo = await call('GET', `/v1/partners/${first.id}/logo?v=${first.logoVersion}`);
+    assert.equal(logo.status, 200);
+    assert.equal(logo.headers.get('content-type'), 'image/svg+xml');
+    assert.match(logo.headers.get('content-security-policy') ?? '', /sandbox/);
+    assert.match(logo.headers.get('cache-control') ?? '', /immutable/);
+    assert.doesNotMatch((await call('GET', `/v1/partners/${first.id}/logo?v=old`)).headers.get('cache-control') ?? '', /immutable/);
+    assert.equal((await call('GET', '/v1/partners/00000000-0000-4000-8000-000000000000/logo')).status, 404);
+
+    // Uploads: checked against their type; SVG with a script or a link is refused.
+    const svg = (body: string) => Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8">${body}</svg>`).toString('base64');
+    await isApiError(staff.setPartnerLogo(first.id, { contentType: 'image/svg+xml', dataBase64: svg('<script>alert(1)</script>') }), 'VALIDATION_FAILED', 422);
+    await isApiError(staff.setPartnerLogo(first.id, { contentType: 'image/svg+xml', dataBase64: svg('<rect onload="x()"/>') }), 'VALIDATION_FAILED', 422);
+    await isApiError(
+      staff.setPartnerLogo(first.id, { contentType: 'image/svg+xml', dataBase64: svg('<image href="https://x.test/a.png"/>') }),
+      'VALIDATION_FAILED',
+      422,
+    );
+    await isApiError(staff.setPartnerLogo(first.id, { contentType: 'image/png', dataBase64: svg('<rect/>') }), 'VALIDATION_FAILED', 422);
+    await isApiError(adminFor(heba).setPartnerLogo(first.id, { contentType: 'image/svg+xml', dataBase64: svg('<rect/>') }), 'FORBIDDEN', 403);
+    const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]).toString('base64');
+    const updated = await staff.setPartnerLogo(first.id, { contentType: 'image/png', dataBase64: png });
+    assert.equal(updated.logo?.type, 'image/png');
+    const after = (await guest.partnerShowcase(24)).find((partner) => partner.id === first.id);
+    assert.ok(after?.logoVersion && after.logoVersion !== first.logoVersion, 'a new upload is visible at once, with a new version');
+    assert.equal((await call('GET', `/v1/partners/${first.id}/logo`)).headers.get('content-type'), 'image/png');
+
+    // Hiding and the badge show on the very next read (no response cache on the list).
+    await staff.setPartnerShowcase(first.id, { newBadge: true });
+    assert.equal((await guest.partnerShowcase(24)).find((partner) => partner.id === first.id)?.isNew, true);
+    await staff.setPartnerShowcase(first.id, { showcased: false });
+    assert.ok(!(await guest.partnerShowcase(24)).some((partner) => partner.id === first.id), 'hidden partners leave the row');
+    assert.equal((await call('GET', `/v1/partners/${first.id}/logo`)).status, 404, 'and their logo with it');
+    assert.equal((await call('GET', `/v1/admin/partners/${first.id}/logo`, { token: youssef })).status, 200, 'the hub still previews it');
+
+    const removed = await staff.removePartnerLogo(first.id);
+    assert.equal(removed.logo, null);
+    await staff.setPartnerShowcase(first.id, { showcased: true, newBadge: false });
+    const back = (await guest.partnerShowcase(24)).find((partner) => partner.id === first.id);
+    assert.deepEqual([back?.logoVersion, back?.isNew], [null, false]);
+    const audit = (await adminFor(sara).audit(20)).map((entry) => entry.action);
+    for (const action of ['partner.logo_set', 'partner.logo_removed', 'partner.showcase_updated']) assert.ok(audit.includes(action), action);
   });
 
   it('accepts an association’s case with its رقم الإشهار and «كود يُسر», without an account', async () => {

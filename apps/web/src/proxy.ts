@@ -66,8 +66,8 @@ async function refreshDonor(request: NextRequest): Promise<CookieWrite[]> {
 export const config = {
   matcher: [
     {
-      // Pages only: not static files, images, metadata routes or /.well-known (app links); not router prefetches.
-      source: '/((?!_next/static|_next/image|\\.well-known|favicon.ico|icon|apple-icon|robots.txt|sitemap.xml|.*\\.[a-z0-9]+$).*)',
+      // Pages only: not static files, images, metadata routes, /.well-known (app links) or /partner-logos; not router prefetches.
+      source: '/((?!_next/static|_next/image|\\.well-known|partner-logos|favicon.ico|icon|apple-icon|robots.txt|sitemap.xml|.*\\.[a-z0-9]+$).*)',
       missing: [
         { type: 'header', key: 'next-router-prefetch' },
         { type: 'header', key: 'purpose', value: 'prefetch' },

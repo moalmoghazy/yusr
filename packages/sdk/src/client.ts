@@ -1,4 +1,12 @@
-import type { CreatePartnerInput, EditCaseInput, PartnerApplicationInput, RecordFollowupInput, UpdatePartnerInput } from '@yusr/core/schemas';
+import type {
+  CreatePartnerInput,
+  EditCaseInput,
+  PartnerApplicationInput,
+  PartnerLogoInput,
+  PartnerShowcaseInput,
+  RecordFollowupInput,
+  UpdatePartnerInput,
+} from '@yusr/core/schemas';
 import type {
   AdminCase,
   AdminDonation,
@@ -115,6 +123,11 @@ export interface AdminClient {
   setPartnerStatus(partnerId: string, status: PartnerStatus, reason?: string): Promise<Partner>;
   /** A new «كود يُسر»; the old one stops working at once. */
   regeneratePartnerCode(partnerId: string): Promise<Partner>;
+  /** Uploads or replaces its logo for «شركاء يُسر» on the home page. */
+  setPartnerLogo(partnerId: string, input: PartnerLogoInput): Promise<Partner>;
+  removePartnerLogo(partnerId: string): Promise<Partner>;
+  /** Shows or hides it in «شركاء يُسر», and switches its «جديد» badge. */
+  setPartnerShowcase(partnerId: string, patch: PartnerShowcaseInput): Promise<Partner>;
   /** Join requests from associations, newest first (partners:manage). */
   partnerApplications(limit?: number): Promise<PartnerApplication[]>;
   setPartnerApplicationStatus(applicationId: string, status: Exclude<PartnerApplicationStatus, 'new'>): Promise<PartnerApplication>;

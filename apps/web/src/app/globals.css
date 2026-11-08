@@ -742,3 +742,102 @@ html[lang='ar'] .font-wordmark {
     opacity: 0;
   }
 }
+
+/* ------------------------------------------------------------------ «شركاء يُسر» (home hero)
+   One long row of partner logos drifting left to right, in both languages. The list holds the same
+   pass twice and moves by exactly one pass (-50% → 0), so the loop has no seam; items are spaced with
+   padding, not gap, to keep the two halves equal. The edges fade with a mask. Logos and names are
+   muted until the pointer rests on one; resting on the row (or focusing inside it) stops it. */
+.partners-marquee {
+  /* Left-anchored in both languages, so the track's -50% → 0 is measured from the left edge. */
+  direction: ltr;
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, black 14%, black 86%, transparent);
+  padding-block: 0.75rem 0.25rem;
+}
+
+.partners-track {
+  direction: ltr;
+  display: flex;
+  width: max-content;
+}
+
+.partners-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-inline-end: 2.5rem;
+  cursor: default;
+}
+
+.partners-logo,
+.partners-text {
+  filter: grayscale(1);
+  opacity: 0.55;
+  transition:
+    filter 0.35s ease,
+    opacity 0.35s ease,
+    transform 0.35s ease;
+}
+
+.partners-item:hover .partners-logo,
+.partners-item:hover .partners-text,
+.partners-item:active .partners-logo,
+.partners-item:active .partners-text {
+  filter: none;
+  opacity: 1;
+}
+
+.partners-item:hover .partners-logo {
+  transform: scale(1.06);
+}
+
+/* «جديد»: stays in colour so a newcomer catches the eye even while the row is muted. */
+.partners-new {
+  position: absolute;
+  z-index: 1;
+  inset-block-start: -0.55rem;
+  inset-inline: 0;
+  margin-inline: auto;
+  width: max-content;
+  white-space: nowrap;
+  border-radius: 999px;
+  background: var(--highlight);
+  color: var(--highlight-foreground);
+  padding: 0.05rem 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.35;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.18);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .partners-track {
+    animation: partners-drift var(--partners-duration, 36s) linear infinite;
+  }
+
+  .partners-marquee:hover .partners-track,
+  .partners-marquee:focus-within .partners-track {
+    animation-play-state: paused;
+  }
+}
+
+/* Without motion: one still pass to swipe through. */
+@media (prefers-reduced-motion: reduce) {
+  .partners-marquee {
+    overflow-x: auto;
+  }
+
+  .partners-item[data-repeat] {
+    display: none;
+  }
+}
+
+@keyframes partners-drift {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}

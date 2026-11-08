@@ -13,14 +13,16 @@ import {
   DomainError,
   PUBLIC_CASE_STATUSES,
   generateYusrCode,
+  partnerLogoProblem,
   type Partner,
   type PartnerApplication,
   type PartnerApplicationStatus,
   type PartnerCredentials,
+  type PartnerLogoType,
   type PartnerStatus,
   type PublicPartner,
 } from '@yusr/core';
-import type { CreatePartnerInput, PartnerApplicationInput, UpdatePartnerInput } from '@yusr/core/schemas';
+import type { CreatePartnerInput, PartnerApplicationInput, PartnerLogoInput, PartnerShowcaseInput, UpdatePartnerInput } from '@yusr/core/schemas';
 import { primaryRole, requirePermission, type CallContext } from '../common/actor';
 import type { FieldCipher } from '../common/cipher';
 import type { Clock } from '../common/clock';
@@ -62,6 +64,9 @@ function notVerified(): DomainError {
 
 const today = (now: Date) => now.toISOString().slice(0, 10);
 
+/** Changes with every upload, so the website can cache a logo for as long as it likes. */
+const logoVersion = (row: PartnerRow): string | null => (row.logoUpdatedAt ? row.logoUpdatedAt.getTime().toString(36) : null);
+
 /** HMAC-SHA256 of a canonical «كود يُسر» under the server pepper (also used by the demo seed). */
 export function yusrCodeHash(pepper: string, code: string): string {
   return hmacHex('sha256', pepper, `yusr-code:${code}`);
@@ -85,19 +90,39 @@ export class PartnersService {
     const { db } = this.deps;
     const [rows, counts] = await Promise.all([db.read.partners.list(), db.read.partners.caseCounts(PUBLIC_CASE_STATUSES)]);
     return rows
-      .filter((row) => row.status === 'active')
+      .filter((row) => row.status === 'active' && row.showcased)
       .sort((a, b) => b.contractSignedOn.localeCompare(a.contractSignedOn) || b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, limit)
       .map((row) => ({
+        id: row.id,
         name: row.name,
         registrationNumber: row.registrationNumber,
         region: row.region,
         joinedOn: row.contractSignedOn,
         casesCount: counts.get(row.id) ?? 0,
+        logoVersion: logoVersion(row),
+        isNew: row.newBadge,
       }));
   }
 
+  /** A showcased partner's logo, for the website (404 when it has none or is not shown). */
+  async publicLogo(id: string): Promise<{ type: PartnerLogoType; bytes: Uint8Array; version: string }> {
+    const row = await this.deps.db.read.partners.byId(id).catch(() => null);
+    if (!row || row.status !== 'active' || !row.showcased || !row.logo || !row.logoType || !row.logoUpdatedAt) {
+      throw new DomainError('NOT_FOUND', 'Logo not found');
+    }
+    return { type: row.logoType, bytes: row.logo, version: logoVersion(row)! };
+  }
+
   // ------------------------------------------------------------------ staff (partners:manage)
+  /** Its logo for the hub's preview, shown or not. */
+  async staffLogo(id: string, context: CallContext): Promise<{ type: PartnerLogoType; bytes: Uint8Array; version: string }> {
+    requirePermission(context.actor, 'partners:manage');
+    const row = await this.deps.db.read.partners.byId(id).catch(() => null);
+    if (!row?.logo || !row.logoType || !row.logoUpdatedAt) throw new DomainError('NOT_FOUND', 'Logo not found');
+    return { type: row.logoType, bytes: row.logo, version: logoVersion(row)! };
+  }
+
   async list(context: CallContext): Promise<Partner[]> {
     requirePermission(context.actor, 'partners:manage');
     const { db } = this.deps;
@@ -139,6 +164,12 @@ export class PartnersService {
         codeHash: this.codeHash(code),
         codeCipher: cipher.encrypt(code, `partner-code:${id}`),
         codeIssuedAt: now,
+        logo: null,
+        logoType: null,
+        logoUpdatedAt: null,
+        // A new partner shows on the home page at once, with the «جديد» badge until staff take it off.
+        showcased: true,
+        newBadge: true,
         createdBy: actor.id,
         createdAt: now,
         updatedAt: now,
@@ -223,6 +254,60 @@ export class PartnersService {
           requestId: context.requestId ?? null,
         });
       }
+      const updated = (await tx.partners.byId(id))!;
+      return this.toPartner(tx, updated, (await tx.partners.caseCounts()).get(id) ?? 0);
+    });
+  }
+
+  // ------------------------------------------------------------------ «شركاء يُسر» on the website
+  /** Uploads (or replaces) the logo shown in «شركاء يُسر». */
+  async setLogo(id: string, input: PartnerLogoInput, context: CallContext): Promise<Partner> {
+    const bytes = Uint8Array.from(Buffer.from(input.dataBase64, 'base64'));
+    const problem = partnerLogoProblem(input.contentType, bytes);
+    if (problem) throw new DomainError('VALIDATION_FAILED', problem, { field: 'logo' });
+    return this.changeShowcase(id, context, 'partner.logo_set', () => ({ logo: bytes, logoType: input.contentType, logoUpdatedAt: this.deps.clock.now() }), {
+      logoType: input.contentType,
+      bytes: bytes.length,
+    });
+  }
+
+  async removeLogo(id: string, context: CallContext): Promise<Partner> {
+    return this.changeShowcase(id, context, 'partner.logo_removed', () => ({ logo: null, logoType: null, logoUpdatedAt: null }), { logo: null });
+  }
+
+  /** Shows or hides the partner in «شركاء يُسر», and puts the «جديد» badge on or off. */
+  async setShowcase(id: string, patch: PartnerShowcaseInput, context: CallContext): Promise<Partner> {
+    const next = {
+      ...(patch.showcased !== undefined ? { showcased: patch.showcased } : {}),
+      ...(patch.newBadge !== undefined ? { newBadge: patch.newBadge } : {}),
+    };
+    return this.changeShowcase(id, context, 'partner.showcase_updated', () => next, next);
+  }
+
+  private async changeShowcase(
+    id: string,
+    context: CallContext,
+    action: string,
+    patch: () => Partial<Pick<PartnerRow, 'logo' | 'logoType' | 'logoUpdatedAt' | 'showcased' | 'newBadge'>>,
+    after: Record<string, unknown>,
+  ): Promise<Partner> {
+    const actor = requirePermission(context.actor, 'partners:manage');
+    const { db } = this.deps;
+    return db.transaction(async (tx) => {
+      const current = await tx.partners.byId(id, 'update');
+      if (!current) throw new DomainError('NOT_FOUND', 'Partner not found');
+      await tx.partners.update(id, patch());
+      await tx.audit.record({
+        actorId: actor.id,
+        actorRole: primaryRole(actor),
+        action,
+        entityType: 'partner',
+        entityId: id,
+        before: { showcased: current.showcased, newBadge: current.newBadge, logoType: current.logoType },
+        after,
+        ip: context.ip ?? null,
+        requestId: context.requestId ?? null,
+      });
       const updated = (await tx.partners.byId(id))!;
       return this.toPartner(tx, updated, (await tx.partners.caseCounts()).get(id) ?? 0);
     });
@@ -393,6 +478,9 @@ export class PartnersService {
       yusrCode: this.deps.cipher.decrypt(row.codeCipher, `partner-code:${row.id}`),
       codeIssuedAt: row.codeIssuedAt.toISOString(),
       casesCount,
+      logo: row.logoType && row.logoUpdatedAt ? { type: row.logoType, version: logoVersion(row)! } : null,
+      showcased: row.showcased,
+      newBadge: row.newBadge,
       createdBy: { id: row.createdBy, name: creator?.displayName ?? '—' },
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),

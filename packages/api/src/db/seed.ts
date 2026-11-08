@@ -23,7 +23,18 @@ import {
   type PaymentMethod,
   type Role,
 } from '@yusr/core';
-import { DEMO_PARTNER_REGISTRY, DEMO_PARTNERS, demoPartnerFor, DONORS, SEED_CASES, seedAmounts, STAFF, VOLUNTEERS, type SeedCase } from '@yusr/sdk/mock';
+import {
+  DEMO_PARTNER_LOGOS,
+  DEMO_PARTNER_REGISTRY,
+  DEMO_PARTNERS,
+  demoPartnerFor,
+  DONORS,
+  SEED_CASES,
+  seedAmounts,
+  STAFF,
+  VOLUNTEERS,
+  type SeedCase,
+} from '@yusr/sdk/mock';
 import type { FieldCipher } from '../common/cipher';
 import { yusrCodeHash } from '../partners/partners.service';
 import type { Tx } from './ports';
@@ -181,7 +192,13 @@ export async function seedDemo(tx: Tx, options: { now: Date; cipher: FieldCipher
     const id = stableId(`partner:${partner.registrationNumber}`);
     partnerIds.set(partner.registrationNumber, id);
     const at = new Date(`${registry.contractSignedOn}T10:00:00Z`);
+    const logo = DEMO_PARTNER_LOGOS[partner.registrationNumber];
     await tx.partners.insert({
+      logo: logo ? new TextEncoder().encode(logo) : null,
+      logoType: logo ? 'image/svg+xml' : null,
+      logoUpdatedAt: logo ? at : null,
+      showcased: true,
+      newBadge: registry.newBadge ?? false,
       id,
       name: partner.name,
       registrationNumber: partner.registrationNumber,
