@@ -29,6 +29,9 @@ const wordmark = localFont({
   src: '../../fonts/palestine-regular.otf',
   weight: '400',
   variable: '--font-palestine',
+  // No metric-matched Arial fallback: it has no unicode-range, so on Windows (where Arial has Arabic letters)
+  // every character outside this face's range was drawn in Arial instead of falling through to the next face.
+  adjustFontFallback: false,
   display: 'swap',
   declarations: [{ prop: 'unicode-range', value: 'U+0020-0040, U+0600-066A, U+066C-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFF' }],
 });
@@ -38,6 +41,9 @@ const digits = localFont({
   src: '../../fonts/kaf-foda-digits.ttf',
   weight: '700',
   variable: '--font-kaf-digits',
+  // No metric-matched Arial fallback: it has no unicode-range, so on Windows (where Arial has Arabic letters)
+  // every character outside this face's range was drawn in Arial instead of falling through to the next face.
+  adjustFontFallback: false,
   display: 'swap',
   declarations: [{ prop: 'unicode-range', value: 'U+0660-0669, U+066C' }],
 });
