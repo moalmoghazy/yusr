@@ -15,7 +15,7 @@ export { PLATFORM_GLYPHS, PlatformIcon, type PlatformIconProps, type PlatformNam
 export { Button, buttonClasses, type ButtonProps, type ButtonSize, type ButtonStyle, type ButtonVariant } from './button';
 export { Badge, type BadgeTone } from './badge';
 export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';
-export { Logo, LogoMark, type LogoMarkProps } from './logo';
+export { Logo, LogoMark, MarkShine, type LogoMarkProps } from './logo';
 export { DonationProgress, ProgressBar, type DonationProgressProps, type ProgressBarProps, type ProgressSize } from './progress';
 export { CaseCover, type CaseCoverProps } from './case-cover';
 export { StoryScene, type StorySceneProps } from './story-scene';

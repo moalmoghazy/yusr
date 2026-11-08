@@ -266,8 +266,8 @@ html[lang='ar'] .font-wordmark {
   }
 }
 
-/* Case covers: the Yusr mark is drawn and its golden ḍamma falls onto it like a drop of water; the ḍamma
-   fades as the mark turns into the category's motif, then the motif turns back into the mark. One 9s loop; each cover
+/* Case covers: the bowl of the Yusr mark is drawn, then turns into the category's motif, and the motif turns
+   back into the mark (.cover-morph-drop is the earlier marks' falling ḍamma). One 9s loop; each cover
    starts at its own point (--morph-delay). Without motion only the motif shows (case-cover.tsx). */
 @media (prefers-reduced-motion: no-preference) {
   .cover-morph-mark,
@@ -385,7 +385,7 @@ html[lang='ar'] .font-wordmark {
 }
 
 /* ------------------------------------------------------------------ The animated mark (/identity) */
-/* The bowl is written, the dots of ي appear, the golden ḍamma falls into place; see animated-mark.tsx. */
+/* The bowl is written and its light rises into it with a gold ripple; see animated-mark.tsx. */
 .ym-stage {
   --ym-x: 0;
   --ym-y: 0;
@@ -419,18 +419,7 @@ html[lang='ar'] .font-wordmark {
   stroke-dashoffset: 0;
 }
 
-.ym-dot {
-  fill: var(--primary);
-}
-
-.ym-drop path {
-  fill: var(--highlight);
-}
-
-.ym-dot,
-.ym-drop,
-.ym-ripple,
-.ym-lean {
+.ym-ripple {
   transform-box: fill-box;
   transform-origin: 50% 50%;
 }
@@ -442,11 +431,11 @@ html[lang='ar'] .font-wordmark {
   opacity: 0;
 }
 
-/* The ḍamma moves towards the pointer wherever it is on the page (animated-mark.tsx sets --ym-x/y,
-   a direction scaled by distance, each in -1…1); the glow follows a little. */
+/* The light slides towards the pointer inside the bowl, wherever the pointer is on the page (animated-mark.tsx
+   sets --ym-x/y, a direction scaled by distance, each in -1…1); the glow follows a little. Units are the mark's grid. */
 .ym-lean {
-  transform: translate(calc(var(--ym-x) * 6px), calc(var(--ym-y) * 6px)) rotate(calc(var(--ym-x) * 16deg));
-  transition: transform 0.45s cubic-bezier(0.34, 1.4, 0.5, 1);
+  transform: translate(calc(var(--ym-x) * 3.5px), calc(var(--ym-y) * 2.5px));
+  transition: transform 0.6s cubic-bezier(0.34, 1.3, 0.5, 1);
 }
 
 .ym-glow {
@@ -459,20 +448,12 @@ html[lang='ar'] .font-wordmark {
     animation: ym-draw 1.3s cubic-bezier(0.65, 0, 0.35, 1) 0.15s both;
   }
 
-  .ym-dot {
-    animation: ym-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 1.2s both;
-  }
-
-  .ym-dot + .ym-dot {
-    animation-delay: 1.32s;
-  }
-
-  .ym-drop {
-    animation: ym-fall 1s cubic-bezier(0.34, 1.3, 0.5, 1) 1.35s both;
+  .ym-light {
+    animation: ym-fade 1.2s ease-out 1.1s both;
   }
 
   .ym-ripple {
-    animation: ym-ripple 1.7s ease-out 2s both;
+    animation: ym-ripple 1.7s ease-out 1.7s both;
   }
 
   .ym-ring {
@@ -508,33 +489,8 @@ html[lang='ar'] .font-wordmark {
   }
 }
 
-@keyframes ym-fall {
-  0% {
-    opacity: 0;
-    transform: translateY(-26px) rotate(-20deg) scale(0.7);
-  }
-  55% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes ym-pop {
-  0% {
-    opacity: 0;
-    transform: scale(0);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
 @keyframes ym-ripple {
-  /* Hidden while it waits for the drop to land (fill-mode both shows the first frame during the delay). */
+  /* Hidden while it waits for the light to rise (fill-mode both shows the first frame during the delay). */
   0% {
     opacity: 0;
     transform: scale(0.6);

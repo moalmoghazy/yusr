@@ -156,8 +156,12 @@ html[lang='en'] .brand-hero-story {
   animation: hm-fall 1s cubic-bezier(0.34, 1.3, 0.5, 1) 1.35s both;
 }
 
+.hero-mark.is-playing .hm-light {
+  animation: hm-fade 1.2s ease-out 1.1s both;
+}
+
 .hero-mark.is-playing .hm-ripple {
-  animation: hm-ripple 1.7s ease-out 2s both;
+  animation: hm-ripple 1.7s ease-out 1.7s both;
 }
 
 .hero-mark.is-playing .hm-ring {
@@ -395,9 +399,15 @@ html[lang='en'] .brand-hero-story {
   font-weight: 700;
 }
 
-.anatomy-num-drop {
+.anatomy-num-drop,
+.anatomy-num-gold {
   background: var(--highlight);
   color: var(--highlight-foreground);
+}
+
+.anatomy-num-shine {
+  background: var(--logo-shine);
+  color: #03272a;
 }
 
 /* ------------------------------------------------------------------ Wordmark construction */

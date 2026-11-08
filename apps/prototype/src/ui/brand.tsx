@@ -1,16 +1,74 @@
-import { brand, lockup, wordmark, type LogoGeometry, type WordmarkGeometry } from '@yusr/theme';
+import { brand, lockup, markShine, markViewBox, shineBandPath, wordmark, type LogoGeometry, type WordmarkGeometry } from '@yusr/theme';
 import { useI18n } from '@yusr/i18n/react';
 import { useId } from 'react';
 import { cx } from './primitives';
 
+/** The bright band's colour: white ink means the bowl sits on the brand colour. */
+const shineFor = (bowl: string) => (bowl.toUpperCase() === '#FFFFFF' ? markShine('inverse').shine : 'var(--logo-shine)');
+
 /**
- * The shapes of the mark for a given geometry: the bowl, the two dots of ي and the golden ḍamma.
- * `size` is the rendered size in px, used to simplify the dots when the mark gets small.
+ * The light inside the bowl (as @yusr/ui MarkShine on the website): turquoise and gold bands kept on the
+ * bowl's stroke, fading up its right arm. Ids derive from `id`, unique in the page.
+ */
+export function MarkShine({
+  logo = brand.logo,
+  shine,
+  gold,
+  id,
+  className,
+}: {
+  logo?: LogoGeometry;
+  shine: string;
+  gold: string;
+  id: string;
+  className?: string;
+}) {
+  if (!logo.shine) return null;
+  const { bands, top, fade } = logo.shine;
+  return (
+    <>
+      <defs>
+        {bands.map((band, index) => (
+          <radialGradient
+            key={index}
+            id={`${id}-b${index}`}
+            gradientUnits="userSpaceOnUse"
+            cx={0}
+            cy={0}
+            r={1}
+            gradientTransform={`translate(${band.cx} ${band.cy}) scale(${band.rx} ${band.ry})`}
+          >
+            {band.stops.map(([offset, opacity], stop) => (
+              <stop key={stop} offset={offset} style={{ stopColor: band.tone === 'gold' ? gold : shine, stopOpacity: opacity }} />
+            ))}
+          </radialGradient>
+        ))}
+        <linearGradient id={`${id}-f`} gradientUnits="userSpaceOnUse" x1={fade.x1} y1={fade.y1} x2={fade.x2} y2={fade.y2}>
+          <stop offset={0} stopColor="#fff" />
+          <stop offset={1} stopColor="#000" />
+        </linearGradient>
+        <mask id={`${id}-m`} maskUnits="userSpaceOnUse" x={0} y={0} width={64} height={64}>
+          <path d={logo.bowl.d} fill="none" stroke={`url(#${id}-f)`} strokeWidth={logo.bowl.strokeWidth} strokeLinecap="round" />
+        </mask>
+      </defs>
+      <g mask={`url(#${id}-m)`} className={className}>
+        {bands.map((band, index) => (
+          <path key={index} d={shineBandPath(band, top)} fill={`url(#${id}-b${index})`} />
+        ))}
+      </g>
+    </>
+  );
+}
+
+/**
+ * The shapes of the mark for a given geometry: the bowl with its light (and, in the earlier versions, the two
+ * dots of ي and the golden ḍamma). `size` is the rendered size in px, used to simplify the dots when the mark gets small.
  */
 export function MarkShapes({
   logo = brand.logo,
   bowl,
   drop,
+  shine = shineFor(bowl),
   size,
   maskId,
   dotClassName,
@@ -18,13 +76,14 @@ export function MarkShapes({
   logo?: LogoGeometry;
   bowl: string;
   drop: string;
+  shine?: string;
   size: number;
   maskId: string;
   dotClassName?: string;
 }) {
   const small = size < logo.dotsMinSize;
-  const cutout = logo.dots.style === 'cutout';
-  const [left, right] = logo.dots.items;
+  const dots = logo.dots;
+  const cutout = dots?.style === 'cutout';
   return (
     <>
       {cutout && !small && <DotsMask id={maskId} logo={logo} holeClassName={dotClassName} />}
@@ -36,14 +95,24 @@ export function MarkShapes({
         strokeLinecap="round"
         mask={cutout && !small ? `url(#${maskId})` : undefined}
       />
-      {!cutout &&
+      <MarkShine logo={logo} shine={shine} gold={drop} id={`${maskId}-shine`} />
+      {dots &&
+        !cutout &&
         (small ? (
           // Too small for two dots: they join into one short stroke, as ي is written by hand in Ruqʿa.
-          <line x1={left.cx} y1={left.cy} x2={right.cx} y2={right.cy} stroke={bowl} strokeWidth={left.r * 2} strokeLinecap="round" />
+          <line
+            x1={dots.items[0].cx}
+            y1={dots.items[0].cy}
+            x2={dots.items[1].cx}
+            y2={dots.items[1].cy}
+            stroke={bowl}
+            strokeWidth={dots.items[0].r * 2}
+            strokeLinecap="round"
+          />
         ) : (
-          logo.dots.items.map((dot) => <circle key={dot.cx} cx={dot.cx} cy={dot.cy} r={dot.r} fill={bowl} className={dotClassName} />)
+          dots.items.map((dot) => <circle key={dot.cx} cx={dot.cx} cy={dot.cy} r={dot.r} fill={bowl} className={dotClassName} />)
         ))}
-      <path d={logo.drop.d} fill={drop} transform={logo.drop.transform} />
+      {logo.drop && <path d={logo.drop.d} fill={drop} transform={logo.drop.transform} />}
     </>
   );
 }
@@ -66,7 +135,7 @@ export function LogoMark({
   const maskId = `yd${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   return (
     <svg
-      viewBox={logo.viewBox}
+      viewBox={markViewBox(logo)}
       width={size}
       height={size}
       className={cx('logo-mark', className)}
@@ -185,7 +254,7 @@ export function DotsMask({ id, logo = brand.logo, holeClassName }: { id: string;
     <defs>
       <mask id={id} maskUnits="userSpaceOnUse" x={-8} y={-8} width={80} height={80}>
         <rect x={-8} y={-8} width={80} height={80} fill="#fff" />
-        {logo.dots.items.map((dot) => (
+        {logo.dots?.items.map((dot) => (
           <circle key={dot.cx} cx={dot.cx} cy={dot.cy} r={dot.r} fill="#000" className={holeClassName} />
         ))}
       </mask>

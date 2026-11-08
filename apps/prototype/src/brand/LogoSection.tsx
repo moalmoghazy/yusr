@@ -1,16 +1,28 @@
 import type { Locale } from '@yusr/core';
-import { LOGO_VARIANTS, brand, centreMark, lockup, logoBackgroundSvg, mix, type BackgroundTone, type LogoGeometry, type LogoVariant } from '@yusr/theme';
+import {
+  APP_ICON_SHARE,
+  LOGO_VARIANTS,
+  brand,
+  centreMark,
+  lockup,
+  logoBackgroundSvg,
+  mix,
+  shineBandPath,
+  type BackgroundTone,
+  type LogoGeometry,
+  type LogoVariant,
+} from '@yusr/theme';
 import { useId, useMemo, type CSSProperties, type ReactNode } from 'react';
 import { useT } from '../app/i18n';
 import { usePrototype } from '../app/prefs';
-import { DotsMask, Lockup, LogoMark, MarkShapes, WordmarkShapes } from '../ui/brand';
+import { Lockup, LogoMark, MarkShapes, MarkShine, WordmarkShapes } from '../ui/brand';
 import { Icon } from '../ui/icons';
 import { DocSectionHead } from '../ui/page-nav';
 
 const GRID = Array.from({ length: 17 }, (_, i) => i * 4);
 
 /** Which explored version is live: the one brand.logo points to in packages/theme/src/brand.ts. */
-const LIVE_VARIANT = (Object.keys(LOGO_VARIANTS) as LogoVariant[]).find((key) => LOGO_VARIANTS[key] === brand.logo) ?? 'dotsBelow';
+const LIVE_VARIANT = (Object.keys(LOGO_VARIANTS) as LogoVariant[]).find((key) => LOGO_VARIANTS[key] === brand.logo) ?? 'lit';
 const VARIANT_ORDER: readonly LogoVariant[] = [LIVE_VARIANT, ...(Object.keys(LOGO_VARIANTS) as LogoVariant[]).filter((key) => key !== LIVE_VARIANT)];
 
 export function LogoSection({ index }: { index: string }) {
@@ -34,7 +46,7 @@ export function LogoSection({ index }: { index: string }) {
             <h3>{t('proto.brand.construction')}</h3>
             <p className="muted">{t('proto.brand.constructionBody')}</p>
             <ol className="anatomy-list">
-              {(['bowl', 'dots', 'drop', 'smile'] as const).map((part, i) => (
+              {(['bowl', 'shine', 'gold', 'fade'] as const).map((part, i) => (
                 <li key={part}>
                   <span className={`anatomy-num anatomy-num-${part}`}>{f.number(i + 1)}</span>
                   <span>{t(`proto.brand.anatomy.${part}`)}</span>
@@ -137,7 +149,7 @@ export function LogoSection({ index }: { index: string }) {
         <div className="logo-bottom">
           <div className="min-sizes">
             <h3 className="doc-h3">{t('proto.brand.minSize')}</h3>
-            <p className="muted size-note">{t('proto.brand.minSizeNote', { size: brand.logo.dotsMinSize })}</p>
+            <p className="muted size-note">{t('proto.brand.minSizeNote')}</p>
             <div className="size-row">
               {[64, 48, 32, 24, 16].map((size) => (
                 <figure key={size} className="size-item">
@@ -180,27 +192,17 @@ export function LogoSection({ index }: { index: string }) {
 function Construction() {
   const { t, f } = useT();
   const { logo } = brand;
-  const { bowl, drop } = logo.guides;
-  const cutout = logo.dots.style === 'cutout';
-  const [left, right] = logo.dots.items;
+  const { bowl } = logo.guides;
+  const shine = logo.shine;
   const low = bowl.cy + bowl.ry; // lowest point of the curve's centre line
-  const edge = logo.bowl.strokeWidth / 2;
-  // Point on the outer edge of the stroke at `angle` (0 = right end, 90 = lowest point).
-  const outer = (angle: number): [number, number] => {
-    const a = (angle * Math.PI) / 180;
-    return [bowl.cx + (bowl.rx + edge) * Math.cos(a), bowl.cy + (bowl.ry + edge) * Math.sin(a)];
-  };
-  const dotsMarker = cutout
-    ? { n: 2, x: 61.4, y: right.cy + 9.5, from: [58.6, right.cy + 8.1], to: [right.cx + right.r * 0.8, right.cy + right.r * 0.8] }
-    : { n: 2, x: 50, y: right.cy + 3.4, from: [46.8, right.cy + 2.6], to: [right.cx + right.r * 0.9, right.cy + right.r * 0.45] };
+  const [outerBand, innerBand] = shine?.bands ?? [];
+  const fade = shine?.fade;
   const markers = [
-    { n: 1, x: 3.6, y: bowl.cy + 10.5, from: [6.8, bowl.cy + 9.7], to: [11.4, bowl.cy + 7.9] },
-    dotsMarker,
-    { n: 3, x: 50.5, y: drop.cy - 11.1, from: [47.6, drop.cy - 9.7], to: [42.4, drop.cy - 6] },
-    cutout
-      ? { n: 4, x: 32, y: low + 10.1, from: [32, low + 6.8], to: [32, low + 3.7] }
-      : { n: 4, x: 8.6, y: bowl.cy + 25.2, from: [10.6, bowl.cy + 22.6], to: outer(128) },
-  ] as const;
+    { n: 1, x: 3.6, y: bowl.cy + 4, from: [6.8, bowl.cy + 4.6], to: [10.2, bowl.cy + 6] },
+    outerBand && { n: 2, x: 10, y: low + 9, from: [12.4, low + 7.2], to: [20.6, low + 0.9] },
+    innerBand && { n: 3, x: 21.6, y: low + 12.8, from: [23.6, low + 10.6], to: [27.4, low - 0.4] },
+    fade && { n: 4, x: fade.x2 + 7.4, y: fade.y2 - 7.4, from: [fade.x2 + 5, fade.y2 - 5], to: [fade.x2 + 0.6, fade.y2 - 0.6] },
+  ].filter((marker): marker is { n: number; x: number; y: number; from: number[]; to: number[] } => Boolean(marker));
   return (
     <svg viewBox="-8 -8 80 80" className="construction-svg" role="img" aria-label={t('proto.brand.construction')}>
       <g className="cg-grid">
@@ -214,37 +216,19 @@ function Construction() {
       <line x1={bowl.cx} y1={-5} x2={bowl.cx} y2={69} className="cg-axis" />
       <line x1={-5} y1={bowl.cy} x2={69} y2={bowl.cy} className="cg-axis" />
       <ellipse cx={bowl.cx} cy={bowl.cy} rx={bowl.rx} ry={bowl.ry} className="cg-guide" />
-      <circle cx={drop.cx} cy={drop.cy} r={drop.r} className="cg-guide cg-guide-gold" />
-      {cutout && <DotsMask id="construction-dots" />}
-      <path
-        d={logo.bowl.d}
-        fill="none"
-        className="cg-bowl"
-        strokeWidth={logo.bowl.strokeWidth}
-        strokeLinecap="round"
-        mask={cutout ? 'url(#construction-dots)' : undefined}
-      />
-      <line x1={left.cx - 6} y1={left.cy} x2={right.cx + 6} y2={right.cy} className="cg-axis" />
-      {cutout ? (
-        logo.dots.items.map((dot) => <circle key={dot.cx} cx={dot.cx} cy={dot.cy} r={dot.r} className="cg-guide cg-guide-dot" />)
-      ) : (
-        <>
-          {/* Clearance under the stroke: the dots hang just below the curve's lowest point. */}
-          <line x1={bowl.cx - 7.5} y1={low + edge} x2={bowl.cx + 7.5} y2={low + edge} className="cg-axis" />
-          {logo.dots.items.map((dot) => (
-            <circle key={dot.cx} cx={dot.cx} cy={dot.cy} r={dot.r} className="cg-dot" />
-          ))}
-        </>
-      )}
-      <path d={logo.drop.d} transform={logo.drop.transform} className="cg-drop" />
+      <path d={logo.bowl.d} fill="none" className="cg-bowl" strokeWidth={logo.bowl.strokeWidth} strokeLinecap="round" />
+      <MarkShine logo={logo} shine="var(--logo-shine)" gold="var(--highlight)" id="construction-shine" />
+      {/* Each band is an ellipse whose edge is crisp and whose light fades towards the middle. */}
+      {shine && outerBand && <path d={shineBandPath(outerBand, shine.top)} className="cg-guide cg-guide-dot" />}
+      {shine && innerBand && <path d={shineBandPath(innerBand, shine.top)} className="cg-guide cg-guide-gold" />}
+      {/* The light fades along this line, up the right arm. */}
+      {fade && <line x1={fade.x1} y1={fade.y1} x2={fade.x2} y2={fade.y2} className="cg-axis cg-axis-strong" />}
       <g className="cg-points">
         <circle cx={bowl.cx - bowl.rx} cy={bowl.cy} r={1} />
         <circle cx={bowl.cx + bowl.rx} cy={bowl.cy} r={1} />
         <circle cx={bowl.cx} cy={low} r={1} />
-        <circle cx={drop.cx} cy={drop.cy} r={1} />
-        {logo.dots.items.map((dot) => (
-          <circle key={dot.cx} cx={dot.cx} cy={dot.cy} r={0.55} />
-        ))}
+        {fade && <circle cx={fade.x1} cy={fade.y1} r={0.7} />}
+        {fade && <circle cx={fade.x2} cy={fade.y2} r={0.7} />}
       </g>
       {markers.map((marker) => (
         <g key={marker.n} className="cg-marker">
@@ -354,8 +338,8 @@ export function AppIcon({ size, shape = 'squircle', logo = brand.logo }: { size:
         </linearGradient>
       </defs>
       {shape === 'circle' ? <circle cx={32} cy={32} r={32} fill={`url(#ai${id})`} /> : <rect width={64} height={64} rx={14.4} fill={`url(#ai${id})`} />}
-      <g transform={centreMark(logo, 64, 0.625)}>
-        <MarkShapes logo={logo} bowl="#FFFFFF" drop={highlight} size={size * 0.625} maskId={`aid${id}`} />
+      <g transform={centreMark(logo, 64, APP_ICON_SHARE)}>
+        <MarkShapes logo={logo} bowl="#FFFFFF" drop={highlight} size={size * APP_ICON_SHARE} maskId={`aid${id}`} />
       </g>
     </svg>
   );

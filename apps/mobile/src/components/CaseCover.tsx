@@ -17,7 +17,7 @@ const GLYPH_SCALE = 3.4;
 const GLYPH_X = 40;
 const GLYPH_Y = (180 - 24 * GLYPH_SCALE) / 2;
 const LOGO = brand.logo;
-const MARK_SCALE = (24 * GLYPH_SCALE * 0.92) / LOGO.bounds.height;
+const MARK_SCALE = (24 * GLYPH_SCALE * 0.92) / Math.max(LOGO.bounds.width, LOGO.bounds.height);
 const MARK_X = GLYPH_X + 12 * GLYPH_SCALE - MARK_SCALE * (LOGO.bounds.x + LOGO.bounds.width / 2);
 const MARK_Y = GLYPH_Y + 12 * GLYPH_SCALE - MARK_SCALE * (LOGO.bounds.y + LOGO.bounds.height / 2);
 const r2 = (value: number) => Math.round(value * 100) / 100;
@@ -29,13 +29,14 @@ const scaleAbout =
     `translate(${cx} ${cy + dy}) scale(${sx} ${sy}) translate(${-cx} ${-cy})`;
 const markScale = scaleAbout(LOGO.bounds.x + LOGO.bounds.width / 2, LOGO.bounds.y + LOGO.bounds.height / 2);
 const iconScale = scaleAbout(12, 12);
-const dropScale = scaleAbout(LOGO.guides.drop.cx, LOGO.guides.drop.cy);
+const DROP_GUIDE = LOGO.guides.drop;
+const dropScale = scaleAbout(DROP_GUIDE?.cx ?? 32, DROP_GUIDE?.cy ?? 16);
 
 /**
  * The website's illustrated cover (no beneficiary photos), drawn natively from the same geometry and
- * moving the same way: the lattice drifts left to right and fades out, and the motif loops — the Yusr
- * mark appears and its golden ḍamma falls onto it like a drop of water, then the ḍamma fades as the mark
- * turns into the category's motif, and back. Covers start the loop at different moments (by seed).
+ * moving the same way: the lattice drifts left to right and fades out, and the motif loops — the bowl of
+ * the Yusr mark appears, then turns into the category's motif, and back (with the earlier marks, their golden
+ * ḍamma also falls onto it like a drop of water). Covers start the loop at different moments (by seed).
  * With reduced motion the cover is still and shows the motif only.
  */
 export function CaseCover({ category, seed, height = 170 }: { category: CaseCategory; seed: number; height?: number }) {
@@ -116,7 +117,7 @@ export function CaseCover({ category, seed, height = 170 }: { category: CaseCate
         <G transform={`translate(${r2(MARK_X)} ${r2(MARK_Y)}) scale(${r2(MARK_SCALE)})`}>
           <AnimatedG opacity={motion.markOpacity} transform={motion.mark}>
             <Path d={LOGO.bowl.d} fill="none" stroke={tone.softForeground} strokeWidth={LOGO.bowl.strokeWidth} strokeLinecap="round" />
-            {LOGO.dots.items.map((dot) => (
+            {LOGO.dots?.items.map((dot) => (
               <Circle key={dot.cx} cx={dot.cx} cy={dot.cy} r={dot.r} fill={tone.softForeground} />
             ))}
           </AnimatedG>
@@ -138,7 +139,7 @@ export function CaseCover({ category, seed, height = 170 }: { category: CaseCate
           })}
         </AnimatedG>
       </G>
-      {motion && (
+      {motion && LOGO.drop && (
         <G transform={`translate(${r2(MARK_X)} ${r2(MARK_Y)}) scale(${r2(MARK_SCALE)})`}>
           <AnimatedG opacity={motion.dropOpacity} transform={motion.drop}>
             <Path d={LOGO.drop.d} transform={LOGO.drop.transform} fill={theme.colors.highlight} />

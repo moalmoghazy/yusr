@@ -1,14 +1,14 @@
 'use client';
 
 import { brand } from '@yusr/theme';
-import { Icon } from '@yusr/ui';
+import { Icon, MarkShine } from '@yusr/ui';
 import { useEffect, useRef, useState } from 'react';
 
 /**
- * «الضمّة الذهبية», drawn live: the bowl of ي is written, its two dots appear, then the golden ḍamma
- * falls into place with a ripple. Wherever the pointer moves on the page, the ḍamma moves towards it
- * (the nearer, the less); a click on the mark (or the button) plays it again. With reduced motion
- * the finished mark is shown still.
+ * The mark, drawn live: the bowl of ي is written, then its light (the turquoise and gold bands) rises into
+ * it with a gold ripple. Wherever the pointer moves on the page, the light slides towards it inside the bowl,
+ * like a reflection (the nearer, the less); a click on the mark (or the button) plays it again. With reduced
+ * motion the finished mark is shown still.
  */
 export function AnimatedMark({ label, replayLabel }: { label: string; replayLabel: string }) {
   const { logo } = brand;
@@ -65,15 +65,8 @@ export function AnimatedMark({ label, replayLabel }: { label: string; replayLabe
           <circle cx="32" cy="32" r="44" className="ym-ring" />
           <circle cx="32" cy="32" r="35" className="ym-ring ym-ring-2" />
           <path d={logo.bowl.d} pathLength={100} className="ym-bowl" strokeWidth={logo.bowl.strokeWidth} />
-          {logo.dots.items.map((dot) => (
-            <circle key={dot.cx} cx={dot.cx} cy={dot.cy} r={dot.r} className="ym-dot" />
-          ))}
-          <circle cx={logo.guides.drop.cx} cy={logo.guides.drop.cy} r={logo.guides.drop.r} className="ym-ripple" />
-          <g className="ym-lean">
-            <g className="ym-drop">
-              <path d={logo.drop.d} transform={logo.drop.transform} />
-            </g>
-          </g>
+          <MarkShine logo={logo} shine="var(--logo-shine)" gold="var(--highlight)" id={`ym-shine-${run}`} className="ym-light" bandsClassName="ym-lean" />
+          <circle cx={logo.guides.bowl.cx} cy={logo.guides.bowl.cy + logo.guides.bowl.ry} r={logo.bowl.strokeWidth} className="ym-ripple" />
         </svg>
       </div>
       <button

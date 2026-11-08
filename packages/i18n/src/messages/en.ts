@@ -851,16 +851,16 @@ export const en: Messages = {
   },
   identity: {
     title: 'Visual identity',
-    description: 'The Yusr mark, “the golden ḍamma”, and the “garden of giving” pattern.',
+    description: 'The Yusr mark, “the light of ease”, and the “garden of giving” pattern.',
     logo: 'The mark',
-    logoName: 'The golden ḍamma',
+    logoName: 'The light of ease',
     pattern: 'The pattern',
     patternName: 'The garden of giving',
     replay: 'Replay',
     logoStory:
-      'The ḍamma is the small mark that turns يسر into يُسر, “ease”. We drew it as a golden drop resting above the curve of the letter yā’, with the letter’s two dots side by side beneath the curve, in its own colour. The curve is also a pair of open hands: a small gift, held carefully, that changes the meaning of someone’s day.',
+      'The mark is the curve of the letter yā’ in يُسر, “ease”, and at the same time a pair of open hands. A light of two colours rests in them: clear turquoise at their edge, then the gold of the ḍamma, the small mark that turns يسر into يُسر. The light fills the hands from below and fades as it climbs one side, as if the gift were being poured in: a small gift, held carefully, that changes the meaning of someone’s day.',
     patternStory:
-      'A pattern from the star-and-strapwork tilework of al-Andalus: an eight-pointed star, linked to its neighbours by interlaced bands that draw octagonal cells between them. In the heart of each star, a rosette of seven golden drops — the ḍamma of the logo, repeated seven times like the seven ears: one gift that multiplies. Where four tiles meet, a small lozenge holds a seed.',
+      'A pattern from the star-and-strapwork tilework of al-Andalus: an eight-pointed star, linked to its neighbours by interlaced bands that draw octagonal cells between them. In the heart of each star, a rosette of seven golden drops — the ḍamma of يُسر, repeated seven times like the seven ears: one gift that multiplies. Where four tiles meet, a small lozenge holds a seed.',
     starLabel: 'One star of the garden of giving, enlarged: seven golden drops at its heart, like the seven ears',
     verse: '﴿كَمَثَلِ حَبَّةٍ أَنبَتَتْ سَبْعَ سَنَابِلَ فِي كُلِّ سُنبُلَةٍ مِّائَةُ حَبَّةٍ﴾',
     verseSource: '“…like a grain that sprouts seven ears, in every ear a hundred grains.” Qur’an 2:261',

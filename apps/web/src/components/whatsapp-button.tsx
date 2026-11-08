@@ -1,9 +1,9 @@
-import { brand } from '@yusr/theme';
+import { DAMMA_DROP } from '@yusr/theme';
 import { PLATFORM_GLYPHS } from '@yusr/ui';
 import type { CSSProperties } from 'react';
 
 const GLYPH = PLATFORM_GLYPHS.whatsapp;
-const DROP = brand.logo.drop;
+const DROP = DAMMA_DROP;
 
 /**
  * A floating button on every page that opens a WhatsApp chat with Yusr's number (site.whatsapp).

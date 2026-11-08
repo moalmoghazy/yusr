@@ -1,4 +1,5 @@
 import { patternCssUrl, patternStyleFor } from './pattern';
+import { markShine } from './svg';
 import type { ColorScheme, SemanticColors, Theme, ToneName } from './tokens';
 
 const kebab = (value: string) =>
@@ -25,6 +26,8 @@ function colorVariables(theme: Theme, scheme: ColorScheme): Record<string, strin
     vars[`--tone-${tone}-soft-foreground`] = colors.softForeground;
     vars[`--tone-${tone}-solid`] = colors.solid;
   }
+  // The bright band inside the logo's bowl (the gold band is --highlight).
+  vars['--logo-shine'] = markShine(scheme, theme).shine;
   vars['--y-shadow-sm'] = theme.shadow[scheme].sm;
   vars['--y-shadow-md'] = theme.shadow[scheme].md;
   vars['--y-shadow-lg'] = theme.shadow[scheme].lg;

@@ -146,10 +146,9 @@ describe('CaseCard', () => {
   it('puts every cover motif in the same place, over a drifting lattice, with the mark loop hidden until animated', () => {
     const motif = (coverSeed: number) => {
       const html = renderToStaticMarkup(<CaseCard item={{ ...fixture(), coverSeed }} locale="ar" href={HREF} now={NOW} />);
-      // The Yusr mark and its golden ḍamma only appear through the stylesheet's loop; without it, the motif alone.
-      assert.equal(html.match(/fill-highlight/g)?.length, 1, 'the only gold is the ḍamma of the mark loop');
+      // The Yusr mark only appears through the stylesheet's loop; without it, the motif alone.
+      assert.equal(html.match(/fill-highlight/g), null, 'the current mark has no falling ḍamma');
       assert.match(html, /class="cover-morph-mark" style="opacity:0"/);
-      assert.match(html, /class="cover-morph-drop" style="opacity:0;/);
       assert.ok(html.includes('class="case-cover-drift"'));
       return html.match(/transform="(translate\([^"]+scale\([^"]+)"/)?.[1];
     };
@@ -194,12 +193,30 @@ describe('cn', () => {
 });
 
 describe('Logo', () => {
-  it('names itself and draws the two dots at full size, one stroke when tiny', async () => {
+  it('names itself and lights the bowl from within, with unique ids per instance', async () => {
     const { LogoMark } = await import('../src/index');
-    const full = renderToStaticMarkup(<LogoMark size={40} title="شعار يُسر" />);
+    const { brand, markViewBox } = await import('@yusr/theme');
+    const full = renderToStaticMarkup(
+      <>
+        <LogoMark size={40} title="شعار يُسر" />
+        <LogoMark size={16} />
+      </>,
+    );
     assert.ok(full.includes('aria-label="شعار يُسر"'));
+    assert.ok(full.includes(`viewBox="${markViewBox(brand.logo)}"`), 'cropped to the mark');
+    assert.equal((full.match(/<circle /g) ?? []).length, 0, 'no dots');
+    assert.equal((full.match(/<radialGradient /g) ?? []).length, 4, 'two bands per mark');
+    assert.ok(full.includes('stop-color:var(--logo-shine)') && full.includes('stop-color:var(--highlight)'));
+    const masks = [...full.matchAll(/<mask id="([^"]+)"/g)].map((match) => match[1]);
+    assert.equal(new Set(masks).size, 2);
+  });
+
+  it('still draws the earlier mark’s two dots at full size, one stroke when tiny', async () => {
+    const { LogoMark } = await import('../src/index');
+    const { LOGO_VARIANTS } = await import('@yusr/theme');
+    const full = renderToStaticMarkup(<LogoMark size={40} logo={LOGO_VARIANTS.dotsBelow} />);
     assert.equal((full.match(/<circle /g) ?? []).length, 2);
-    const tiny = renderToStaticMarkup(<LogoMark size={16} />);
+    const tiny = renderToStaticMarkup(<LogoMark size={16} logo={LOGO_VARIANTS.dotsBelow} />);
     assert.equal((tiny.match(/<circle /g) ?? []).length, 0);
     assert.ok(tiny.includes('<line '));
   });
@@ -209,7 +226,7 @@ describe('Logo', () => {
     const ar = renderToStaticMarkup(<Logo locale="ar" size={32} wordmark="typeset" />);
     assert.ok(ar.includes('aria-label="شعار يُسر"') && ar.includes('role="img"'));
     assert.ok(ar.includes('>يُسر</span>') && ar.includes('font-logo'), 'the logo face, not the heading face');
-    assert.equal((ar.match(/<circle /g) ?? []).length, 2, 'the mark’s two dots');
+    assert.equal((ar.match(/<radialGradient /g) ?? []).length, 2, 'the mark’s light');
     const en = renderToStaticMarkup(<Logo locale="en" size={32} />);
     assert.ok(en.includes('>Yusr</span>') && en.includes('font-logo'));
   });
@@ -220,7 +237,9 @@ describe('Logo', () => {
     const ar = renderToStaticMarkup(<Logo locale="ar" size={32} />);
     assert.ok(ar.includes(`d="${wordmark.ink.d}"`) && ar.includes(`d="${wordmark.damma.d}"`), 'the word is drawn');
     assert.ok(ar.includes(`translate(${lockup.markX} 0)`), 'the mark shares the word’s grid');
-    assert.equal((ar.match(/<circle /g) ?? []).length, 2, 'the mark’s two dots (the word’s are part of its shape)');
+    assert.equal((ar.match(/<radialGradient /g) ?? []).length, 2, 'the mark’s light');
+    const inverse = renderToStaticMarkup(<Logo locale="ar" size={32} inverse />);
+    assert.ok(inverse.includes('stroke="#FFFFFF"') && !inverse.includes('var(--logo-shine)'), 'on the brand colour the light is fixed');
     assert.ok(!ar.includes('يُسر<'), 'no text: the word is drawn');
   });
 });

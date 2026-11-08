@@ -10,10 +10,12 @@ import { fileURLToPath } from 'node:url';
 import {
   appIconSvg,
   cssText,
+  faviconSvg,
   defaultTheme,
   logoBackgroundSvg,
   logoLockupSvg,
   logoMarkSvg,
+  markShine,
   patternStyleFor,
   patternTileSvg,
   tailwindThemeCss,
@@ -29,7 +31,9 @@ writeFileSync(join(dist, 'tokens.css'), `${cssText(defaultTheme)}\n`);
 writeFileSync(join(dist, 'tailwind.css'), tailwindThemeCss(defaultTheme));
 
 writeFileSync(join(assets, 'logo-mark.svg'), logoMarkSvg());
-writeFileSync(join(assets, 'logo-mark-inverse.svg'), logoMarkSvg({ bowl: '#FFFFFF' }));
+writeFileSync(join(assets, 'logo-mark-inverse.svg'), logoMarkSvg({ bowl: '#FFFFFF', shine: markShine('inverse').shine }));
+// The apps' browser-tab icon (copy to apps/web/src/app/icon.svg and apps/admin/src/app/icon.svg).
+writeFileSync(join(assets, 'favicon.svg'), faviconSvg());
 writeFileSync(join(assets, 'logo-ar.svg'), logoLockupSvg('ar'));
 writeFileSync(join(assets, 'logo-en.svg'), logoLockupSvg('en'));
 writeFileSync(join(assets, 'app-icon.svg'), appIconSvg());

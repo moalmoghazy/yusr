@@ -2,7 +2,7 @@ import { brand } from '@yusr/theme';
 import { useMemo, useState } from 'react';
 import { useT } from '../app/i18n';
 import { SURFACES, usePrototype } from '../app/prefs';
-import { DotsMask } from '../ui/brand';
+import { DotsMask, MarkShine } from '../ui/brand';
 import { Icon, type IconName } from '../ui/icons';
 import { DocSectionHead, PageNav } from '../ui/page-nav';
 import { Button, cx } from '../ui/primitives';
@@ -68,10 +68,10 @@ function BrandHero() {
   );
 }
 
-/** The mark draws itself: the bowl opens, the two dots of ي appear, then the golden ḍamma settles into place. */
+/** The mark draws itself: the bowl opens, then its light rises into it with a gold ripple (earlier marks: the dots appear and the golden ḍamma settles). */
 function AnimatedMark({ play, label }: { play: boolean; label: string }) {
   const { logo } = brand;
-  const cutout = logo.dots.style === 'cutout';
+  const cutout = logo.dots?.style === 'cutout';
   return (
     <svg viewBox="-18 -18 100 100" className={cx('hero-mark', play && 'is-playing')} role="img" aria-label={label}>
       <defs>
@@ -86,11 +86,18 @@ function AnimatedMark({ play, label }: { play: boolean; label: string }) {
       <circle cx="32" cy="32" r="35" className="hm-ring hm-ring-2" />
       {cutout && <DotsMask id="hero-dots" holeClassName="hm-hole" />}
       <path d={logo.bowl.d} pathLength={100} className="hm-bowl" strokeWidth={logo.bowl.strokeWidth} mask={cutout ? 'url(#hero-dots)' : undefined} />
-      {!cutout && logo.dots.items.map((dot) => <circle key={dot.cx} cx={dot.cx} cy={dot.cy} r={dot.r} className="hm-dot" />)}
-      <circle cx={logo.guides.drop.cx} cy={logo.guides.drop.cy} r={logo.guides.drop.r} className="hm-ripple" />
-      <g className="hm-drop">
-        <path d={logo.drop.d} transform={logo.drop.transform} />
-      </g>
+      <MarkShine logo={logo} shine="var(--logo-shine)" gold="var(--highlight)" id="hero-shine" className="hm-light" />
+      {!cutout && logo.dots?.items.map((dot) => <circle key={dot.cx} cx={dot.cx} cy={dot.cy} r={dot.r} className="hm-dot" />)}
+      {logo.guides.drop ? (
+        <circle cx={logo.guides.drop.cx} cy={logo.guides.drop.cy} r={logo.guides.drop.r} className="hm-ripple" />
+      ) : (
+        <circle cx={logo.guides.bowl.cx} cy={logo.guides.bowl.cy + logo.guides.bowl.ry} r={logo.bowl.strokeWidth} className="hm-ripple" />
+      )}
+      {logo.drop && (
+        <g className="hm-drop">
+          <path d={logo.drop.d} transform={logo.drop.transform} />
+        </g>
+      )}
     </svg>
   );
 }

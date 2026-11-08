@@ -1,29 +1,75 @@
-import { brand, type BrandConfig, type LogoGeometry } from './brand';
+import { brand, shineBandPath, type BrandConfig, type LogoGeometry, type ShineColors } from './brand';
 import { mix } from './color';
 import { andalusianPattern } from './pattern';
-import { defaultTheme, type Theme } from './tokens';
+import { defaultTheme, type ColorScheme, type Theme } from './tokens';
 import { arabicLockup, arabicWordmark, type WordmarkGeometry } from './wordmark';
 
 export interface MarkColors {
   bowl: string;
+  /** The ḍamma's gold: the drop of the earlier marks, the gold band of the current one. */
   drop: string;
+  /** The bright band inside the bowl (current mark). */
+  shine?: string;
   background?: string;
+}
+
+/**
+ * The colours of the light inside the bowl. `light`: the brand turquoise bowl with the bright turquoise
+ * of the dark theme; `dark`: the dark theme's bowl with a paler band; `inverse`: a white bowl on the brand colour.
+ */
+export function markShine(scheme: ColorScheme | 'inverse', theme: Theme = defaultTheme): ShineColors {
+  const { light, dark } = theme.colors;
+  if (scheme === 'dark') return { shine: mix(dark.primary, '#FFFFFF', 0.7), gold: dark.highlight };
+  if (scheme === 'inverse') return { shine: dark.primary, gold: light.highlight };
+  return { shine: dark.primary, gold: light.highlight };
+}
+
+const n2 = (value: number) => Math.round(value * 1000) / 1000;
+
+/**
+ * The light inside the bowl: one radial gradient per band, and a mask that keeps them on the bowl's stroke
+ * and fades them up its right arm. `id` must be unique in the document.
+ */
+export function shineSvg(logo: LogoGeometry, colors: ShineColors, id: string): string {
+  const { shine } = logo;
+  if (!shine) return '';
+  const { fade } = shine;
+  const gradients = shine.bands
+    .map(
+      (band, index) =>
+        `<radialGradient id="${id}-b${index}" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="1" gradientTransform="translate(${band.cx} ${band.cy}) scale(${band.rx} ${band.ry})">` +
+        band.stops.map(([offset, opacity]) => `<stop offset="${n2(offset)}" stop-color="${colors[band.tone]}" stop-opacity="${n2(opacity)}"/>`).join('') +
+        '</radialGradient>',
+    )
+    .join('');
+  return [
+    '<defs>',
+    gradients,
+    `<linearGradient id="${id}-f" gradientUnits="userSpaceOnUse" x1="${fade.x1}" y1="${fade.y1}" x2="${fade.x2}" y2="${fade.y2}"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient>`,
+    `<mask id="${id}-m" maskUnits="userSpaceOnUse" x="0" y="0" width="64" height="64"><path d="${logo.bowl.d}" fill="none" stroke="url(#${id}-f)" stroke-width="${logo.bowl.strokeWidth}" stroke-linecap="round"/></mask>`,
+    '</defs>',
+    `<g mask="url(#${id}-m)">`,
+    shine.bands.map((band, index) => `<path d="${shineBandPath(band, shine.top)}" fill="url(#${id}-b${index})"/>`).join(''),
+    '</g>',
+  ].join('');
 }
 
 /** Mask that keeps the bowl and cuts the two dots of ي out of it (they stay transparent on any background). */
 function dotsMask(logo: LogoGeometry, id: string): string {
+  if (!logo.dots) return '';
   const holes = logo.dots.items.map((dot) => `<circle cx="${dot.cx}" cy="${dot.cy}" r="${dot.r}" fill="#000"/>`).join('');
   return `<defs><mask id="${id}" maskUnits="userSpaceOnUse" x="-8" y="-8" width="80" height="80"><rect x="-8" y="-8" width="80" height="80" fill="#fff"/>${holes}</mask></defs>`;
 }
 
 function markPaths(logo: LogoGeometry, colors: MarkColors, maskId = 'yusr-dots'): string {
-  const cutout = logo.dots.style === 'cutout';
+  const cutout = logo.dots?.style === 'cutout';
   const parts = [
     cutout ? dotsMask(logo, maskId) : '',
     `<path d="${logo.bowl.d}" fill="none" stroke="${colors.bowl}" stroke-width="${logo.bowl.strokeWidth}" stroke-linecap="round"${cutout ? ` mask="url(#${maskId})"` : ''}/>`,
+    shineSvg(logo, { shine: colors.shine ?? markShine('light').shine, gold: colors.drop }, `${maskId}-shine`),
     // Solid dots take the curve's colour, so the letter reads as one shape.
-    cutout ? '' : logo.dots.items.map((dot) => `<circle cx="${dot.cx}" cy="${dot.cy}" r="${dot.r}" fill="${colors.bowl}"/>`).join(''),
-    `<path d="${logo.drop.d}" fill="${colors.drop}" transform="${logo.drop.transform}"/>`,
+    logo.dots && !cutout ? logo.dots.items.map((dot) => `<circle cx="${dot.cx}" cy="${dot.cy}" r="${dot.r}" fill="${colors.bowl}"/>`).join('') : '',
+    logo.drop ? `<path d="${logo.drop.d}" fill="${colors.drop}" transform="${logo.drop.transform}"/>` : '',
   ];
   return parts.join('');
 }
@@ -37,18 +83,47 @@ export function centreMark(logo: LogoGeometry, size: number, share: number): str
   return `translate(${round(size / 2 - scale * cx)} ${round(size / 2 - scale * cy)}) scale(${round(scale)})`;
 }
 
-/** The mark alone (transparent background unless one is given). */
+/** A square viewBox around the mark's visual bounds with `pad` units on its longer side: draws the mark as large as its box. */
+export function markViewBox(logo: LogoGeometry, pad = 1.5): string {
+  const side = Math.max(logo.bounds.width, logo.bounds.height) + 2 * pad;
+  const round = (value: number) => Math.round(value * 100) / 100;
+  const x = logo.bounds.x + logo.bounds.width / 2 - side / 2;
+  const y = logo.bounds.y + logo.bounds.height / 2 - side / 2;
+  return `${round(x)} ${round(y)} ${round(side)} ${round(side)}`;
+}
+
+/**
+ * The browser-tab icon (apps' icon.svg): the mark in the light theme's colours, and in the dark theme's
+ * when the browser is dark.
+ */
+export function faviconSvg(theme: Theme = defaultTheme, config: BrandConfig = brand): string {
+  const { light, dark } = theme.colors;
+  return [
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${markViewBox(config.logo, 1)}" role="img" aria-label="${config.name.en}">`,
+    '<style>.d{display:none}@media (prefers-color-scheme:dark){.l{display:none}.d{display:inline}}</style>',
+    `<g class="l">${markPaths(config.logo, { bowl: light.primary, drop: light.highlight, shine: markShine('light', theme).shine }, 'yusr-fl')}</g>`,
+    `<g class="d">${markPaths(config.logo, { bowl: dark.primary, drop: dark.highlight, shine: markShine('dark', theme).shine }, 'yusr-fd')}</g>`,
+    '</svg>',
+  ].join('');
+}
+
+/** The mark alone (transparent background unless one is given; without one the box is cropped to the mark). */
 export function logoMarkSvg(colors?: Partial<MarkColors>, theme: Theme = defaultTheme, config: BrandConfig = brand): string {
   const resolved: MarkColors = {
     bowl: colors?.bowl ?? theme.colors.light.primary,
     drop: colors?.drop ?? theme.colors.light.highlight,
+    shine: colors?.shine ?? markShine('light', theme).shine,
     background: colors?.background,
   };
   const bg = resolved.background ? `<rect width="64" height="64" rx="16" fill="${resolved.background}"/>` : '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${config.logo.viewBox}" role="img" aria-label="${config.name.en}">${bg}${markPaths(config.logo, resolved)}</svg>`;
+  const viewBox = resolved.background ? config.logo.viewBox : markViewBox(config.logo);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" role="img" aria-label="${config.name.en}">${bg}${markPaths(config.logo, resolved)}</svg>`;
 }
 
-/** 1024×1024 app icon: white bowl and gold ḍamma on the primary color. */
+/** How much of the app icon's width the mark's 64-unit grid spans (the mark itself is about 73% of that grid). */
+export const APP_ICON_SHARE = 0.8;
+
+/** 1024×1024 app icon: the white bowl, lit with turquoise and gold, on the primary color. */
 export function appIconSvg(theme: Theme = defaultTheme, config: BrandConfig = brand): string {
   const { primary, primaryHover, highlight } = theme.colors.light;
   return [
@@ -57,7 +132,7 @@ export function appIconSvg(theme: Theme = defaultTheme, config: BrandConfig = br
     `<stop offset="0" stop-color="${primary}"/><stop offset="1" stop-color="${primaryHover}"/>`,
     '</linearGradient></defs>',
     '<rect width="1024" height="1024" fill="url(#g)"/>',
-    `<g transform="${centreMark(config.logo, 1024, 0.625)}">${markPaths(config.logo, { bowl: '#FFFFFF', drop: highlight })}</g>`,
+    `<g transform="${centreMark(config.logo, 1024, APP_ICON_SHARE)}">${markPaths(config.logo, { bowl: '#FFFFFF', drop: highlight, shine: markShine('inverse', theme).shine }, 'yusr-icon')}</g>`,
     '</svg>',
   ].join('');
 }
@@ -142,6 +217,7 @@ export function logoBackgroundSvg(options: LogoBackgroundOptions = {}, theme: Th
       edge: mix(light.primary, '#021416', 0.66),
       ink: '#FFFFFF',
       drop: light.highlight,
+      shine: markShine('inverse', theme).shine,
       stroke: '#FFFFFF',
       strokeOpacity: 0.085,
       fill: light.highlight,
@@ -153,6 +229,7 @@ export function logoBackgroundSvg(options: LogoBackgroundOptions = {}, theme: Th
       edge: mix(light.background, light.primary, 0.07),
       ink: light.primary,
       drop: light.highlight,
+      shine: markShine('light', theme).shine,
       stroke: light.primary,
       strokeOpacity: 0.13,
       fill: light.highlight,
@@ -163,6 +240,7 @@ export function logoBackgroundSvg(options: LogoBackgroundOptions = {}, theme: Th
       edge: dark.background,
       ink: dark.primary,
       drop: dark.highlight,
+      shine: markShine('dark', theme).shine,
       stroke: dark.primary,
       strokeOpacity: 0.12,
       fill: dark.highlight,
@@ -187,7 +265,7 @@ export function logoBackgroundSvg(options: LogoBackgroundOptions = {}, theme: Th
     ty = round(height * 0.48 - scale * (vy + layout.height / 2));
     lockupBody = [
       wordmarkPaths(word, { ink: look.ink, drop: look.drop }),
-      `<g transform="translate(${layout.markX} 0)">${markPaths(config.logo, { bowl: look.ink, drop: look.drop }, `${id}-dots`)}</g>`,
+      `<g transform="translate(${layout.markX} 0)">${markPaths(config.logo, { bowl: look.ink, drop: look.drop, shine: look.shine }, `${id}-dots`)}</g>`,
     ].join('');
   } else {
     // The name is set in the logo face: the file carries a link to it, so a browser shows it as designed.
@@ -196,7 +274,7 @@ export function logoBackgroundSvg(options: LogoBackgroundOptions = {}, theme: Th
     tx = round(width / 2 - scale * TYPESET.centre);
     ty = round(height * 0.48 - scale * 32);
     lockupBody = [
-      `<g transform="translate(${TYPESET.markX} 0)">${markPaths(config.logo, { bowl: look.ink, drop: look.drop }, `${id}-dots`)}</g>`,
+      `<g transform="translate(${TYPESET.markX} 0)">${markPaths(config.logo, { bowl: look.ink, drop: look.drop, shine: look.shine }, `${id}-dots`)}</g>`,
       `<text x="${TYPESET.textEnd}" y="${TYPESET.baseline}" text-anchor="end" direction="ltr" font-family=${fontAttr(theme.typography.fonts.logo)} font-size="${TYPESET.size}" font-weight="700" fill="${look.ink}">${config.name.ar}</text>`,
     ].join('');
   }

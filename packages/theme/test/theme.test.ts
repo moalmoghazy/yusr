@@ -5,7 +5,13 @@ import {
   DISPLAY_FACES,
   displayFaceOf,
   withDisplayFace,
+  APP_ICON_SHARE,
+  DAMMA_DROP,
   LOGO_VARIANTS,
+  faviconSvg,
+  markShine,
+  markViewBox,
+  shineBandPath,
   andalusianPattern,
   arabicLockup,
   arabicWordmark,
@@ -124,12 +130,12 @@ describe('logo geometry', () => {
   });
 
   it('draws solid dots in the curve colour and centres the mark in the app icon', () => {
-    const mark = logoMarkSvg({ bowl: '#123456', drop: '#ABCDEF' });
+    const dotted = { ...brand, logo: LOGO_VARIANTS.dotsBelow };
+    const mark = logoMarkSvg({ bowl: '#123456', drop: '#ABCDEF' }, defaultTheme, dotted);
     assert.equal(mark.match(/<circle [^>]*fill="#123456"/g)?.length, 2);
     assert.ok(!mark.includes('<mask'), 'solid dots need no mask');
-    assert.equal(brand.logo, LOGO_VARIANTS.dotsBelow);
     const icon = appIconSvg();
-    const transform = centreMark(brand.logo, 1024, 0.625);
+    const transform = centreMark(brand.logo, 1024, APP_ICON_SHARE);
     assert.ok(icon.includes(transform));
     const [, tx, ty, scale] = /translate\(([\d.]+) ([\d.]+)\) scale\(([\d.]+)\)/.exec(transform)!.map(Number) as [number, number, number, number];
     const { x, y, width, height } = brand.logo.bounds;
@@ -150,7 +156,7 @@ describe('wordmark', () => {
     assert.deepEqual(arabicWordmark(), wordmark);
   });
 
-  it('keeps every point inside its bounds, left of the mark and within the mark’s height', () => {
+  it('keeps every point inside its bounds, left of the mark, and the mark within the word’s height', () => {
     const { x, y, width, height } = wordmark.bounds;
     for (const d of [wordmark.ink.d, wordmark.damma.d]) {
       const values = numbers(d);
@@ -160,7 +166,8 @@ describe('wordmark', () => {
       assert.ok(Math.min(...ys) >= y - 0.6 && Math.max(...ys) <= y + height + 0.6, 'y within bounds');
     }
     assert.ok(x + width < logo.bounds.x, 'the word ends before the mark begins');
-    assert.ok(y > logo.bounds.y && y + height < logo.bounds.y + logo.bounds.height, 'the word sits within the mark’s height');
+    assert.ok(y < logo.bounds.y && y + height > logo.bounds.y + logo.bounds.height, 'the mark sits within the word’s height');
+    assert.ok(Math.abs(y + height / 2 - (logo.bounds.y + logo.bounds.height / 2)) < 3, 'and roughly centred on it');
     const [dammaX = NaN, dammaY = NaN] = numbers(wordmark.damma.d);
     assert.ok(dammaY < 26 && dammaX > x + width / 2, 'the ḍamma floats above the right of the word, over the ي');
   });
@@ -204,12 +211,53 @@ describe('the ḍamma', () => {
     assert.notEqual(dammaPath(0, 0, 10, { angle: -45 }), level);
   });
 
-  it('crowns the mark as the golden drop, floating over the bowl’s mouth', () => {
-    const { drop, bowl } = brand.logo.guides;
+  it('crowned the earlier mark with the golden drop, floating over the bowl’s mouth', () => {
+    const logo = LOGO_VARIANTS.dotsBelow;
+    const { drop, bowl } = logo.guides;
     assert.ok(drop.cy + drop.r < bowl.cy, 'the drop floats above the bowl’s ends');
     assert.ok(Math.abs(drop.cx - bowl.cx) < drop.r, 'over the middle of the bowl');
-    assert.equal((brand.logo.drop.d.match(/M/g) ?? []).length, 1, 'one drop, not a head and a tail');
-    assert.match(brand.logo.drop.transform, /rotate\(-145 /, 'its point turned up to the left');
+    assert.equal((logo.drop.d.match(/M/g) ?? []).length, 1, 'one drop, not a head and a tail');
+    assert.match(logo.drop.transform, /rotate\(-145 /, 'its point turned up to the left');
+    assert.equal(DAMMA_DROP, logo.drop, 'the WhatsApp badge keeps it');
+  });
+
+  it('lights the current mark from within: a turquoise band and a gold band on the bowl, no dots or drop', () => {
+    const logo = brand.logo;
+    assert.equal(logo, LOGO_VARIANTS.lit);
+    assert.equal(logo.dots, null);
+    assert.equal(logo.drop, null);
+    const shine = logo.shine!;
+    assert.deepEqual(
+      shine.bands.map((band) => band.tone),
+      ['shine', 'gold'],
+    );
+    const edge = logo.bowl.strokeWidth / 2;
+    const { bowl } = logo.guides;
+    for (const band of shine.bands) {
+      // The band's crisp outer edge (its lowest point) lies inside the bowl's stroke.
+      const bottom = band.cy + band.ry;
+      assert.ok(bottom < bowl.cy + bowl.ry + edge && bottom > bowl.cy + bowl.ry - edge, `${band.tone} band sits in the stroke`);
+      const offsets = band.stops.map(([offset]) => offset);
+      assert.deepEqual(
+        [...offsets].sort((a, b) => a - b),
+        offsets,
+        'stops in order',
+      );
+      assert.equal(band.stops.at(-1)![1], 1, 'opaque at the edge');
+      assert.equal(band.stops[0]![1], 0, 'clear towards the middle');
+    }
+    assert.ok(shine.fade.x2 > shine.fade.x1 && shine.fade.y2 < shine.fade.y1, 'the light fades up and to the right');
+    const svg = logoMarkSvg();
+    assert.equal(svg.match(/<radialGradient /g)?.length, 2);
+    assert.ok(svg.includes(`stop-color="${markShine('light').shine}"`) && svg.includes(`stop-color="${defaultTheme.colors.light.highlight}"`));
+    assert.ok(svg.includes('mask="url(#yusr-dots-shine-m)"'), 'the light stays on the stroke');
+    assert.ok(!svg.includes('<circle'), 'no dots');
+    assert.equal(shineBandPath(shine.bands[0]!, 22.5).startsWith('M10.97 22.5L10.97 25.9A21.03 21.95 0 0 0 53.03 25.9'), true);
+    const favicon = faviconSvg();
+    assert.ok(favicon.includes('prefers-color-scheme:dark') && favicon.includes('yusr-fl-shine-m') && favicon.includes('yusr-fd-shine-m'));
+    const viewBox = markViewBox(logo).split(' ').map(Number);
+    assert.equal(viewBox[2], viewBox[3], 'a square box');
+    assert.ok(Math.abs(viewBox[2]! - (logo.bounds.width + 3)) < 0.01, 'cropped to the mark with a small margin');
   });
 });
 

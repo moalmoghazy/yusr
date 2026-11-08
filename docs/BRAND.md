@@ -6,12 +6,14 @@ Yusr should feel **warm, trustworthy and calm**: a place where giving is simple 
 figure can be checked. The identity is defined once in `packages/theme` and rendered from there
 by the website, the control hub, the mobile app, receipts and the prototype.
 
-## The mark — «الضمّة الذهبية» (the golden ḍamma)
+## The mark — «نور اليُسر» (the light of ease)
 
-The ḍamma is the small mark that turns يسر into **يُسر** — "ease". The logo holds it as **a golden drop**
-above an open curve: the bowl of the letter **ي**, with its **two dots beneath it, solid, close
-together and in the same colour as the curve**. Read another way, the curve is a pair of cupped
-hands. A small gift, held carefully, that changes the meaning of someone's day.
+Approved 2026-11-08 from the owner's design (`yusr-mark-color.psd`). The mark is the open curve of the
+letter **ي** in **يُسر**, "ease", which is also a pair of cupped hands, **lit from within**: a band of bright
+turquoise near the curve's outer edge and, inside it, a band of the ḍamma's gold, both fading out as they
+climb the right arm. The ḍamma itself, the small mark that turns يسر into يُسر, now lives in that light;
+the dots of ي and the golden drop of the earlier mark are gone from the mark (the wordmark «يُسر» keeps its
+dots and gold ḍamma).
 
 | File | Use |
 |---|---|
@@ -23,19 +25,28 @@ hands. A small gift, held carefully, that changes the meaning of someone's day.
 
 - The geometry lives in `brand.ts` (`LOGO_VARIANTS`); `<LogoMark>` on the web and on mobile both
   draw from it, so there is one logo, not copies.
-- **Small sizes**: below 20 px the two dots join into one short stroke (as ي is written by hand
-  in Ruqʿa), so the mark stays legible in a tab or a notification.
-- The mark's drop is `DROP_PATH` in `brand.ts`, its point turned up to the left.
-- **Animated**: the website's «من نحن» page (`/about`) draws the mark live and replays on click;
-  the ḍamma moves towards the pointer wherever it is on the page. In the website's header (Arabic)
+- **The light** is `shine` in `LOGO_VARIANTS.lit`: two elliptical bands, each filled with a radial
+  gradient (crisp outer edge, clear towards the middle), kept on the bowl's stroke by a mask and faded along
+  `shine.fade`. Colours come from `markShine()` in `svg.ts`: on light, the turquoise bowl with the dark
+  theme's bright turquoise (`--logo-shine` in CSS) and the highlight gold; on dark, a paler band; on the
+  brand colour, a white bowl with the bright turquoise. No blur filters, so the same drawing works in
+  browsers, `react-native-svg` and print.
+- **Boxes**: `markViewBox()` crops a square to the mark, so a `<LogoMark size={n}>` is about `n` px wide;
+  `faviconSvg()` writes the browser-tab icon (light and dark) copied to both apps' `icon.svg`.
+- **Small sizes**: a single shape with no small parts, so it holds up at 16 px; the light becomes a touch of colour.
+- The earlier marks (`dotsBelow`, `dotsInCurve`) stay in `LOGO_VARIANTS`; their drop is `DAMMA_DROP`,
+  which the WhatsApp button still wears as a badge.
+- **Animated**: the website's «من نحن» page (`/about`) draws the bowl live, then its light rises in with a
+  gold ripple, and replays on click; the light slides towards the pointer inside the bowl like a reflection.
+  Beside «من نحن؟» the mark bends into a question mark with a gold dot. In the website's header (Arabic)
   «يُسر» slides out of the mark, rests, and slides back in, every 7 s (`Logo animated`, `.logo-word`;
   still under reduced motion).
-- **In the app**: the case covers loop like the website's (the mark appears, its ḍamma falls like a drop,
-  it turns into the category's motif and back) and the home's pattern drifts behind the opening
-  (`apps/mobile/src/lib/motion.ts`: one shared clock per loop, still under reduced motion).
-- **Clear space**: at least the height of the ḍamma on every side. **Minimum size**: 16 px (mark),
+- **In the app and on case covers**: the bowl is drawn and turns into the category's motif and back, and the
+  home's pattern drifts behind the opening (`apps/mobile/src/lib/motion.ts`: one shared clock per loop,
+  still under reduced motion).
+- **Clear space**: at least the curve's stroke width on every side. **Minimum size**: 16 px (mark),
   96 px wide (mark + wordmark).
-- **Don't** recolour the ḍamma (it is always the highlight gold), outline the mark, rotate it, or
+- **Don't** recolour the light (turquoise and the highlight gold), outline the mark, rotate it, or
   place it on busy imagery without the inverse version.
 
 ### The name
@@ -86,7 +97,7 @@ is kept as the `emerald` preset in `@yusr/theme`.
 | `primary` | `#00707A` | `#3FC6CF` | Brand turquoise: actions, links, progress |
 | `primary-hover` | `#055A62` | `#62D3DA` | Pressed / hover |
 | `secondary` | `#9C5A2E` | `#E3A37B` | Burnt clay: outline actions, a second voice |
-| `highlight` | `#D9A441` | `#E7BE6A` | The sand-gold ḍamma: the logo drop, milestones, "funded" |
+| `highlight` | `#D9A441` | `#E7BE6A` | The sand-gold ḍamma: the gold in the logo's light and the wordmark, milestones, "funded" |
 | `background` | `#F8F5EE` | `#081315` | Page (papyrus) |
 | `card` | `#FFFFFF` | `#0F1D20` | Surfaces |
 | `foreground` | `#132326` | `#E4F0EF` | Text |
@@ -130,7 +141,7 @@ name together. The apps load fonts by name, so also change:
 
 Andalusian geometry: the eight-pointed star of the Alhambra's tilework (two squares — the
 *khatam*), joined to its neighbours by strapwork that draws octagonal cells between the stars.
-Inside each star, a rosette of **seven golden drops** — the ḍamma of the logo, repeated once for each
+Inside each star, a rosette of **seven golden drops** — the ḍamma of يُسر, repeated once for each
 of the verse's seven ears: a single gift that multiplies, *"like a grain that sprouts seven ears."* Where four tiles meet, a small
 lozenge holds one seed.
 
