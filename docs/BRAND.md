@@ -39,7 +39,7 @@ dots and gold ḍamma).
 - **Animated**: the website's «من نحن» page (`/about`) draws the bowl live, then its light rises in with a
   gold ripple, and replays on click; the light slides towards the pointer inside the bowl like a reflection.
   Beside «من نحن؟» the mark bends into a question mark with a gold dot. In the website's header (Arabic)
-  «يُسر» slides out of the mark, rests, and slides back in, every 7 s (`Logo animated`, `.logo-word`;
+  «يُسر» slides out of the mark fading in, rests, and fades out from right to left, every 7 s (`Logo animated`, `.logo-word`, `.logo-wipe`;
   still under reduced motion).
 - **In the app and on case covers**: the bowl is drawn and turns into the category's motif and back, and the
   home's pattern drifts behind the opening (`apps/mobile/src/lib/motion.ts`: one shared clock per loop,

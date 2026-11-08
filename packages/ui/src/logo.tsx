@@ -6,6 +6,13 @@ import { textFor } from './text';
 
 const round = (value: number) => Math.round(value * 100) / 100;
 
+/** The header loop's exit: a soft edge (`soft` units) starts just right of the word and travels past its left end. */
+const WIPE = (() => {
+  const soft = 24;
+  const start = wordmark.bounds.x + wordmark.bounds.width + 2;
+  return { soft, start, travel: wordmark.bounds.width + soft + 6 };
+})();
+
 /**
  * The light inside the bowl (@yusr/theme LogoShine): turquoise and gold bands, kept on the bowl's stroke
  * and fading up its right arm. Ids derive from `id`, which must be unique in the page.
@@ -184,8 +191,8 @@ export function Logo({
   className?: string;
   wordmark?: 'typeset' | 'lettered';
   /**
-   * The header's loop (Arabic lettered lockup): «يُسر» slides out of the mark, rests, and slides back
-   * in (`.logo-word` in the web stylesheet; still under reduced motion, and the word simply shows
+   * The header's loop (Arabic lettered lockup): «يُسر» slides out of the mark fading in, rests, and fades
+   * out from right to left (`.logo-word` and `.logo-wipe` in the web stylesheet; still under reduced motion, and the word simply shows
    * without the stylesheet).
    */
   animated?: boolean;
@@ -211,14 +218,32 @@ export function Logo({
         {animated ? (
           <>
             <defs>
-              {/* The word is only seen left of the mark, so it seems to come out of it and go back in. */}
+              {/* The word is only seen left of the mark, so it seems to come out of it. */}
               <clipPath id={`${maskId}-clip`}>
                 <rect x={-120} y={-20} width={120 + brand.logo.bounds.x + 1} height={110} />
               </clipPath>
+              {/* To leave, a soft edge sweeps across the word from right to left, fading it out (.logo-wipe). */}
+              <linearGradient id={`${maskId}-wipe-g`} gradientUnits="userSpaceOnUse" x1={WIPE.start} x2={WIPE.start + WIPE.soft} y1={0} y2={0}>
+                <stop offset={0} stopColor="#fff" />
+                <stop offset={1} stopColor="#000" />
+              </linearGradient>
+              <mask id={`${maskId}-wipe`} maskUnits="userSpaceOnUse" x={-120} y={-20} width={200} height={110}>
+                <rect
+                  x={-400}
+                  y={-20}
+                  width={500}
+                  height={110}
+                  fill={`url(#${maskId}-wipe-g)`}
+                  className="logo-wipe"
+                  style={{ ['--logo-wipe-travel' as string]: `${round(-WIPE.travel)}px` }}
+                />
+              </mask>
             </defs>
             <g clipPath={`url(#${maskId}-clip)`}>
-              <g className="logo-word" style={{ ['--logo-word-travel' as string]: `${round(-wordmark.bounds.x + brand.logo.bounds.x + 2)}px` }}>
-                <WordmarkShapes word={wordmark} ink={ink} drop="var(--highlight)" />
+              <g mask={`url(#${maskId}-wipe)`}>
+                <g className="logo-word" style={{ ['--logo-word-travel' as string]: `${round(-wordmark.bounds.x + brand.logo.bounds.x + 2)}px` }}>
+                  <WordmarkShapes word={wordmark} ink={ink} drop="var(--highlight)" />
+                </g>
               </g>
             </g>
           </>

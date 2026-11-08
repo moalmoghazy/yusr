@@ -666,36 +666,51 @@ html[lang='ar'] .font-wordmark {
 }
 
 /*
- * The header logo (Arabic): «يُسر» slides out of the mark, rests, then slides back into the mark, and
- * again (7s). Under reduced motion the word simply shows.
+ * The header logo (Arabic): «يُسر» slides out of the mark fading in, rests, then fades out from right to
+ * left, and again (7s). Under reduced motion the word simply shows.
  */
 @media (prefers-reduced-motion: no-preference) {
   .logo-word {
     animation: logo-word 7s cubic-bezier(0.65, 0, 0.35, 1) infinite;
   }
+
+  .logo-wipe {
+    animation: logo-wipe 7s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  }
 }
 
+/* In: slides out of the mark while fading in. Out: stays put while .logo-wipe fades it from right to left;
+   then, unseen, it goes back behind the mark for the next round. */
 @keyframes logo-word {
   0%,
   8% {
     transform: translateX(var(--logo-word-travel));
     opacity: 0;
   }
-  12% {
-    opacity: 1;
-  }
-  28%,
-  64% {
+  30%,
+  86% {
     transform: translateX(0);
     opacity: 1;
   }
-  80% {
-    opacity: 1;
+  88%,
+  99% {
+    transform: translateX(0);
+    opacity: 0;
   }
-  84%,
   100% {
     transform: translateX(var(--logo-word-travel));
     opacity: 0;
+  }
+}
+
+@keyframes logo-wipe {
+  0%,
+  62% {
+    transform: translateX(0);
+  }
+  84%,
+  100% {
+    transform: translateX(var(--logo-wipe-travel));
   }
 }
 
