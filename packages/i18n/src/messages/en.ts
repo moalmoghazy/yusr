@@ -382,7 +382,8 @@ export const en: Messages = {
       funded: 'Fully funded: {title}',
     },
     partnersTitle: 'Yusr partners',
-    partnersBody: 'Associations registered with the Ministry of Social Solidarity, under contract with us before any of their cases goes up.',
+    partnersBody:
+      'Associations registered with the Ministry of Social Solidarity and subject to its oversight, including audits of their financial records and of the cases they investigate.',
     partners: {
       new: 'New',
       registration: 'Registration no.',
