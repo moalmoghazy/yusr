@@ -365,11 +365,20 @@ function PartnersMarquee({ locale, partners }: { locale: Locale; partners: Publi
   const items = [...pass, ...pass];
   return (
     <section aria-labelledby="partners-title" className="mt-2 flex flex-col gap-3">
-      <div className="flex flex-col gap-0.5">
-        <h2 id="partners-title" className="title-plain font-display text-lg font-bold">
+      {/* Set like the hero's opening line and paragraph above it. */}
+      <div className="flex flex-col gap-2">
+        <h2
+          id="partners-title"
+          className={cn(
+            'font-bold',
+            locale === 'en'
+              ? 'font-display text-[clamp(2.05rem,1.2rem+2.6vw,3.3rem)] leading-[1.15]'
+              : 'font-wordmark text-[clamp(2.05rem,1.2rem+2.6vw,3.2rem)] leading-[1.55]',
+          )}
+        >
           {t('landing.partnersTitle')}
         </h2>
-        <p className="text-sm text-muted-foreground">{t('landing.partnersBody')}</p>
+        <p className="max-w-[58ch] text-[1.08rem] text-muted-foreground">{t('landing.partnersBody')}</p>
       </div>
       <div className="partners-marquee" style={{ ['--partners-duration' as string]: `${pass.length * 5.75}s` }}>
         <ul className="partners-track">
