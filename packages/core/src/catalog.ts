@@ -26,9 +26,9 @@ function progressPercent(item: CaseSummary): number {
   return computeProgress(item.raisedMinor, item.goalMinor).percent;
 }
 
-export function matchesFilters(item: CaseSummary, filters: CaseFilters): boolean {
-  if (!isPubliclyVisible(item.status)) return false;
-  if (!filters.includeFunded && item.status !== 'published') return false;
+export function matchesFilters(item: CaseSummary, filters: CaseFilters, options: QueryOptions = {}): boolean {
+  if (!options.anyStatus && !isPubliclyVisible(item.status)) return false;
+  if (!options.anyStatus && !filters.includeFunded && item.status !== 'published') return false;
   if (filters.categories?.length && !filters.categories.includes(item.category)) return false;
   if (filters.regions?.length && !filters.regions.includes(item.region)) return false;
   if (filters.urgentOnly && !item.isUrgent) return false;
@@ -70,11 +70,16 @@ export function sortCases(items: readonly CaseSummary[], sort: CaseSort = 'urgen
 }
 
 /** In-memory catalog query with offset cursors (the API does the same in SQL). */
-export function queryCases(items: readonly CaseSummary[], filters: CaseFilters = {}): Page<CaseSummary> {
+/** `anyStatus`: the caller already chose the statuses (staff lists), so drafts and cases under review count too. */
+export interface QueryOptions {
+  anyStatus?: boolean;
+}
+
+export function queryCases(items: readonly CaseSummary[], filters: CaseFilters = {}, options: QueryOptions = {}): Page<CaseSummary> {
   const limit = Math.min(Math.max(filters.limit ?? 12, 1), 50);
   const offset = filters.cursor ? Number.parseInt(filters.cursor, 10) || 0 : 0;
   const matching = sortCases(
-    items.filter((item) => matchesFilters(item, filters)),
+    items.filter((item) => matchesFilters(item, filters, options)),
     filters.sort,
   );
   const pageItems = matching.slice(offset, offset + limit);

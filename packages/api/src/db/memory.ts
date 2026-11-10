@@ -387,7 +387,8 @@ export class MemoryDatabase implements Database {
       bySlug: async (slug) => clone([...s().cases.values()].find((row) => row.slug === slug) ?? null),
       search: async (filters): Promise<CasePage> => {
         const rows = [...s().cases.values()].filter((row) => filters.statuses.includes(row.status));
-        const page = queryCases(rows.map(toCaseSummary), { ...filters, includeFunded: true });
+        // The statuses were chosen above: staff lists include drafts and cases under review.
+        const page = queryCases(rows.map(toCaseSummary), { ...filters, includeFunded: true }, { anyStatus: true });
         return {
           items: page.items.map((item) => clone(s().cases.get(item.id)!)),
           total: page.total,

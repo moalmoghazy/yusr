@@ -67,7 +67,8 @@ export const config = {
   matcher: [
     {
       // Pages only: not static files, images, metadata routes, /.well-known (app links) or /partner-logos and /story-photos; not router prefetches.
-      source: '/((?!_next/static|_next/image|\\.well-known|partner-logos|story-photos|favicon.ico|icon|apple-icon|robots.txt|sitemap.xml|.*\\.[a-z0-9]+$).*)',
+      source:
+        '/((?!_next/static|_next/image|\\.well-known|partner-logos|story-photos|dev-storage|favicon.ico|icon|apple-icon|robots.txt|sitemap.xml|.*\\.[a-z0-9]+$).*)',
       missing: [
         { type: 'header', key: 'next-router-prefetch' },
         { type: 'header', key: 'purpose', value: 'prefetch' },

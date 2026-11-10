@@ -25,10 +25,20 @@ export async function requestUpload(input: unknown): Promise<{ ok: true; ticket:
     return { ok: false, code: 'VALIDATION_FAILED', fields: fields.some((field) => field.startsWith('association')) ? fields : ['documents'] };
   }
   try {
-    return { ok: true, ticket: await (await live(DEFAULT_LOCALE)).presignUpload(parsed.data) };
+    return { ok: true, ticket: sameOrigin(await (await live(DEFAULT_LOCALE)).presignUpload(parsed.data)) };
   } catch (error) {
     return actionError(error, 'requestUpload');
   }
+}
+
+/**
+ * An API without object storage (the public demo) signs links to its own /dev-storage; the browser
+ * PUTs through this site's /dev-storage route instead (same origin, so the page's CSP and the API's
+ * CORS never get in the way). Links to real object storage are left alone.
+ */
+function sameOrigin(ticket: UploadTicket): UploadTicket {
+  const url = new URL(ticket.url);
+  return url.pathname.startsWith('/dev-storage/') ? { ...ticket, url: `${url.pathname}${url.search}` } : ticket;
 }
 
 /** Step 2: the case itself, validated with the API's own schema before it is sent (with the same partner credentials). */
