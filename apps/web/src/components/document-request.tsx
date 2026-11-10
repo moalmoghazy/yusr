@@ -37,7 +37,7 @@ export function DocumentRequestDialog({ locale, slug }: { locale: Locale; slug: 
     <dialog
       id={DIALOG_ID}
       aria-labelledby={`${ids}-title`}
-      className="m-auto w-[min(34rem,calc(100vw-2rem))] rounded-card border border-border bg-card p-0 text-foreground shadow-xl backdrop:bg-foreground/40 backdrop:backdrop-blur-sm"
+      className="m-auto outline-none w-[min(34rem,calc(100vw-2rem))] rounded-card border border-border bg-card p-0 text-foreground shadow-xl backdrop:bg-foreground/40 backdrop:backdrop-blur-sm"
     >
       <div className="flex flex-col gap-4 p-5 md:p-6">
         <div className="flex items-start justify-between gap-3">

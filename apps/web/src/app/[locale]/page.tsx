@@ -18,6 +18,7 @@ import { HowReveal } from '@/components/how-reveal';
 import { NewsTicker, type NewsItem } from '@/components/news-ticker';
 import { StoryReel, type ReelStory } from '@/components/story-reel';
 import { SupervisionBadge } from '@/components/supervision-badge';
+import { PartnerCardButton, PartnerCardDialog } from '@/components/partner-card';
 import { catalog, fresh } from '@/lib/api';
 import { href } from '@/lib/i18n';
 import { pageLocale, type LocaleParams } from '@/lib/page';
@@ -381,42 +382,45 @@ function PartnersMarquee({ locale, partners }: { locale: Locale; partners: Publi
               aria-hidden={index >= partners.length || undefined}
               data-repeat={index >= partners.length || undefined}
             >
-              <span className="relative shrink-0">
-                {partner.isNew && <span className="partners-new">{t('landing.partners.new')}</span>}
-                <span className="partners-logo grid size-21 place-items-center overflow-hidden rounded-[1.4rem] border border-border bg-white">
-                  {partner.logoVersion ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- a tiny logo from our own route; next/image adds nothing here
-                    <img
-                      src={`/partner-logos/${encodeURIComponent(partner.id)}?v=${partner.logoVersion}`}
-                      alt=""
-                      width={84}
-                      height={84}
-                      loading="lazy"
-                      decoding="async"
-                      className="size-full object-contain"
-                    />
-                  ) : (
-                    <span aria-hidden className="font-display text-[1.875rem] font-bold text-primary">
-                      {initial(partner.name)}
-                    </span>
-                  )}
-                </span>
-              </span>
-              <span className="partners-text flex min-w-0 flex-col gap-1">
-                <span className="whitespace-nowrap text-[1.5rem] font-bold leading-snug" dir="auto">
-                  {partner.name}
-                </span>
-                <span className="whitespace-nowrap text-[1.125rem] text-muted-foreground">
-                  {t('landing.partners.registration')}{' '}
-                  <span dir="ltr" className="font-mono">
-                    {partner.registrationNumber}
+              <PartnerCardButton partnerId={partner.id} label={t('landing.partners.open', { name: partner.name })} repeat={index >= partners.length}>
+                <span className="relative shrink-0">
+                  {partner.isNew && <span className="partners-new">{t('landing.partners.new')}</span>}
+                  <span className="partners-logo grid size-21 place-items-center overflow-hidden rounded-[1.4rem] border border-border bg-white">
+                    {partner.logoVersion ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- a tiny logo from our own route; next/image adds nothing here
+                      <img
+                        src={`/partner-logos/${encodeURIComponent(partner.id)}?v=${partner.logoVersion}`}
+                        alt=""
+                        width={84}
+                        height={84}
+                        loading="lazy"
+                        decoding="async"
+                        className="size-full object-contain"
+                      />
+                    ) : (
+                      <span aria-hidden className="font-display text-[1.875rem] font-bold text-primary">
+                        {initial(partner.name)}
+                      </span>
+                    )}
                   </span>
                 </span>
-              </span>
+                <span className="partners-text flex min-w-0 flex-col gap-1">
+                  <span className="whitespace-nowrap text-[1.5rem] font-bold leading-snug" dir="auto">
+                    {partner.name}
+                  </span>
+                  <span className="whitespace-nowrap text-[1.125rem] text-muted-foreground">
+                    {t('landing.partners.registration')}{' '}
+                    <span dir="ltr" className="font-mono">
+                      {partner.registrationNumber}
+                    </span>
+                  </span>
+                </span>
+              </PartnerCardButton>
             </li>
           ))}
         </ul>
       </div>
+      <PartnerCardDialog locale={locale} partners={partners} />
     </section>
   );
 }

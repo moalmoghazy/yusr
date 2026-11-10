@@ -10,6 +10,7 @@ import {
   type FollowupOutcome,
   type Localized,
   type PartnerAssociation,
+  type PartnerProfile,
   type PayeeType,
 } from '@yusr/core';
 
@@ -88,11 +89,74 @@ export const DEMO_PARTNER_REGISTRY: ReadonlyArray<{
   contractSignedOn: string;
   yusrCode: string;
   newBadge?: boolean;
+  /** Its card on the website (demo text, as fictional as the association). */
+  profile?: PartnerProfile;
 }> = [
-  { registrationNumber: '0001/2026', region: 'EG-C', contractSignedOn: '2026-01-15', yusrCode: 'YSR-RAHMA226' },
-  { registrationNumber: '0002/2026', region: 'EG-GZ', contractSignedOn: '2026-02-01', yusrCode: 'YSR-SANABE26' },
-  { registrationNumber: '0003/2026', region: 'EG-ALX', contractSignedOn: '2026-03-10', yusrCode: 'YSR-YADAWN26' },
-  { registrationNumber: '0004/2026', region: 'EG-MNF', contractSignedOn: '2026-09-14', yusrCode: 'YSR-NAWRAS26', newBadge: true },
+  {
+    registrationNumber: '0001/2026',
+    region: 'EG-C',
+    contractSignedOn: '2026-01-15',
+    yusrCode: 'YSR-RAHMA226',
+    profile: {
+      about: {
+        ar: 'جمعية أهلية تعمل في أحياء القاهرة الشعبية منذ ٢٠٠٩، يقودها متطوعون من أبناء المنطقة. تبحث كل حالة ميدانيًا بزيارة منزلية، وتصرف المساعدة مباشرة للمستشفى أو المدرسة أو الدائن.',
+        en: "A community association working in Cairo's working-class neighbourhoods since 2009, run by local volunteers. It researches every case with a home visit and pays the hospital, school or creditor directly.",
+      },
+      giving: {
+        ar: 'تكفلت بأكثر من ١٢٠٠ عملية جراحية وجلسة علاج، وسددت ديون ٣٤٠ أسرة مهددة بالحبس أو الطرد، وتدعم ٨٠ طالبًا سنويًا بالمصروفات الدراسية.',
+        en: 'It has covered more than 1,200 operations and treatment sessions, cleared the debts of 340 families facing prison or eviction, and pays school fees for 80 students a year.',
+      },
+    },
+  },
+  {
+    registrationNumber: '0002/2026',
+    region: 'EG-GZ',
+    contractSignedOn: '2026-02-01',
+    yusrCode: 'YSR-SANABE26',
+    profile: {
+      about: {
+        ar: 'جمعية في الجيزة تركز على التعليم وكفالة الأسر التي تعولها نساء، وتعمل مع المدارس الحكومية في القرى المحيطة لاكتشاف الطلاب المهددين بترك الدراسة.',
+        en: 'A Giza association focused on education and on families headed by women, working with village state schools to find students at risk of dropping out.',
+      },
+      giving: {
+        ar: 'أعادت ٤٥٠ طالبًا وطالبة إلى الدراسة، وتكفل ٢١٠ أسر شهريًا، وجهّزت ٦ فصول تقوية في قرى أطفيح والصف.',
+        en: 'It has brought 450 students back to school, supports 210 families every month and has equipped 6 tutoring classrooms in Atfih and El Saff villages.',
+      },
+    },
+  },
+  {
+    registrationNumber: '0003/2026',
+    region: 'EG-ALX',
+    contractSignedOn: '2026-03-10',
+    yusrCode: 'YSR-YADAWN26',
+    profile: {
+      about: {
+        ar: 'جمعية سكندرية متخصصة في الإغاثة العاجلة: الحرائق وانهيار المنازل والسيول، ولها فريق طوارئ يصل للأسرة خلال ٤٨ ساعة من البلاغ.',
+        en: 'An Alexandria association specialising in urgent relief after fires, house collapses and floods, with an emergency team that reaches a family within 48 hours of a report.',
+      },
+      giving: {
+        ar: 'أعادت تأهيل ٩٠ منزلًا متضررًا، ووزعت أكثر من ٣٠٠٠ كرتونة غذائية في الطوارئ، ووفرت سكنًا مؤقتًا لـ٦٥ أسرة.',
+        en: 'It has rebuilt 90 damaged homes, handed out more than 3,000 emergency food boxes and found temporary housing for 65 families.',
+      },
+    },
+  },
+  {
+    registrationNumber: '0004/2026',
+    region: 'EG-MNF',
+    contractSignedOn: '2026-09-14',
+    yusrCode: 'YSR-NAWRAS26',
+    newBadge: true,
+    profile: {
+      about: {
+        ar: 'جمعية تنموية حديثة في المنوفية، تعمل على تمكين الشباب وتوفير فرص عمل صغيرة للأسر الأولى بالرعاية.',
+        en: 'A young development association in Menoufia that helps young people and families in need start small sources of income.',
+      },
+      giving: {
+        ar: 'موّلت ٧٥ مشروعًا صغيرًا لأسر معيلة، ودربت ٢٠٠ شاب وفتاة على حرف يدوية.',
+        en: 'It has funded 75 small projects for families with a single provider and trained 200 young people in handicrafts.',
+      },
+    },
+  },
   { registrationNumber: '0005/2026', region: 'EG-SHG', contractSignedOn: '2026-10-05', yusrCode: 'YSR-BASMA826', newBadge: true },
   { registrationNumber: '0006/2026', region: 'EG-DK', contractSignedOn: '2026-10-28', yusrCode: 'YSR-BARAKA26', newBadge: true },
 ];

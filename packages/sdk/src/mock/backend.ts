@@ -94,6 +94,7 @@ import type {
   CreatePartnerInput,
   EditCaseInput,
   PartnerApplicationInput,
+  PartnerProfileInput,
   DocumentRequestInput,
   PartnerLogoInput,
   PartnerShowcaseInput,
@@ -1281,6 +1282,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       logo: DEMO_PARTNER_LOGOS[partner.registrationNumber] ? { type: 'image/svg+xml', version: Date.parse(at).toString(36) } : null,
       showcased: true,
       newBadge: registry.newBadge ?? false,
+      profile: registry.profile ?? null,
       createdBy: { id: youssef.id, name: youssef.name.ar },
       createdAt: at,
       updatedAt: at,
@@ -1321,6 +1323,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
         casesCount: publicCount(partner.registrationNumber),
         logoVersion: partner.logo?.version ?? null,
         isNew: partner.newBadge,
+        profile: partner.profile,
       }));
   };
   /** «قصص نجاح»: closed cases, the most recently closed first, with the latest confirming follow-up. */
@@ -1772,6 +1775,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
           logo: null,
           showcased: true,
           newBadge: true,
+          profile: null,
           createdBy: { id: actor.id, name: actor.name },
           createdAt: at,
           updatedAt: at,
@@ -1871,6 +1875,23 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
         const next = { ...current, ...change, updatedAt: iso(clock()) };
         partners.splice(partners.indexOf(current), 1, next);
         logAudit(actorRef, 'partner.showcase_updated', 'partner', partnerId, next.name, { showcased: current.showcased, newBadge: current.newBadge }, change);
+        return withCount(next);
+      },
+      setPartnerProfile: (partnerId: string, input: PartnerProfileInput) => {
+        ensure('partners:manage');
+        const current = mustPartner(partnerId);
+        const profile = { about: { ar: input.about.ar, en: input.about.en ?? '' }, giving: { ar: input.giving.ar, en: input.giving.en ?? '' } };
+        const next = { ...current, profile, updatedAt: iso(clock()) };
+        partners.splice(partners.indexOf(current), 1, next);
+        logAudit(actorRef, 'partner.profile_set', 'partner', partnerId, next.name, null, { profile: 'set' });
+        return withCount(next);
+      },
+      removePartnerProfile: (partnerId: string) => {
+        ensure('partners:manage');
+        const current = mustPartner(partnerId);
+        const next = { ...current, profile: null, updatedAt: iso(clock()) };
+        partners.splice(partners.indexOf(current), 1, next);
+        logAudit(actorRef, 'partner.profile_removed', 'partner', partnerId, next.name, null, { profile: null });
         return withCount(next);
       },
       partnerApplications: (limit = 100) => {
@@ -1991,6 +2012,8 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       setPartnerLogo: wrap(sync.setPartnerLogo),
       removePartnerLogo: wrap(sync.removePartnerLogo),
       setPartnerShowcase: wrap(sync.setPartnerShowcase),
+      setPartnerProfile: wrap(sync.setPartnerProfile),
+      removePartnerProfile: wrap(sync.removePartnerProfile),
       partnerApplications: wrap(sync.partnerApplications),
       setPartnerApplicationStatus: wrap(sync.setPartnerApplicationStatus),
       followups: wrap(sync.followups),

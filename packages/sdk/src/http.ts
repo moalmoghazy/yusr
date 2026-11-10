@@ -151,6 +151,8 @@ export function createHttpAdminClient(options: HttpClientOptions): AdminClient {
     setPartnerLogo: (partnerId, input) => request('PUT', `/admin/partners/${seg(partnerId)}/logo`, input),
     removePartnerLogo: (partnerId) => request('DELETE', `/admin/partners/${seg(partnerId)}/logo`),
     setPartnerShowcase: (partnerId, patch) => request('PATCH', `/admin/partners/${seg(partnerId)}/showcase`, patch),
+    setPartnerProfile: (partnerId, input) => request('PUT', `/admin/partners/${seg(partnerId)}/profile`, input),
+    removePartnerProfile: (partnerId) => request('DELETE', `/admin/partners/${seg(partnerId)}/profile`),
     partnerApplications: (limit = 100) => request('GET', `/admin/partner-applications?limit=${limit}`),
     setPartnerApplicationStatus: (applicationId, status) => post(`/admin/partner-applications/${seg(applicationId)}/status`, { status }),
     followups: () => request('GET', '/admin/followups'),

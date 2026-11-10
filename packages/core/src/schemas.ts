@@ -15,6 +15,7 @@ import {
   PARTNER_APPLICATION_STATUSES,
   PARTNER_LOGO_MAX_BYTES,
   PARTNER_LOGO_TYPES,
+  PARTNER_PROFILE_MAX_LENGTH,
   PARTNER_STATUSES,
 } from './partners';
 import {
@@ -158,6 +159,14 @@ export const partnerLogoSchema = z.object({
 export type PartnerLogoInput = z.infer<typeof partnerLogoSchema>;
 
 /** Whether a partner shows in «شركاء يُسر» on the website, and with the «جديد» badge. */
+/** A partner's card on the website: Arabic is required, English optional (the Arabic shows instead). */
+const profileText = z.object({
+  ar: z.string().trim().min(20).max(PARTNER_PROFILE_MAX_LENGTH),
+  en: z.string().trim().max(PARTNER_PROFILE_MAX_LENGTH).default(''),
+});
+export const partnerProfileSchema = z.object({ about: profileText, giving: profileText });
+export type PartnerProfileInput = z.infer<typeof partnerProfileSchema>;
+
 export const partnerShowcaseSchema = z
   .object({ showcased: z.boolean().optional(), newBadge: z.boolean().optional() })
   .refine((patch) => patch.showcased !== undefined || patch.newBadge !== undefined, { message: 'Nothing to change' });

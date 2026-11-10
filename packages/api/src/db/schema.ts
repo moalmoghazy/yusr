@@ -20,6 +20,7 @@ import {
   type Localized,
   type PartnerAssociation,
   type PartnerApplicationStatus,
+  type PartnerProfile,
   type DocumentRequestStatus,
   type PartnerLogoType,
   type PartnerStatus,
@@ -173,6 +174,8 @@ export const partners = pgTable('partners', {
   logoUpdatedAt: at('logo_updated_at'),
   showcased: boolean('showcased').notNull().default(true),
   newBadge: boolean('new_badge').notNull().default(false),
+  /** Its card on the website (0013_partner_profile.sql). */
+  profile: jsonb('profile').$type<PartnerProfile>(),
   createdBy: uuid('created_by')
     .notNull()
     .references(() => users.id),

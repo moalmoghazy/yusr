@@ -3,7 +3,7 @@ import { Badge, Icon, textFor } from '@yusr/ui';
 import type { Metadata } from 'next';
 import { NoAccess } from '@/components/no-access';
 import { CreatePartnerForm } from '@/components/partner-forms';
-import { LogoUpload, RemoveLogoForm, RenamePartnerForm, ShowcaseSwitch } from '@/components/showcase-forms';
+import { LogoUpload, ProfileForm, RemoveLogoForm, RenamePartnerForm, ShowcaseSwitch } from '@/components/showcase-forms';
 import { hubLocale, hubText } from '@/lib/i18n';
 import { adminApi, currentStaff } from '@/lib/session';
 
@@ -129,6 +129,22 @@ export default async function ShowcasePage() {
                     <ShowcaseSwitch locale={locale} partnerId={partner.id} field="showcased" on={partner.showcased} disabled={suspended} />
                     <ShowcaseSwitch locale={locale} partnerId={partner.id} field="newBadge" on={partner.newBadge} />
                   </div>
+
+                  <details className="group/profile flex flex-col gap-2 border-t border-border pt-3">
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-xs font-semibold text-muted-foreground">
+                      <span className="inline-flex items-center gap-2">
+                        {t('admin.showcase.profile.title')}
+                        <Badge tone={partner.profile ? 'success' : 'neutral'}>
+                          {partner.profile ? t('admin.showcase.profile.live') : t('admin.showcase.profile.none')}
+                        </Badge>
+                      </span>
+                      <Icon name="chevron-down" size={16} className="transition-transform group-open/profile:rotate-180" />
+                    </summary>
+                    <div className="mt-3 flex flex-col gap-2">
+                      <p className="text-xs text-muted-foreground">{t('admin.showcase.profile.hint')}</p>
+                      <ProfileForm key={partner.updatedAt} locale={locale} partnerId={partner.id} profile={partner.profile} />
+                    </div>
+                  </details>
 
                   <div className="flex flex-col gap-2 border-t border-border pt-3">
                     <p className="text-xs font-semibold text-muted-foreground">{t('admin.showcase.edit')}</p>

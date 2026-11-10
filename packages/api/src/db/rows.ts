@@ -19,6 +19,7 @@ import type {
   PaymentMethod,
   PartnerAssociation,
   PartnerApplicationStatus,
+  PartnerProfile,
   DocumentRequestStatus,
   PartnerLogoType,
   PartnerStatus,
@@ -150,6 +151,8 @@ export interface PartnerRow {
   logoUpdatedAt: Timestamp | null;
   showcased: boolean;
   newBadge: boolean;
+  /** Its card on the website (0013), or null. */
+  profile: PartnerProfile | null;
   createdBy: Id;
   createdAt: Timestamp;
   updatedAt: Timestamp;

@@ -22,7 +22,14 @@ import {
   type PartnerStatus,
   type PublicPartner,
 } from '@yusr/core';
-import type { CreatePartnerInput, PartnerApplicationInput, PartnerLogoInput, PartnerShowcaseInput, UpdatePartnerInput } from '@yusr/core/schemas';
+import type {
+  CreatePartnerInput,
+  PartnerApplicationInput,
+  PartnerLogoInput,
+  PartnerProfileInput,
+  PartnerShowcaseInput,
+  UpdatePartnerInput,
+} from '@yusr/core/schemas';
 import { primaryRole, requirePermission, type CallContext } from '../common/actor';
 import type { FieldCipher } from '../common/cipher';
 import type { Clock } from '../common/clock';
@@ -102,6 +109,7 @@ export class PartnersService {
         casesCount: counts.get(row.id) ?? 0,
         logoVersion: logoVersion(row),
         isNew: row.newBadge,
+        profile: row.profile,
       }));
   }
 
@@ -170,6 +178,7 @@ export class PartnersService {
         // A new partner shows on the home page at once, with the «جديد» badge until staff take it off.
         showcased: true,
         newBadge: true,
+        profile: null,
         createdBy: actor.id,
         createdAt: now,
         updatedAt: now,
@@ -284,11 +293,21 @@ export class PartnersService {
     return this.changeShowcase(id, context, 'partner.showcase_updated', () => next, next);
   }
 
+  /** Writes (or replaces) its card on the website; it shows as soon as it is saved. */
+  async setProfile(id: string, input: PartnerProfileInput, context: CallContext): Promise<Partner> {
+    const profile = { about: { ar: input.about.ar, en: input.about.en }, giving: { ar: input.giving.ar, en: input.giving.en } };
+    return this.changeShowcase(id, context, 'partner.profile_set', () => ({ profile }), { profile: 'set' });
+  }
+
+  async removeProfile(id: string, context: CallContext): Promise<Partner> {
+    return this.changeShowcase(id, context, 'partner.profile_removed', () => ({ profile: null }), { profile: null });
+  }
+
   private async changeShowcase(
     id: string,
     context: CallContext,
     action: string,
-    patch: () => Partial<Pick<PartnerRow, 'logo' | 'logoType' | 'logoUpdatedAt' | 'showcased' | 'newBadge'>>,
+    patch: () => Partial<Pick<PartnerRow, 'logo' | 'logoType' | 'logoUpdatedAt' | 'showcased' | 'newBadge' | 'profile'>>,
     after: Record<string, unknown>,
   ): Promise<Partner> {
     const actor = requirePermission(context.actor, 'partners:manage');
@@ -481,6 +500,7 @@ export class PartnersService {
       logo: row.logoType && row.logoUpdatedAt ? { type: row.logoType, version: logoVersion(row)! } : null,
       showcased: row.showcased,
       newBadge: row.newBadge,
+      profile: row.profile,
       createdBy: { id: row.createdBy, name: creator?.displayName ?? '—' },
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),

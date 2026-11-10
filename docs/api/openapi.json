@@ -5258,6 +5258,152 @@
         }
       }
     },
+    "/v1/admin/partners/{id}/profile": {
+      "put": {
+        "operationId": "admin.partners.profile",
+        "tags": [
+          "Operations · Partners"
+        ],
+        "summary": "Write its card on the website (about it and its giving); it shows as soon as it is saved",
+        "description": "Arabic is required (20 characters or more); English is optional and the Arabic shows in its place.\n\nRequires a staff session with two-factor authentication.\n\nPermission: `partners:manage`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "about": {
+                    "type": "object",
+                    "properties": {
+                      "ar": {
+                        "type": "string",
+                        "minLength": 20,
+                        "maxLength": 1200
+                      },
+                      "en": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 1200
+                      }
+                    },
+                    "required": [
+                      "ar"
+                    ]
+                  },
+                  "giving": {
+                    "type": "object",
+                    "properties": {
+                      "ar": {
+                        "type": "string",
+                        "minLength": 20,
+                        "maxLength": 1200
+                      },
+                      "en": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 1200
+                      }
+                    },
+                    "required": [
+                      "ar"
+                    ]
+                  }
+                },
+                "required": [
+                  "about",
+                  "giving"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "partners:manage",
+        "responses": {
+          "200": {
+            "description": "Partner",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Partner (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "admin.partners.removeProfile",
+        "tags": [
+          "Operations · Partners"
+        ],
+        "summary": "Remove its card from the website (the logo still shows, with its public facts only)",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `partners:manage`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-permission": "partners:manage",
+        "responses": {
+          "200": {
+            "description": "Partner",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Partner (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/admin/partner-applications": {
       "get": {
         "operationId": "admin.partners.applications",

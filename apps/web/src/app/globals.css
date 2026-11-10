@@ -738,7 +738,6 @@ html[lang='ar'] .font-wordmark {
   align-items: center;
   gap: 1.125rem;
   padding-inline-end: 3.75rem;
-  cursor: default;
 }
 
 .partners-logo,
@@ -754,7 +753,9 @@ html[lang='ar'] .font-wordmark {
 .partners-item:hover .partners-logo,
 .partners-item:hover .partners-text,
 .partners-item:active .partners-logo,
-.partners-item:active .partners-text {
+.partners-item:active .partners-text,
+.partners-item:focus-within .partners-logo,
+.partners-item:focus-within .partners-text {
   filter: none;
   opacity: 1;
 }

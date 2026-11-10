@@ -199,6 +199,7 @@ export async function seedDemo(tx: Tx, options: { now: Date; cipher: FieldCipher
       logoUpdatedAt: logo ? at : null,
       showcased: true,
       newBadge: registry.newBadge ?? false,
+      profile: registry.profile ?? null,
       id,
       name: partner.name,
       registrationNumber: partner.registrationNumber,

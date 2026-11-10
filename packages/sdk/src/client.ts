@@ -4,6 +4,7 @@ import type {
   EditCaseInput,
   PartnerApplicationInput,
   PartnerLogoInput,
+  PartnerProfileInput,
   PartnerShowcaseInput,
   RecordFollowupInput,
   UpdatePartnerInput,
@@ -134,6 +135,9 @@ export interface AdminClient {
   removePartnerLogo(partnerId: string): Promise<Partner>;
   /** Shows or hides it in «شركاء يُسر», and switches its «جديد» badge. */
   setPartnerShowcase(partnerId: string, patch: PartnerShowcaseInput): Promise<Partner>;
+  /** Writes its card on the website (about it and its giving); it shows as soon as it is saved. */
+  setPartnerProfile(partnerId: string, input: PartnerProfileInput): Promise<Partner>;
+  removePartnerProfile(partnerId: string): Promise<Partner>;
   /** Join requests from associations, newest first (partners:manage). */
   partnerApplications(limit?: number): Promise<PartnerApplication[]>;
   setPartnerApplicationStatus(applicationId: string, status: Exclude<PartnerApplicationStatus, 'new'>): Promise<PartnerApplication>;

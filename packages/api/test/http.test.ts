@@ -459,7 +459,17 @@ describe('operations', () => {
     const joined = partners.map((partner) => partner.joinedOn);
     assert.deepEqual(joined, [...joined].sort().reverse(), 'the most recently joined first');
     for (const partner of partners) {
-      assert.deepEqual(Object.keys(partner).sort(), ['casesCount', 'id', 'isNew', 'joinedOn', 'logoVersion', 'name', 'region', 'registrationNumber']);
+      assert.deepEqual(Object.keys(partner).sort(), [
+        'casesCount',
+        'id',
+        'isNew',
+        'joinedOn',
+        'logoVersion',
+        'name',
+        'profile',
+        'region',
+        'registrationNumber',
+      ]);
     }
     const showcase = await call('GET', '/v1/partners?limit=24');
     for (const partner of DEMO_PARTNERS) assert.ok(!showcase.text.includes(partner.contactPhone), 'no contact phone');

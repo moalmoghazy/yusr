@@ -1,6 +1,6 @@
 'use server';
 
-import { partnerLogoSchema, updatePartnerSchema } from '@yusr/core/schemas';
+import { partnerLogoSchema, partnerProfileSchema, updatePartnerSchema } from '@yusr/core/schemas';
 import { textFor } from '@yusr/ui';
 import { revalidatePath } from 'next/cache';
 import { formId, text } from '@/lib/form';
@@ -61,6 +61,31 @@ export async function renamePartner(_previous: ActionResult, form: FormData): Pr
   if (!partnerId || !parsed.success) return { ok: false, message: t('errors.VALIDATION_FAILED') };
   const api = await adminApi();
   const result = await attempt(() => api.updatePartner(partnerId, parsed.data), t('admin.showcase.saved'));
+  if (result?.ok) refresh();
+  return result;
+}
+
+/** «نبذة عن الجمعية» and «عطاؤها»: published on its card on the website as soon as they are saved. */
+export async function setPartnerProfile(_previous: ActionResult, form: FormData): Promise<ActionResult> {
+  const { t } = textFor(await hubLocale());
+  const partnerId = formId(form, 'partnerId');
+  const parsed = partnerProfileSchema.safeParse({
+    about: { ar: text(form, 'aboutAr'), en: text(form, 'aboutEn') },
+    giving: { ar: text(form, 'givingAr'), en: text(form, 'givingEn') },
+  });
+  if (!partnerId || !parsed.success) return { ok: false, message: t('admin.showcase.profile.invalid') };
+  const api = await adminApi();
+  const result = await attempt(() => api.setPartnerProfile(partnerId, parsed.data), t('admin.showcase.profile.published'));
+  if (result?.ok) refresh();
+  return result;
+}
+
+export async function removePartnerProfile(_previous: ActionResult, form: FormData): Promise<ActionResult> {
+  const { t } = textFor(await hubLocale());
+  const partnerId = formId(form, 'partnerId');
+  if (!partnerId) return { ok: false, message: t('errors.VALIDATION_FAILED') };
+  const api = await adminApi();
+  const result = await attempt(() => api.removePartnerProfile(partnerId), t('admin.showcase.profile.removed'));
   if (result?.ok) refresh();
   return result;
 }

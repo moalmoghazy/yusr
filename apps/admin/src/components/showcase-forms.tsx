@@ -1,9 +1,9 @@
 'use client';
 
-import { PARTNER_LOGO_MAX_BYTES, PARTNER_LOGO_TYPES, type Locale, type PartnerLogoType } from '@yusr/core';
+import { PARTNER_LOGO_MAX_BYTES, PARTNER_LOGO_TYPES, PARTNER_PROFILE_MAX_LENGTH, type Locale, type PartnerLogoType, type PartnerProfile } from '@yusr/core';
 import { buttonClasses, cn, Icon, textFor } from '@yusr/ui';
 import { startTransition, useActionState, useRef, useState } from 'react';
-import { removePartnerLogo, renamePartner, setPartnerLogo, setPartnerShowcase } from '@/app/(hub)/showcase/actions';
+import { removePartnerLogo, removePartnerProfile, renamePartner, setPartnerLogo, setPartnerProfile, setPartnerShowcase } from '@/app/(hub)/showcase/actions';
 import type { ActionResult } from '@/lib/session';
 
 const control =
@@ -206,5 +206,59 @@ export function RenamePartnerForm({
         <Result result={result} />
       </div>
     </form>
+  );
+}
+
+/**
+ * The partner's card on the website: «نبذة عن الجمعية» and «عطاؤها», in Arabic (required) and English
+ * (optional). «نشر على الموقع» saves and publishes at once.
+ */
+export function ProfileForm({ locale, partnerId, profile }: { locale: Locale; partnerId: string; profile: PartnerProfile | null }) {
+  const { t } = textFor(locale);
+  const [result, action, pending] = useActionState<ActionResult, FormData>(setPartnerProfile, null);
+  const [removed, remove, removing] = useActionState<ActionResult, FormData>(removePartnerProfile, null);
+  const area = cn(control, 'h-auto min-h-24 py-2 leading-relaxed');
+  const field = (name: string, label: string, value: string, required: boolean, dir: 'rtl' | 'ltr') => (
+    <label className="flex flex-col gap-1 text-xs">
+      <span className="font-semibold text-muted-foreground">{label}</span>
+      <textarea
+        name={name}
+        rows={4}
+        required={required}
+        minLength={required ? 20 : undefined}
+        maxLength={PARTNER_PROFILE_MAX_LENGTH}
+        dir={dir}
+        defaultValue={value}
+        className={area}
+      />
+    </label>
+  );
+  return (
+    <div className="flex flex-col gap-2">
+      <form action={action} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <input type="hidden" name="partnerId" value={partnerId} />
+        {field('aboutAr', t('admin.showcase.profile.aboutAr'), profile?.about.ar ?? '', true, 'rtl')}
+        {field('aboutEn', t('admin.showcase.profile.aboutEn'), profile?.about.en ?? '', false, 'ltr')}
+        {field('givingAr', t('admin.showcase.profile.givingAr'), profile?.giving.ar ?? '', true, 'rtl')}
+        {field('givingEn', t('admin.showcase.profile.givingEn'), profile?.giving.en ?? '', false, 'ltr')}
+        <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
+          <button type="submit" disabled={pending} className={buttonClasses({ size: 'sm' })}>
+            <Icon name="send" size={15} />
+            {t('admin.showcase.profile.publish')}
+          </button>
+          <Result result={result} />
+        </div>
+      </form>
+      {profile && (
+        <form action={remove} className="flex flex-wrap items-center gap-2">
+          <input type="hidden" name="partnerId" value={partnerId} />
+          <button type="submit" disabled={removing} className={buttonClasses({ variant: 'ghost', size: 'sm', className: 'text-destructive' })}>
+            <Icon name="x" size={15} />
+            {t('admin.showcase.profile.remove')}
+          </button>
+          <Result result={removed} />
+        </form>
+      )}
+    </div>
   );
 }

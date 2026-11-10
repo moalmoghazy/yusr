@@ -277,3 +277,32 @@ describe('join requests («انضم كجمعية شريكة»)', () => {
     assert.equal(after?.alreadyPartner, true, 'flags a request whose association is already in the registry');
   });
 });
+
+describe('a partner’s card on the website', () => {
+  const profile = {
+    about: { ar: 'جمعية أهلية تعمل في الجيزة منذ ٢٠١٠ وتخدم الأسر الأولى بالرعاية.', en: '' },
+    giving: { ar: 'تكفلت بأكثر من ٣٠٠ عملية جراحية وسددت ديون ٩٠ أسرة.', en: 'It has paid for more than 300 operations.' },
+  };
+
+  it('is written by content moderators and shows on the public row once saved, until removed', async () => {
+    const { partners } = await setupPartners();
+    const created = await partners.create(newPartner(), { actor: moderator });
+    assert.equal((await partners.showcase(10))[0]?.profile, null);
+    await rejects(partners.setProfile(created.id, profile, { actor: actorOf(USERS.auditor) }), 'FORBIDDEN');
+    const saved = await partners.setProfile(created.id, profile, { actor: moderator });
+    assert.deepEqual(saved.profile, profile);
+    const [shown] = await partners.showcase(10);
+    assert.equal(shown?.profile?.about.ar, profile.about.ar);
+    assert.equal(shown?.profile?.giving.en, profile.giving.en);
+    assert.doesNotMatch(JSON.stringify(shown), /YSR-|\+20/, 'the card carries no code or contact');
+    await partners.removeProfile(created.id, { actor: moderator });
+    assert.equal((await partners.showcase(10))[0]?.profile, null);
+  });
+
+  it('needs the Arabic text', async () => {
+    const { partnerProfileSchema } = await import('@yusr/core/schemas');
+    assert.equal(partnerProfileSchema.safeParse(profile).success, true);
+    assert.equal(partnerProfileSchema.safeParse({ ...profile, about: { ar: '', en: 'Only English here, long enough.' } }).success, false);
+    assert.equal(partnerProfileSchema.safeParse({ about: profile.about, giving: { ar: profile.giving.ar } }).success, true);
+  });
+});

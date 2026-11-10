@@ -1,3 +1,5 @@
+import type { Localized } from './types';
+
 /**
  * The approved-partner registry: the جمعيات أهلية (registered with the Ministry of Social Solidarity)
  * that Yusr has approved, coordinated with and signed a contract with. Only their cases are listed.
@@ -18,6 +20,21 @@ export const PARTNER_LOGO_MAX_BYTES = 150 * 1024;
 export type PartnerStatus = (typeof PARTNER_STATUSES)[number];
 
 /** A partner as staff with `partners:manage` see it in the control hub. */
+/**
+ * The partner's card on the website: what opens when a donor clicks it in «شركاء يُسر». Staff write it
+ * in the control hub («شركاء الموقع») and it shows as soon as it is saved. English may be left empty
+ * (the Arabic is shown instead).
+ */
+export interface PartnerProfile {
+  /** «نبذة عن الجمعية». */
+  about: Localized;
+  /** «عطاؤها»: what it does and has given (programmes, families served, results). */
+  giving: Localized;
+}
+
+/** How long each text of a profile may be. */
+export const PARTNER_PROFILE_MAX_LENGTH = 1200;
+
 export interface Partner {
   id: string;
   name: string;
@@ -41,6 +58,8 @@ export interface Partner {
   showcased: boolean;
   /** The small «جديد» badge on its logo there. */
   newBadge: boolean;
+  /** Its card on the website, or null until staff write one. */
+  profile: PartnerProfile | null;
   createdBy: { id: string; name: string };
   createdAt: string;
   updatedAt: string;
@@ -63,6 +82,8 @@ export interface PublicPartner {
   logoVersion: string | null;
   /** Staff switched on the «جديد» badge for it. */
   isNew: boolean;
+  /** Its card (about and giving), or null when staff have not written one. */
+  profile: PartnerProfile | null;
 }
 
 /**
