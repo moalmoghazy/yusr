@@ -34,8 +34,7 @@ dots and gold ḍamma).
 - **Boxes**: `markViewBox()` crops a square to the mark, so a `<LogoMark size={n}>` is about `n` px wide;
   `faviconSvg()` writes the browser-tab icon (light and dark) copied to both apps' `icon.svg`.
 - **Small sizes**: a single shape with no small parts, so it holds up at 16 px; the light becomes a touch of colour.
-- The earlier marks (`dotsBelow`, `dotsInCurve`) stay in `LOGO_VARIANTS`; their drop is `DAMMA_DROP`,
-  which the WhatsApp button still wears as a badge.
+- The earlier marks (`dotsBelow`, `dotsInCurve`) stay in `LOGO_VARIANTS`; their drop is `DAMMA_DROP`.
 - **Animated**: the website's «من نحن» page (`/about`) draws the bowl live, then its light rises in with a
   gold ripple, and replays on click; the light slides towards the pointer inside the bowl like a reflection.
   Beside «من نحن؟» the mark bends into a question mark with a gold dot. In the website's header (Arabic)

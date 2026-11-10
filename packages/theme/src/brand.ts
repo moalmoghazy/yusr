@@ -115,7 +115,7 @@ export function dammaPath(cx: number, cy: number, r: number, options: { angle?: 
 /** The earlier marks' ḍamma: the golden drop, its point turned towards the upper left, floating over the bowl's mouth. */
 const DROP_PATH = 'M32 8.5c0 0-7.6 9.1-7.6 14.1a7.6 7.6 0 0 0 15.2 0c0-5-7.6-14.1-7.6-14.1Z';
 
-/** The golden ḍamma as a badge (the WhatsApp button wears it): the drop of the earlier marks. */
+/** The golden ḍamma drop of the earlier marks (kept for the older logo variants). */
 export const DAMMA_DROP = { d: DROP_PATH, transform: 'translate(3 -5.5) rotate(-145 32 21.5)' } as const;
 
 /**

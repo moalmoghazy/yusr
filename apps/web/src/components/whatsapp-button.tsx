@@ -1,14 +1,11 @@
-import { DAMMA_DROP } from '@yusr/theme';
 import { PLATFORM_GLYPHS } from '@yusr/ui';
 import type { CSSProperties } from 'react';
 
 const GLYPH = PLATFORM_GLYPHS.whatsapp;
-const DROP = DAMMA_DROP;
 
 /**
  * A floating button on every page that opens a WhatsApp chat with Yusr's number (site.whatsapp).
- * At rest it wears the site's colours: WhatsApp's glyph in white on the brand green, a gold ring and the
- * golden ḍamma. On hover (or focus) it turns WhatsApp's real green, and its label
+ * At rest it wears the site's colours: WhatsApp's glyph in white on the brand green, and a gold ring. On hover (or focus) it turns WhatsApp's real green, and its label
  * appears beside it, circled by a glowing gold line (`.wa-*` in globals.css).
  */
 export function WhatsAppButton({ number, label }: { number: string; label: string }) {
@@ -31,15 +28,6 @@ export function WhatsAppButton({ number, label }: { number: string; label: strin
         className="text-primary-foreground transition-colors duration-300 group-hover:text-[var(--wa-on-brand)] group-focus-visible:text-[var(--wa-on-brand)]"
       >
         <path d={GLYPH.d} />
-      </svg>
-      {/* The golden ḍamma, Yusr's touch on the button; it lifts away when WhatsApp's own colours take over. */}
-      <svg
-        viewBox="22 4 26 26"
-        aria-hidden
-        focusable="false"
-        className="absolute -top-1 -end-1 size-5 drop-shadow transition-[opacity,transform] duration-300 group-hover:-translate-y-1 group-hover:opacity-0 group-focus-visible:opacity-0"
-      >
-        <path d={DROP.d} transform={DROP.transform} className="fill-highlight" />
       </svg>
       <span
         aria-hidden

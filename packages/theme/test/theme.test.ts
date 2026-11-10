@@ -218,7 +218,7 @@ describe('the ḍamma', () => {
     assert.ok(Math.abs(drop.cx - bowl.cx) < drop.r, 'over the middle of the bowl');
     assert.equal((logo.drop.d.match(/M/g) ?? []).length, 1, 'one drop, not a head and a tail');
     assert.match(logo.drop.transform, /rotate\(-145 /, 'its point turned up to the left');
-    assert.equal(DAMMA_DROP, logo.drop, 'the WhatsApp badge keeps it');
+    assert.equal(DAMMA_DROP, logo.drop);
   });
 
   it('lights the current mark from within: a turquoise band and a gold band on the bowl, no dots or drop', () => {
