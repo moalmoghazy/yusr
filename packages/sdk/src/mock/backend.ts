@@ -41,6 +41,8 @@ import {
   type ActivityItem,
   type Actor,
   type AdminCase,
+  type AdminStory,
+  type StoryText,
   type AdminDonation,
   type AdminOverview,
   type AuditEntry,
@@ -97,6 +99,7 @@ import type {
   PartnerApplicationInput,
   PartnerProfileInput,
   StoryPhotoInput,
+  CaseStoryInput,
   DocumentRequestInput,
   PartnerLogoInput,
   PartnerShowcaseInput,
@@ -1198,6 +1201,8 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
   );
   /** «قصص نجاح» photos by case id (the prototype keeps only their versions). */
   const storyPhotos = new Map<string, string>();
+  /** «قصص نجاح» text and visibility edited in the hub. */
+  const storyEdits = new Map<string, { text: StoryText; published: boolean; updatedAt: string; updatedBy: string }>();
   const isFollowed = (status: CaseStatus): status is FollowupCase['status'] => (FOLLOWUP_STATUSES as readonly CaseStatus[]).includes(status);
   const followupCase = (item: AdminCase): FollowupCase => {
     const entries = followupLog.filter((entry) => entry.caseId === item.id).reverse();
@@ -1333,27 +1338,34 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
   };
   /** «قصص نجاح»: closed cases, the most recently closed first, with the latest confirming follow-up. */
   const successStories = (limit = 8): SuccessStory[] =>
+    closedStories()
+      .filter(({ item }) => storyEdits.get(item.id)?.published !== false)
+      .slice(0, limit)
+      .map(({ story }) => story);
+  const closedStories = (): Array<{ item: AdminCase; story: SuccessStory }> =>
     [...state.cases.values()]
       .filter((item) => item.status === 'closed')
       .map((item) => ({ item, closedAt: item.history.findLast((change) => change.to === 'closed')?.at ?? null }))
       .filter((entry): entry is { item: AdminCase; closedAt: string } => entry.closedAt !== null)
       .sort((a, b) => Date.parse(b.closedAt) - Date.parse(a.closedAt))
-      .slice(0, limit)
       .map(({ item, closedAt }) => {
+        const edit = storyEdits.get(item.id);
         const confirmed = followupLog.filter((entry) => entry.caseId === item.id && entry.outcome === 'confirmed').at(-1);
         const contributors = state.donations
           .filter((record) => record.caseId === item.id && record.status === 'succeeded')
           .slice(-STORY_CONTRIBUTORS_SHOWN)
           .reverse()
           .map((record) => (record.anonymous || !record.displayName ? null : record.displayName.ar));
-        return {
+        const story: SuccessStory = {
           ...toSummary(item),
-          story: item.story,
+          ...(edit ? { title: edit.text.title, summary: edit.text.outcome } : {}),
+          story: edit?.text.story ?? item.story,
           closedAt,
           confirmedAt: confirmed?.recordedAt ?? null,
           photoVersion: storyPhotos.get(item.id) ?? null,
           contributors,
         };
+        return { item, story };
       });
   const mustPartner = (id: string) => {
     const partner = partners.find((entry) => entry.id === id);
@@ -1951,6 +1963,39 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
         logAudit(actorRef, 'case.story_photo_set', 'case', caseId, item.reference, null, { type: input.contentType });
         return { version };
       },
+      stories: (): AdminStory[] => {
+        ensure('cases:read');
+        return closedStories().map(({ item, story }) => {
+          const edit = storyEdits.get(item.id);
+          return {
+            story,
+            original: { title: item.title, story: item.story, outcome: item.summary },
+            edited: edit !== undefined,
+            published: edit?.published ?? true,
+            updatedAt: edit?.updatedAt ?? null,
+            updatedBy: edit?.updatedBy ?? null,
+          };
+        });
+      },
+      saveStory: (caseId: string, input: CaseStoryInput) => {
+        ensure('cases:edit');
+        const parsed = input;
+        const short = (text: { ar: string }, min: number) => text.ar.trim().length < min;
+        if (short(parsed.title, 3) || short(parsed.story, 20) || short(parsed.outcome, 3))
+          throw new DomainError('VALIDATION_FAILED', 'Arabic text is required');
+        const item = state.cases.get(caseId);
+        if (!item) throw new DomainError('NOT_FOUND', 'Case not found');
+        if (item.status !== 'closed') throw new DomainError('VALIDATION_FAILED', 'Only closed cases have a success story');
+        const filled = (text: { ar: string; en?: string }) => ({ ar: text.ar.trim(), en: text.en?.trim() || text.ar.trim() });
+        storyEdits.set(caseId, {
+          text: { title: filled(parsed.title), story: filled(parsed.story), outcome: filled(parsed.outcome) },
+          published: parsed.published,
+          updatedAt: iso(clock()),
+          updatedBy: actor.name,
+        });
+        logAudit(actorRef, 'case.story_saved', 'case', caseId, item.reference, null, { published: parsed.published });
+        return { saved: true as const };
+      },
       removeStoryPhoto: (caseId: string) => {
         ensure('cases:edit');
         storyPhotos.delete(caseId);
@@ -2054,6 +2099,8 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       recordFollowup: wrap(sync.recordFollowup),
       setStoryPhoto: wrap(sync.setStoryPhoto),
       removeStoryPhoto: wrap(sync.removeStoryPhoto),
+      stories: wrap(sync.stories),
+      saveStory: wrap(sync.saveStory),
       documentRequests: wrap(sync.documentRequests),
       setDocumentRequestStatus: wrap(sync.setDocumentRequestStatus),
     };

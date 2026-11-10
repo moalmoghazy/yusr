@@ -50,6 +50,7 @@ import type {
   PartnerApplicationRow,
   DocumentRequestRow,
   StoryPhotoRow,
+  CaseStoryRow,
   PartnerRow,
   PaymentAttemptRow,
   PayoutRow,
@@ -93,6 +94,7 @@ interface State {
   followups: CaseFollowupRow[];
   documentRequests: Map<Id, DocumentRequestRow>;
   storyPhotos: Map<Id, StoryPhotoRow>;
+  stories: Map<Id, CaseStoryRow>;
   lines: Map<Id, DisbursementLineRow>;
   tasks: Map<Id, VerificationTaskRow>;
   donations: Map<Id, DonationRow>;
@@ -142,6 +144,7 @@ function emptyState(): State {
     followups: [],
     documentRequests: new Map(),
     storyPhotos: new Map(),
+    stories: new Map(),
     lines: new Map(),
     tasks: new Map(),
     donations: new Map(),
@@ -504,6 +507,11 @@ export class MemoryDatabase implements Database {
       },
       deleteStoryPhoto: async (caseId) => {
         s().storyPhotos.delete(caseId);
+      },
+      stories: async (caseIds) => caseIds.flatMap((caseId) => (s().stories.has(caseId) ? [clone(s().stories.get(caseId)!)] : [])),
+      putStory: async (row) => {
+        if (!s().cases.has(row.caseId)) throw new DomainError('NOT_FOUND', `case ${row.caseId} not found`);
+        s().stories.set(row.caseId, clone(row));
       },
       updateDocumentRequest: async (id, patch) => {
         const current = s().documentRequests.get(id);

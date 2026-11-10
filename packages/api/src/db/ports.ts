@@ -25,6 +25,7 @@ import type {
   PartnerApplicationRow,
   DocumentRequestRow,
   StoryPhotoRow,
+  CaseStoryRow,
   PartnerRow,
   PaymentAttemptRow,
   PayoutRow,
@@ -109,6 +110,10 @@ export interface CasesRepo {
   /** Adds or replaces it. */
   putStoryPhoto(row: StoryPhotoRow): Promise<void>;
   deleteStoryPhoto(caseId: Id): Promise<void>;
+  /** «قصص نجاح» text and visibility edited in the hub (0015), for these cases. */
+  stories(caseIds: readonly Id[]): Promise<CaseStoryRow[]>;
+  /** Adds or replaces it. */
+  putStory(row: CaseStoryRow): Promise<void>;
 }
 
 /** The approved-partner registry. Renaming a partner renames it on its cases too (a trigger in SQL). */

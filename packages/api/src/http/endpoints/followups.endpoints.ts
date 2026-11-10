@@ -3,7 +3,7 @@
  * that the help reached the beneficiary, also after the case closes. Anyone with cases:read sees the
  * board; cases:follow_up logs a call or visit.
  */
-import { recordFollowupSchema, storyPhotoSchema } from '@yusr/core/schemas';
+import { caseStorySchema, recordFollowupSchema, storyPhotoSchema } from '@yusr/core/schemas';
 import { endpoint } from '../endpoint';
 
 const FOLLOWUPS = 'Operations · Follow-up';
@@ -73,5 +73,31 @@ export const followupOperations = [
     permission: 'cases:edit',
     returns: '{ removed: true }',
     handle: ({ services, ctx, params }) => services.cases.removeStoryPhoto(params['id']!, ctx),
+  }),
+  endpoint({
+    id: 'admin.stories.list',
+    method: 'GET',
+    path: '/admin/stories',
+    version: '1',
+    access: 'staff',
+    tag: FOLLOWUPS,
+    summary: 'Closed cases as «قصص نجاح» stories, published or not, with their own text',
+    permission: 'cases:read',
+    returns: 'AdminStory[]',
+    handle: ({ services, ctx }) => services.cases.adminStories(ctx),
+  }),
+  endpoint({
+    id: 'admin.stories.save',
+    method: 'PUT',
+    path: '/admin/stories/:id',
+    version: '1',
+    access: 'staff',
+    tag: FOLLOWUPS,
+    summary: 'Set the title, story and outcome a closed case tells in «قصص نجاح», and whether it shows',
+    description: 'Arabic is required; an empty English text shows the Arabic. Only closed cases.',
+    permission: 'cases:edit',
+    body: caseStorySchema,
+    returns: '{ saved: true }',
+    handle: ({ services, ctx, params, body }) => services.cases.saveStory(params['id']!, body, ctx),
   }),
 ];

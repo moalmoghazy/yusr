@@ -179,6 +179,16 @@ export const storyPhotoSchema = z.object({
 });
 export type StoryPhotoInput = z.infer<typeof storyPhotoSchema>;
 
+/** «قصص نجاح» text from the hub: Arabic required; empty English shows the Arabic. */
+const storyField = (min: number, max: number) => z.object({ ar: z.string().trim().min(min).max(max), en: z.string().trim().max(max).default('') });
+export const caseStorySchema = z.object({
+  title: storyField(3, 120),
+  story: storyField(20, 6000),
+  outcome: storyField(3, 240),
+  published: z.boolean(),
+});
+export type CaseStoryInput = z.infer<typeof caseStorySchema>;
+
 export const partnerShowcaseSchema = z
   .object({ showcased: z.boolean().optional(), newBadge: z.boolean().optional() })
   .refine((patch) => patch.showcased !== undefined || patch.newBadge !== undefined, { message: 'Nothing to change' });

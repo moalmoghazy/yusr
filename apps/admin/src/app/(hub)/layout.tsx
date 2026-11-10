@@ -10,7 +10,7 @@ import { adminApi, currentStaff } from '@/lib/session';
 /** Each section shows when the staff member holds any of its permissions (the API re-checks every call). */
 const SECTIONS: ReadonlyArray<{
   href: string;
-  key: 'overview' | 'cases' | 'verification' | 'followups' | 'documentRequests' | 'finance' | 'crm' | 'partners' | 'showcase' | 'audit';
+  key: 'overview' | 'cases' | 'verification' | 'followups' | 'stories' | 'documentRequests' | 'finance' | 'crm' | 'partners' | 'showcase' | 'audit';
   icon: IconName;
   anyOf: readonly Permission[];
 }> = [
@@ -18,6 +18,7 @@ const SECTIONS: ReadonlyArray<{
   { href: '/cases', key: 'cases', icon: 'kanban', anyOf: ['cases:read'] },
   { href: '/verification', key: 'verification', icon: 'clipboard-check', anyOf: ['verifications:assign', 'verifications:perform'] },
   { href: '/followups', key: 'followups', icon: 'eye', anyOf: ['cases:read'] },
+  { href: '/stories', key: 'stories', icon: 'book-open', anyOf: ['cases:read'] },
   { href: '/document-requests', key: 'documentRequests', icon: 'file-text', anyOf: ['documents:share'] },
   { href: '/finance', key: 'finance', icon: 'landmark', anyOf: ['finance:read'] },
   { href: '/people', key: 'crm', icon: 'users', anyOf: ['cases:read'] },

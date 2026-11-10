@@ -17,6 +17,7 @@ import {
   STORY_CONTRIBUTORS_SHOWN,
   STORY_PHOTO_MAX_BYTES,
   type AdminCase,
+  type AdminStory,
   type CaseDetail,
   type CaseDocumentPublic,
   type CaseFilters,
@@ -32,14 +33,14 @@ import {
   type SuccessStory,
   type TimelineEvent,
 } from '@yusr/core';
-import type { StoryPhotoInput, SubmitCaseInput } from '@yusr/core/schemas';
+import type { CaseStoryInput, StoryPhotoInput, SubmitCaseInput } from '@yusr/core/schemas';
 import { primaryRole, requirePermission, type CallContext, type RequestActor } from '../common/actor';
 import type { FieldCipher } from '../common/cipher';
 import type { Clock } from '../common/clock';
 import { hmacHex, mask } from '../common/crypto';
 import type { IdGenerator } from '../common/ids';
 import type { Database, Tx } from '../db/ports';
-import type { CaseRow } from '../db/rows';
+import type { CaseRow, CaseStoryRow } from '../db/rows';
 import { uploadPrefix } from '../documents/documents.service';
 import type { PartnersService } from '../partners/partners.service';
 import { toCaseSummary } from './mappers';
@@ -117,21 +118,87 @@ export class CasesService {
    * each with the day Yusr's follow-up last confirmed the help arrived. Follow-up notes stay private.
    */
   async stories(limit: number): Promise<SuccessStory[]> {
+    const closed = await this.closedCases(50);
+    const edits = await this.deps.db.read.cases.stories(closed.map((item) => item.id));
+    const shown = closed.filter((item) => edits.find((row) => row.caseId === item.id)?.published !== false).slice(0, limit);
+    return this.toStories(shown, edits);
+  }
+
+  /** The hub's «قصص النجاح» page: every closed case, published or not, with its own text to go back to. */
+  async adminStories(context: CallContext): Promise<AdminStory[]> {
+    requirePermission(context.actor, 'cases:read');
     const { db } = this.deps;
-    const page = await db.read.cases.search({ statuses: ['closed'], sort: 'newest', limit: 50 });
-    const closed = page.items
+    const closed = await this.closedCases(100);
+    const edits = await db.read.cases.stories(closed.map((item) => item.id));
+    const stories = await this.toStories(closed, edits);
+    return Promise.all(
+      closed.map(async (item, index) => {
+        const row = edits.find((edit) => edit.caseId === item.id);
+        const by = row ? await db.read.users.byId(row.updatedBy) : null;
+        return {
+          story: stories[index]!,
+          original: { title: item.title, story: item.story, outcome: item.summary },
+          edited: row !== undefined,
+          published: row?.published ?? true,
+          updatedAt: row ? new Date(row.updatedAt).toISOString() : null,
+          updatedBy: by?.displayName ?? null,
+        };
+      }),
+    );
+  }
+
+  /** Staff (cases:edit) set what a closed case's story says on the home page, and whether it shows. */
+  async saveStory(caseId: string, input: CaseStoryInput, context: CallContext): Promise<{ saved: true }> {
+    const actor = requirePermission(context.actor, 'cases:edit');
+    const { db, clock } = this.deps;
+    const filled = (text: { ar: string; en: string }) => ({ ar: text.ar, en: text.en || text.ar });
+    await db.transaction(async (tx) => {
+      const item = await tx.cases.byId(caseId);
+      if (!item) throw new DomainError('NOT_FOUND', 'Case not found');
+      if (item.status !== 'closed') throw new DomainError('VALIDATION_FAILED', 'Only closed cases have a success story');
+      await tx.cases.putStory({
+        caseId,
+        title: filled(input.title),
+        story: filled(input.story),
+        outcome: filled(input.outcome),
+        published: input.published,
+        updatedBy: actor.id,
+        updatedAt: clock.now(),
+      });
+      await tx.audit.record({
+        actorId: actor.id,
+        actorRole: primaryRole(actor),
+        action: 'case.story_saved',
+        entityType: 'case',
+        entityId: caseId,
+        after: { published: input.published },
+        ip: context.ip ?? null,
+        requestId: context.requestId ?? null,
+      });
+    });
+    return { saved: true };
+  }
+
+  private async closedCases(limit: number): Promise<Array<CaseRow & { closedAt: Date }>> {
+    const page = await this.deps.db.read.cases.search({ statuses: ['closed'], sort: 'newest', limit });
+    return page.items
       .filter((item): item is CaseRow & { closedAt: Date } => item.closedAt !== null)
-      .sort((a, b) => b.closedAt.getTime() - a.closedAt.getTime())
-      .slice(0, limit);
+      .sort((a, b) => b.closedAt.getTime() - a.closedAt.getTime());
+  }
+
+  private async toStories(closed: Array<CaseRow & { closedAt: Date }>, edits: CaseStoryRow[]): Promise<SuccessStory[]> {
+    const { db } = this.deps;
     const ids = closed.map((item) => item.id);
     const [followups, photos] = await Promise.all([db.read.cases.followups(ids), db.read.cases.storyPhotoTimes(ids)]);
     return Promise.all(
       closed.map(async (item) => {
         const confirmed = followups.find((row) => row.caseId === item.id && row.outcome === 'confirmed');
         const photo = photos.get(item.id);
+        const edit = edits.find((row) => row.caseId === item.id);
         return {
           ...toCaseSummary(item),
-          story: item.story,
+          ...(edit ? { title: edit.title, summary: edit.outcome } : {}),
+          story: edit?.story ?? item.story,
           closedAt: item.closedAt.toISOString(),
           confirmedAt: confirmed?.recordedAt.toISOString() ?? null,
           photoVersion: photo ? photo.getTime().toString(36) : null,

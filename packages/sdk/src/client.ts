@@ -8,10 +8,12 @@ import type {
   PartnerShowcaseInput,
   RecordFollowupInput,
   StoryPhotoInput,
+  CaseStoryInput,
   UpdatePartnerInput,
 } from '@yusr/core/schemas';
 import type {
   AdminCase,
+  AdminStory,
   AdminDonation,
   AdminOverview,
   AuditEntry,
@@ -151,6 +153,9 @@ export interface AdminClient {
   /** The real photo of a closed case's «قصص نجاح» story (cases:edit); faces blurred before upload. */
   setStoryPhoto(caseId: string, input: StoryPhotoInput): Promise<{ version: string }>;
   removeStoryPhoto(caseId: string): Promise<{ removed: true }>;
+  /** The hub's «قصص النجاح» page: closed cases as stories, published or not. */
+  stories(): Promise<AdminStory[]>;
+  saveStory(caseId: string, input: CaseStoryInput): Promise<{ saved: true }>;
   /** Requests to see case documents, newest first, with how many still wait (documents:share). */
   documentRequests(limit?: number): Promise<DocumentRequestInbox>;
   setDocumentRequestStatus(requestId: string, status: Exclude<DocumentRequestStatus, 'new'>): Promise<DocumentRequest>;

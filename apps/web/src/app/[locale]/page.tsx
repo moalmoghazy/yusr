@@ -10,7 +10,19 @@ import {
   type PublicPartner,
   type SuccessStory,
 } from '@yusr/core';
-import { buttonClasses, CaseCard, cn, DonationProgress, Icon, LogoMark, textFor, type CaseCardProps, type IconName } from '@yusr/ui';
+import {
+  buttonClasses,
+  CaseCard,
+  cn,
+  DonationProgress,
+  Icon,
+  LogoMark,
+  storySlideData,
+  storySlideLabels,
+  textFor,
+  type CaseCardProps,
+  type IconName,
+} from '@yusr/ui';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { FeaturedRotator } from '@/components/featured-rotator';
@@ -33,7 +45,10 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
     api.liveDonations(5),
     api.listCases({ featuredOnly: true, limit: 6 }),
     // The two showcase rows are extras: an API that does not serve them yet just hides them.
-    api.successStories(6).catch((): SuccessStory[] => []),
+    // Never cached, like the partners below: what staff publish in «قصص النجاح» in the hub shows at once.
+    fresh(locale)
+      .successStories(6)
+      .catch((): SuccessStory[] => []),
     // Never cached: what staff change in «شركاء الموقع» in the hub shows here on the next visit.
     fresh(locale)
       .partnerShowcase(24)
@@ -287,7 +302,7 @@ function SectionHead({ id, title, body, children }: { id: string; title: string;
 
 /** «قصص نجاح»: the most recently closed cases, with what was raised and when our follow-up confirmed the help arrived. */
 function SuccessStories({ locale, stories }: { locale: Locale; stories: SuccessStory[] }) {
-  const { t, f, l } = textFor(locale);
+  const { t } = textFor(locale);
   return (
     <section className="container-page py-14" aria-labelledby="stories-title">
       <SectionHead id="stories-title" title={t('landing.storiesTitle')} body={t('landing.storiesBody')}>
@@ -297,36 +312,11 @@ function SuccessStories({ locale, stories }: { locale: Locale; stories: SuccessS
         </Link>
       </SectionHead>
       <StoryReel
-        labels={{
-          read: t('landing.stories.read'),
-          previous: t('landing.stories.previous'),
-          next: t('landing.stories.next'),
-          show: t('landing.stories.blurred'),
-          illustrated: t('landing.stories.illustrated'),
-          contributors: t('landing.stories.contributors'),
-          noContributors: t('landing.stories.noContributors'),
-        }}
+        labels={{ read: t('landing.stories.read'), previous: t('landing.stories.previous'), next: t('landing.stories.next'), ...storySlideLabels(locale) }}
         stories={stories.map((story): ReelStory => ({
+          ...storySlideData(story, locale, story.photoVersion ? `/story-photos/${encodeURIComponent(story.id)}?v=${story.photoVersion}` : null),
           id: story.id,
-          category: story.category,
           href: href(locale, `/cases/${story.slug}`),
-          meta: `${t(`categories.${story.category}`)} · ${regionName(story.region, l)}`,
-          title: l(story.title),
-          // An API from before stories carried their text answers with the summary only.
-          story: l(story.story ?? story.summary),
-          outcome: l(story.summary),
-          raised: t('landing.stories.raised', { amount: f.money(story.raisedMinor, story.currency) }),
-          donors: t('units.donors', { count: story.donorsCount }),
-          closed: t('landing.stories.closedOn', { date: f.date(story.closedAt, 'medium') }),
-          confirmed: story.confirmedAt ? t('landing.stories.confirmed', { date: f.date(story.confirmedAt, 'medium') }) : null,
-          // An API from before photos and contributors: the illustrated scene, no names.
-          photo: story.photoVersion ? `/story-photos/${encodeURIComponent(story.id)}?v=${story.photoVersion}` : null,
-          // Each name once (a donor who gave twice, or many anonymous gifts, shows a single chip).
-          contributors: [...new Set((story.contributors ?? []).map((name) => name ?? t('landing.stories.anonymous')))],
-          others:
-            story.donorsCount > (story.contributors ?? []).length
-              ? t('landing.stories.others', { count: story.donorsCount - (story.contributors ?? []).length })
-              : null,
         }))}
       />
     </section>

@@ -3742,6 +3742,168 @@
         }
       }
     },
+    "/v1/admin/stories": {
+      "get": {
+        "operationId": "admin.stories.list",
+        "tags": [
+          "Operations · Follow-up"
+        ],
+        "summary": "Closed cases as «قصص نجاح» stories, published or not, with their own text",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `cases:read`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "x-permission": "cases:read",
+        "responses": {
+          "200": {
+            "description": "AdminStory[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "AdminStory[] (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/stories/{id}": {
+      "put": {
+        "operationId": "admin.stories.save",
+        "tags": [
+          "Operations · Follow-up"
+        ],
+        "summary": "Set the title, story and outcome a closed case tells in «قصص نجاح», and whether it shows",
+        "description": "Arabic is required; an empty English text shows the Arabic. Only closed cases.\n\nRequires a staff session with two-factor authentication.\n\nPermission: `cases:edit`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "object",
+                    "properties": {
+                      "ar": {
+                        "type": "string",
+                        "minLength": 3,
+                        "maxLength": 120
+                      },
+                      "en": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 120
+                      }
+                    },
+                    "required": [
+                      "ar"
+                    ]
+                  },
+                  "story": {
+                    "type": "object",
+                    "properties": {
+                      "ar": {
+                        "type": "string",
+                        "minLength": 20,
+                        "maxLength": 6000
+                      },
+                      "en": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 6000
+                      }
+                    },
+                    "required": [
+                      "ar"
+                    ]
+                  },
+                  "outcome": {
+                    "type": "object",
+                    "properties": {
+                      "ar": {
+                        "type": "string",
+                        "minLength": 3,
+                        "maxLength": 240
+                      },
+                      "en": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 240
+                      }
+                    },
+                    "required": [
+                      "ar"
+                    ]
+                  },
+                  "published": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "title",
+                  "story",
+                  "outcome",
+                  "published"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "cases:edit",
+        "responses": {
+          "200": {
+            "description": "{ saved: true }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "{ saved: true } (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/admin/document-requests": {
       "get": {
         "operationId": "admin.documentRequests.inbox",

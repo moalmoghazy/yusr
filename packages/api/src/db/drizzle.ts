@@ -316,6 +316,17 @@ function createTx(x: Executor): Tx & { raw: Executor } {
       deleteStoryPhoto: async (caseId) => {
         await x.delete(t.caseStoryPhotos).where(eq(t.caseStoryPhotos.caseId, caseId));
       },
+      stories: async (caseIds) =>
+        caseIds.length === 0
+          ? []
+          : x
+              .select()
+              .from(t.caseStories)
+              .where(inArray(t.caseStories.caseId, [...caseIds])),
+      putStory: async (row) => {
+        const { caseId, ...rest } = row;
+        await x.insert(t.caseStories).values(row).onConflictDoUpdate({ target: t.caseStories.caseId, set: rest });
+      },
       updateDocumentRequest: async (id, patch) => {
         await x.update(t.documentRequests).set(patch).where(eq(t.documentRequests.id, id));
       },

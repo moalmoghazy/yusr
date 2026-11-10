@@ -4,7 +4,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { FollowupPanel } from '@/components/followup-form';
 import { NoAccess } from '@/components/no-access';
-import { StoryPhotoForm } from '@/components/story-photo-form';
 import { hubLocale, hubText } from '@/lib/i18n';
 import { adminApi, currentStaff } from '@/lib/session';
 
@@ -30,7 +29,6 @@ export default async function FollowupsPage({ searchParams }: { searchParams: Pr
   const api = await adminApi();
   const board = await api.followups();
   const canRecord = staff.permissions.has('cases:follow_up');
-  const canEditStory = staff.permissions.has('cases:edit');
   const filter = FOLLOWUP_STATES.find((state) => state === query.state) ?? null;
   const shown = filter ? board.filter((item) => item.state === filter) : board;
   const today = cairoDay(new Date());
@@ -155,8 +153,6 @@ export default async function FollowupsPage({ searchParams }: { searchParams: Pr
                   </ol>
                 </details>
               )}
-
-              {canEditStory && item.status === 'closed' && <StoryPhotoForm locale={locale} caseId={item.caseId} version={item.storyPhotoVersion} />}
 
               {canRecord && <FollowupPanel locale={locale} caseId={item.caseId} tomorrow={tomorrow} open={item.state === 'pending' || item.state === 'due'} />}
             </li>

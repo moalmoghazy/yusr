@@ -184,6 +184,17 @@ export interface StoryPhotoRow {
   uploadedAt: Timestamp;
 }
 
+/** A closed case's «قصص نجاح» text and visibility, edited in the hub (0015_case_stories.sql). */
+export interface CaseStoryRow {
+  caseId: Id;
+  title: Localized;
+  story: Localized;
+  outcome: Localized;
+  published: boolean;
+  updatedBy: Id;
+  updatedAt: Timestamp;
+}
+
 /** A request to see a case's documents (0012_document_requests.sql). The number is staff only. */
 export interface DocumentRequestRow {
   id: Id;

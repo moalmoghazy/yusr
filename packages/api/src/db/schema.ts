@@ -325,6 +325,21 @@ export const caseStoryPhotos = pgTable('case_story_photos', {
   uploadedAt: at('uploaded_at').notNull().defaultNow(),
 });
 
+/** «قصص نجاح» text and visibility edited in the hub, one per closed case (0015_case_stories.sql). */
+export const caseStories = pgTable('case_stories', {
+  caseId: uuid('case_id')
+    .primaryKey()
+    .references(() => cases.id),
+  title: jsonb('title').$type<Localized>().notNull(),
+  story: jsonb('story').$type<Localized>().notNull(),
+  outcome: jsonb('outcome').$type<Localized>().notNull(),
+  published: boolean('published').notNull().default(true),
+  updatedBy: uuid('updated_by')
+    .notNull()
+    .references(() => users.id),
+  updatedAt: at('updated_at').notNull().defaultNow(),
+});
+
 /** Follow-up calls and visits on funded and closed cases (0010_case_followups.sql); append-only. */
 export const caseFollowups = pgTable(
   'case_followups',

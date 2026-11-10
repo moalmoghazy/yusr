@@ -63,4 +63,29 @@ describe('«قصص نجاح» photos and contributors', () => {
     await rejects(cases.setStoryPhoto(CLOSED_ID, { contentType: 'image/webp', dataBase64: JPEG }, moderator), 'VALIDATION_FAILED');
     await rejects(cases.publicStoryPhoto('00000000-0000-4000-8000-00000000c001'), 'NOT_FOUND');
   });
+
+  it('tells the edited text, hides an unpublished story from the website, and keeps it in the hub', async () => {
+    const { cases } = await setupStories();
+    const text = {
+      title: { ar: 'عاد أحمد إلى مدرسته', en: '' },
+      story: { ar: 'غطّى المتبرعون مصروفات العام كاملة، وعاد أحمد إلى فصله بعد انقطاع شهرين.', en: 'Donors covered the whole year.' },
+      outcome: { ar: 'سُددت المصروفات ورُفع الإيصال.', en: 'Fees paid; receipt uploaded.' },
+    };
+    await rejects(cases.saveStory(CLOSED_ID, { ...text, published: true }, { actor: actorOf(USERS.auditor) }), 'FORBIDDEN');
+    await cases.saveStory(CLOSED_ID, { ...text, published: true }, moderator);
+    const shown = (await cases.stories(6)).find((story) => story.id === CLOSED_ID);
+    assert.deepEqual(shown?.title, { ar: 'عاد أحمد إلى مدرسته', en: 'عاد أحمد إلى مدرسته' });
+    assert.equal(shown?.story.en, 'Donors covered the whole year.');
+    assert.equal(shown?.summary.ar, 'سُددت المصروفات ورُفع الإيصال.');
+
+    await cases.saveStory(CLOSED_ID, { ...text, published: false }, moderator);
+    assert.equal(
+      (await cases.stories(6)).find((story) => story.id === CLOSED_ID),
+      undefined,
+    );
+    const inHub = (await cases.adminStories(moderator)).find((entry) => entry.story.id === CLOSED_ID);
+    assert.equal(inHub?.published, false);
+    assert.equal(inHub?.edited, true);
+    assert.notEqual(inHub?.original.title.ar, 'عاد أحمد إلى مدرسته');
+  });
 });

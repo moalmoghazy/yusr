@@ -138,6 +138,27 @@ export interface SuccessStory extends CaseSummary {
   contributors: Array<string | null>;
 }
 
+/** The text a «قصص نجاح» story tells (edited in the hub, or the case's own). */
+export interface StoryText {
+  title: Localized;
+  story: Localized;
+  outcome: Localized;
+}
+
+/** A closed case in the hub's «قصص النجاح» page. */
+export interface AdminStory {
+  /** As the website tells it (edited text when there is some), whether or not it is published. */
+  story: SuccessStory;
+  /** The case's own text, to start from or go back to. */
+  original: StoryText;
+  /** The text was edited in the hub. */
+  edited: boolean;
+  /** Shows in «قصص نجاح» on the website. */
+  published: boolean;
+  updatedAt: string | null;
+  updatedBy: string | null;
+}
+
 /** Real photos for «قصص نجاح»: pictures only, shrunk in the browser before upload. */
 export const STORY_PHOTO_TYPES = ['image/webp', 'image/jpeg'] as const;
 export type StoryPhotoType = (typeof STORY_PHOTO_TYPES)[number];
