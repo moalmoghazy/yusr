@@ -106,6 +106,11 @@ export function StoryReel({ stories, labels }: { stories: ReelStory[]; labels: R
                 ) : (
                   <StoryScene category={story.category} className="absolute inset-0 size-full" />
                 )}
+                {/* The photo fades into the story beside it (below it on a phone). */}
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 bg-linear-to-b from-transparent from-55% to-card md:from-45% md:ltr:bg-linear-to-r md:rtl:bg-linear-to-l"
+                />
                 <span className="absolute bottom-3 start-3 inline-flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1 text-[0.7rem] font-semibold text-white backdrop-blur-sm">
                   <Icon name="eye-off" size={13} />
                   {story.photo ? labels.show : labels.illustrated}
