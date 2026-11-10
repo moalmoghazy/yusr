@@ -19,6 +19,22 @@ export interface ReelStory {
   donors: string;
   closed: string;
   confirmed: string | null;
+  /** A real photo staff uploaded (faces blurred), or null for the illustrated scene. */
+  photo: string | null;
+  /** Who gave, newest first (anonymous gifts already named «فاعل خير»). */
+  contributors: string[];
+  /** «و٢٣ متبرعًا آخر» when more gave than are named. */
+  others: string | null;
+}
+
+interface ReelLabels {
+  read: string;
+  previous: string;
+  next: string;
+  show: string;
+  illustrated: string;
+  contributors: string;
+  noContributors: string;
 }
 
 /** How long one story stays, and how long it takes to fade out before the next. */
@@ -31,7 +47,7 @@ const OUT_MS = 700;
  * Resting the pointer on it (or focusing inside it) holds the current story; the dots jump to one.
  * With reduced motion nothing moves on its own: the dots and arrows change the story.
  */
-export function StoryReel({ stories, labels }: { stories: ReelStory[]; labels: { read: string; previous: string; next: string; show: string } }) {
+export function StoryReel({ stories, labels }: { stories: ReelStory[]; labels: ReelLabels }) {
   const [index, setIndex] = useState(0);
   const [leaving, setLeaving] = useState(false);
   const [held, setHeld] = useState(false);
@@ -81,13 +97,18 @@ export function StoryReel({ stories, labels }: { stories: ReelStory[]; labels: {
               key={story.id}
               data-state={state}
               aria-hidden={state === 'hidden' || undefined}
-              className="story-slide grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]"
+              className="story-slide grid grid-cols-1 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] xl:grid-cols-[minmax(0,0.75fr)_minmax(0,1.1fr)_minmax(0,0.65fr)]"
             >
-              <div className="story-photo relative overflow-hidden">
-                <StoryScene category={story.category} className="aspect-[16/10] size-full" />
+              <div className="story-photo relative min-h-56 overflow-hidden bg-muted">
+                {story.photo ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- a photo from our own route, already sized when uploaded
+                  <img src={story.photo} alt="" loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover" />
+                ) : (
+                  <StoryScene category={story.category} className="absolute inset-0 size-full" />
+                )}
                 <span className="absolute bottom-3 start-3 inline-flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1 text-[0.7rem] font-semibold text-white backdrop-blur-sm">
                   <Icon name="eye-off" size={13} />
-                  {labels.show}
+                  {story.photo ? labels.show : labels.illustrated}
                 </span>
               </div>
               <div className="flex flex-col justify-center gap-4 p-6 md:p-8">
@@ -128,6 +149,28 @@ export function StoryReel({ stories, labels }: { stories: ReelStory[]; labels: {
                   </Link>
                 </div>
               </div>
+              <aside
+                aria-label={labels.contributors}
+                className="story-step flex flex-col gap-3 border-t border-border bg-muted/40 p-6 md:col-span-2 xl:col-span-1 xl:border-s xl:border-t-0"
+                style={{ ['--i' as string]: 5 }}
+              >
+                <h4 className="inline-flex items-center gap-2 text-sm font-bold">
+                  <Icon name="heart" size={16} className="text-highlight" />
+                  {labels.contributors}
+                </h4>
+                {story.contributors.length > 0 ? (
+                  <ul className="flex max-h-36 flex-wrap gap-1.5 overflow-y-auto md:max-h-none xl:max-h-80">
+                    {story.contributors.map((name, position) => (
+                      <li key={`${name}-${position}`} className="rounded-full border border-border bg-card px-2.5 py-1 text-xs font-semibold" dir="auto">
+                        {name}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">{labels.noContributors}</p>
+                )}
+                {story.others && <p className="text-xs text-muted-foreground">{story.others}</p>}
+              </aside>
             </article>
           );
         })}

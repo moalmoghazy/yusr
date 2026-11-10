@@ -158,6 +158,8 @@ export function createHttpAdminClient(options: HttpClientOptions): AdminClient {
     followups: () => request('GET', '/admin/followups'),
     caseFollowups: (caseId) => request('GET', `/admin/cases/${seg(caseId)}/followups`),
     recordFollowup: (caseId, input) => post(`/admin/cases/${seg(caseId)}/followups`, input),
+    setStoryPhoto: (caseId, input) => request('PUT', `/admin/cases/${seg(caseId)}/story-photo`, input),
+    removeStoryPhoto: (caseId) => request('DELETE', `/admin/cases/${seg(caseId)}/story-photo`),
     documentRequests: (limit = 100) => request('GET', `/admin/document-requests?limit=${limit}`),
     setDocumentRequestStatus: (requestId, status) => post(`/admin/document-requests/${seg(requestId)}/status`, { status }),
   };

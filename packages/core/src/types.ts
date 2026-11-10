@@ -129,7 +129,21 @@ export interface SuccessStory extends CaseSummary {
   closedAt: string;
   /** The latest follow-up that confirmed the help reached the beneficiary; null when none yet. */
   confirmedAt: string | null;
+  /**
+   * A real photo staff uploaded for the story (faces blurred before upload), served at
+   * GET /stories/{id}/photo?v=…; null shows the illustrated scene instead.
+   */
+  photoVersion: string | null;
+  /** Who gave, newest first (at most STORY_CONTRIBUTORS_SHOWN); null = a donor who chose to stay anonymous. */
+  contributors: Array<string | null>;
 }
+
+/** Real photos for «قصص نجاح»: pictures only, shrunk in the browser before upload. */
+export const STORY_PHOTO_TYPES = ['image/webp', 'image/jpeg'] as const;
+export type StoryPhotoType = (typeof STORY_PHOTO_TYPES)[number];
+export const STORY_PHOTO_MAX_BYTES = 450 * 1024;
+/** How many contributors a story lists by name (the rest are counted). */
+export const STORY_CONTRIBUTORS_SHOWN = 30;
 
 export interface CaseDocumentPublic {
   id: string;

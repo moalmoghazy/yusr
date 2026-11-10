@@ -49,6 +49,7 @@ import type {
   OutboxRow,
   PartnerApplicationRow,
   DocumentRequestRow,
+  StoryPhotoRow,
   PartnerRow,
   PaymentAttemptRow,
   PayoutRow,
@@ -91,6 +92,7 @@ interface State {
   documents: Map<Id, CaseDocumentRow>;
   followups: CaseFollowupRow[];
   documentRequests: Map<Id, DocumentRequestRow>;
+  storyPhotos: Map<Id, StoryPhotoRow>;
   lines: Map<Id, DisbursementLineRow>;
   tasks: Map<Id, VerificationTaskRow>;
   donations: Map<Id, DonationRow>;
@@ -139,6 +141,7 @@ function emptyState(): State {
     documents: new Map(),
     followups: [],
     documentRequests: new Map(),
+    storyPhotos: new Map(),
     lines: new Map(),
     tasks: new Map(),
     donations: new Map(),
@@ -491,6 +494,16 @@ export class MemoryDatabase implements Database {
           throw new DomainError('VALIDATION_FAILED', 'A request from this number is already waiting');
         }
         s().documentRequests.set(row.id, clone(row));
+      },
+      storyPhoto: async (caseId) => clone(s().storyPhotos.get(caseId) ?? null),
+      storyPhotoTimes: async (caseIds) =>
+        new Map(caseIds.flatMap((caseId) => (s().storyPhotos.has(caseId) ? [[caseId, new Date(s().storyPhotos.get(caseId)!.uploadedAt)] as const] : []))),
+      putStoryPhoto: async (row) => {
+        if (!s().cases.has(row.caseId)) throw new DomainError('NOT_FOUND', `case ${row.caseId} not found`);
+        s().storyPhotos.set(row.caseId, clone(row));
+      },
+      deleteStoryPhoto: async (caseId) => {
+        s().storyPhotos.delete(caseId);
       },
       updateDocumentRequest: async (id, patch) => {
         const current = s().documentRequests.get(id);

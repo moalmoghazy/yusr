@@ -103,6 +103,25 @@ export const publicEndpoints = [
   }),
 
   endpoint({
+    id: 'stories.photo',
+    method: 'GET',
+    path: '/stories/:id/photo',
+    version: '1',
+    access: 'public',
+    tag: 'Catalog',
+    summary: "A closed case's «قصص نجاح» photo (WebP or JPEG, faces blurred)",
+    description: 'Link it with `?v=<photoVersion>` from GET /stories: each upload gets a new version, so it may be cached for a year.',
+    handle: async ({ services, params, request }) => {
+      const photo = await services.cases.publicStoryPhoto(params['id']!);
+      const versioned = request.query['v'] === photo.version;
+      return reply.content(Buffer.from(photo.bytes), photo.type, {
+        'cache-control': versioned ? 'public, max-age=31536000, immutable' : 'public, max-age=60',
+        'x-content-type-options': 'nosniff',
+      });
+    },
+  }),
+
+  endpoint({
     id: 'donations.live',
     method: 'GET',
     path: '/donations/live',

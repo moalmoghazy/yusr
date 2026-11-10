@@ -391,6 +391,18 @@ export const en: Messages = {
       raised: '{amount} raised',
       closedOn: 'Completed on {date}',
       confirmed: 'We confirmed the help arrived on {date}',
+      illustrated: 'Illustration',
+      contributors: 'Who made this story',
+      anonymous: 'A kind donor',
+      others: {
+        zero: '',
+        one: 'and one more donor',
+        two: 'and two more donors',
+        few: 'and {count} more donors',
+        many: 'and {count} more donors',
+        other: 'and {count} more donors',
+      },
+      noContributors: 'The names of those who gave will show here.',
     },
     news: {
       title: 'Latest news',
@@ -1095,6 +1107,18 @@ export const en: Messages = {
     noAccess: 'Your current role can’t open this section',
     followups: {
       title: 'Follow-up after payout',
+      storyPhoto: {
+        title: 'Success-story photo',
+        hint: "Replaces the illustration in «Success stories» on the website. Blur faces and anything that identifies the beneficiary before uploading, and only use a photo taken with their (or their guardian's) consent.",
+        upload: 'Upload a real photo',
+        replace: 'Change photo',
+        remove: 'Remove photo',
+        removeConfirm: 'The illustration will return in place of the photo on the website. Sure?',
+        saved: 'Photo saved. It shows on the website from the next visit.',
+        removed: 'Photo removed; the illustration is back.',
+        invalid: "Couldn't read that image. Try a JPG, PNG or WebP.",
+        tooBig: 'The photo is still too large after shrinking. Try a smaller one.',
+      },
       subtitle:
         'Gifts go straight to the partner association’s account, and the association pays the institution. We then check, as an independent third party, that the help really reached the beneficiary, and keep checking after the case closes. Log every call or visit here and set the next check.',
       empty: 'No fully funded cases yet.',

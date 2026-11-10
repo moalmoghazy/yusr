@@ -7,6 +7,7 @@ import type {
   PartnerProfileInput,
   PartnerShowcaseInput,
   RecordFollowupInput,
+  StoryPhotoInput,
   UpdatePartnerInput,
 } from '@yusr/core/schemas';
 import type {
@@ -147,6 +148,9 @@ export interface AdminClient {
   caseFollowups(caseId: string): Promise<FollowupLog>;
   /** Logs a call or visit (cases:follow_up); append-only. */
   recordFollowup(caseId: string, input: RecordFollowupInput): Promise<FollowupLog>;
+  /** The real photo of a closed case's «قصص نجاح» story (cases:edit); faces blurred before upload. */
+  setStoryPhoto(caseId: string, input: StoryPhotoInput): Promise<{ version: string }>;
+  removeStoryPhoto(caseId: string): Promise<{ removed: true }>;
   /** Requests to see case documents, newest first, with how many still wait (documents:share). */
   documentRequests(limit?: number): Promise<DocumentRequestInbox>;
   setDocumentRequestStatus(requestId: string, status: Exclude<DocumentRequestStatus, 'new'>): Promise<DocumentRequest>;

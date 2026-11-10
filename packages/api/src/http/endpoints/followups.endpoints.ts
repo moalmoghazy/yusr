@@ -3,7 +3,7 @@
  * that the help reached the beneficiary, also after the case closes. Anyone with cases:read sees the
  * board; cases:follow_up logs a call or visit.
  */
-import { recordFollowupSchema } from '@yusr/core/schemas';
+import { recordFollowupSchema, storyPhotoSchema } from '@yusr/core/schemas';
 import { endpoint } from '../endpoint';
 
 const FOLLOWUPS = 'Operations · Follow-up';
@@ -47,5 +47,31 @@ export const followupOperations = [
     status: 201,
     returns: 'FollowupLog',
     handle: ({ services, ctx, params, body }) => services.followups.record(params['id']!, body, ctx),
+  }),
+  endpoint({
+    id: 'admin.stories.photo',
+    method: 'PUT',
+    path: '/admin/cases/:id/story-photo',
+    version: '1',
+    access: 'staff',
+    tag: FOLLOWUPS,
+    summary: 'Add or replace the real photo of a closed case’s «قصص نجاح» story (faces blurred before upload)',
+    description: 'JPEG or WebP, up to 450 KB (the hub shrinks pictures before sending). Only closed cases.',
+    permission: 'cases:edit',
+    body: storyPhotoSchema,
+    returns: '{ version: string }',
+    handle: ({ services, ctx, params, body }) => services.cases.setStoryPhoto(params['id']!, body, ctx),
+  }),
+  endpoint({
+    id: 'admin.stories.removePhoto',
+    method: 'DELETE',
+    path: '/admin/cases/:id/story-photo',
+    version: '1',
+    access: 'staff',
+    tag: FOLLOWUPS,
+    summary: 'Remove the story photo (the illustrated scene shows again)',
+    permission: 'cases:edit',
+    returns: '{ removed: true }',
+    handle: ({ services, ctx, params }) => services.cases.removeStoryPhoto(params['id']!, ctx),
   }),
 ];

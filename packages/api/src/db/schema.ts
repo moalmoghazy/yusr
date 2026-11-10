@@ -21,6 +21,7 @@ import {
   type PartnerAssociation,
   type PartnerApplicationStatus,
   type PartnerProfile,
+  type StoryPhotoType,
   type DocumentRequestStatus,
   type PartnerLogoType,
   type PartnerStatus,
@@ -310,6 +311,19 @@ export const documentRequests = pgTable(
   },
   (t) => [index('document_requests_inbox_idx').on(t.createdAt)],
 );
+
+/** Real photos for «قصص نجاح», one per closed case (0014_story_photos.sql). */
+export const caseStoryPhotos = pgTable('case_story_photos', {
+  caseId: uuid('case_id')
+    .primaryKey()
+    .references(() => cases.id),
+  photo: bytea('photo').notNull(),
+  photoType: text('photo_type').$type<StoryPhotoType>().notNull(),
+  uploadedBy: uuid('uploaded_by')
+    .notNull()
+    .references(() => users.id),
+  uploadedAt: at('uploaded_at').notNull().defaultNow(),
+});
 
 /** Follow-up calls and visits on funded and closed cases (0010_case_followups.sql); append-only. */
 export const caseFollowups = pgTable(

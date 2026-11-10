@@ -40,6 +40,8 @@ export async function createApp(): Promise<NestExpressApplication> {
   // Webhooks and uploads keep their exact bytes (signatures, files); everything else is JSON or a form.
   app.use('/v1/webhooks', express.raw({ type: () => true, limit: '1mb' }));
   app.use('/dev-storage', express.raw({ type: () => true, limit: '20mb' }));
+  // A success-story photo (STORY_PHOTO_MAX_BYTES) is larger than other JSON once base64-encoded.
+  app.use(/^\/v1\/admin\/cases\/[^/]+\/story-photo$/, express.json({ limit: '700kb' }));
   app.use(express.json({ limit: '256kb' }));
   app.use(express.urlencoded({ extended: false, limit: '32kb' }));
   app.use(bodyParserErrors);

@@ -29,6 +29,8 @@ import {
   PAYEE_TYPES,
   PAYMENT_METHODS,
   ROLES,
+  STORY_PHOTO_MAX_BYTES,
+  STORY_PHOTO_TYPES,
 } from './types';
 
 /** E.164 phone numbers, e.g. +201001234567 or +966501234567. */
@@ -166,6 +168,16 @@ const profileText = z.object({
 });
 export const partnerProfileSchema = z.object({ about: profileText, giving: profileText });
 export type PartnerProfileInput = z.infer<typeof partnerProfileSchema>;
+
+/** A real photo for a closed case's «قصص نجاح» story (faces blurred before upload). */
+export const storyPhotoSchema = z.object({
+  contentType: z.enum(STORY_PHOTO_TYPES),
+  dataBase64: z
+    .string()
+    .max(Math.ceil((STORY_PHOTO_MAX_BYTES * 4) / 3) + 4)
+    .regex(/^[A-Za-z0-9+/]+={0,2}$/, 'Not base64'),
+});
+export type StoryPhotoInput = z.infer<typeof storyPhotoSchema>;
 
 export const partnerShowcaseSchema = z
   .object({ showcased: z.boolean().optional(), newBadge: z.boolean().optional() })

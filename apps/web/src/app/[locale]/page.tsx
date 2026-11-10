@@ -302,6 +302,9 @@ function SuccessStories({ locale, stories }: { locale: Locale; stories: SuccessS
           previous: t('landing.stories.previous'),
           next: t('landing.stories.next'),
           show: t('landing.stories.blurred'),
+          illustrated: t('landing.stories.illustrated'),
+          contributors: t('landing.stories.contributors'),
+          noContributors: t('landing.stories.noContributors'),
         }}
         stories={stories.map((story): ReelStory => ({
           id: story.id,
@@ -316,6 +319,14 @@ function SuccessStories({ locale, stories }: { locale: Locale; stories: SuccessS
           donors: t('units.donors', { count: story.donorsCount }),
           closed: t('landing.stories.closedOn', { date: f.date(story.closedAt, 'medium') }),
           confirmed: story.confirmedAt ? t('landing.stories.confirmed', { date: f.date(story.confirmedAt, 'medium') }) : null,
+          // An API from before photos and contributors: the illustrated scene, no names.
+          photo: story.photoVersion ? `/story-photos/${encodeURIComponent(story.id)}?v=${story.photoVersion}` : null,
+          // Each name once (a donor who gave twice, or many anonymous gifts, shows a single chip).
+          contributors: [...new Set((story.contributors ?? []).map((name) => name ?? t('landing.stories.anonymous')))],
+          others:
+            story.donorsCount > (story.contributors ?? []).length
+              ? t('landing.stories.others', { count: story.donorsCount - (story.contributors ?? []).length })
+              : null,
         }))}
       />
     </section>

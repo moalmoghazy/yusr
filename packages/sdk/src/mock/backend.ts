@@ -9,6 +9,7 @@ import {
   DEMO_FX,
   DomainError,
   FOLLOWUP_STATUSES,
+  STORY_CONTRIBUTORS_SHOWN,
   cairoDay,
   compareFollowups,
   followupState,
@@ -95,6 +96,7 @@ import type {
   EditCaseInput,
   PartnerApplicationInput,
   PartnerProfileInput,
+  StoryPhotoInput,
   DocumentRequestInput,
   PartnerLogoInput,
   PartnerShowcaseInput,
@@ -1194,6 +1196,8 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       recordedAt: iso(clock() - entry.daysAgo * DAY),
     })),
   );
+  /** «قصص نجاح» photos by case id (the prototype keeps only their versions). */
+  const storyPhotos = new Map<string, string>();
   const isFollowed = (status: CaseStatus): status is FollowupCase['status'] => (FOLLOWUP_STATUSES as readonly CaseStatus[]).includes(status);
   const followupCase = (item: AdminCase): FollowupCase => {
     const entries = followupLog.filter((entry) => entry.caseId === item.id).reverse();
@@ -1213,6 +1217,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       last,
       entries,
       nextDueOn: last?.nextDueOn ?? null,
+      storyPhotoVersion: storyPhotos.get(item.id) ?? null,
     };
   };
   const followupLogFor = (caseId: string): FollowupLog => {
@@ -1336,7 +1341,19 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       .slice(0, limit)
       .map(({ item, closedAt }) => {
         const confirmed = followupLog.filter((entry) => entry.caseId === item.id && entry.outcome === 'confirmed').at(-1);
-        return { ...toSummary(item), story: item.story, closedAt, confirmedAt: confirmed?.recordedAt ?? null };
+        const contributors = state.donations
+          .filter((record) => record.caseId === item.id && record.status === 'succeeded')
+          .slice(-STORY_CONTRIBUTORS_SHOWN)
+          .reverse()
+          .map((record) => (record.anonymous || !record.displayName ? null : record.displayName.ar));
+        return {
+          ...toSummary(item),
+          story: item.story,
+          closedAt,
+          confirmedAt: confirmed?.recordedAt ?? null,
+          photoVersion: storyPhotos.get(item.id) ?? null,
+          contributors,
+        };
       });
   const mustPartner = (id: string) => {
     const partner = partners.find((entry) => entry.id === id);
@@ -1924,6 +1941,22 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
         logAudit(actorRef, `documents.request_${status}`, 'document_request', requestId, current.case.reference, { status: current.status }, { status });
         return next;
       },
+      setStoryPhoto: (caseId: string, input: StoryPhotoInput) => {
+        ensure('cases:edit');
+        const item = state.cases.get(caseId);
+        if (!item) throw new DomainError('NOT_FOUND', 'Case not found');
+        if (item.status !== 'closed') throw new DomainError('VALIDATION_FAILED', 'Only closed cases have a success story');
+        const version = clock().toString(36);
+        storyPhotos.set(caseId, version);
+        logAudit(actorRef, 'case.story_photo_set', 'case', caseId, item.reference, null, { type: input.contentType });
+        return { version };
+      },
+      removeStoryPhoto: (caseId: string) => {
+        ensure('cases:edit');
+        storyPhotos.delete(caseId);
+        logAudit(actorRef, 'case.story_photo_removed', 'case', caseId, state.cases.get(caseId)?.reference ?? caseId, null, null);
+        return { removed: true as const };
+      },
       followups: () => {
         ensure('cases:read');
         return [...state.cases.values()]
@@ -2019,6 +2052,8 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       followups: wrap(sync.followups),
       caseFollowups: wrap(sync.caseFollowups),
       recordFollowup: wrap(sync.recordFollowup),
+      setStoryPhoto: wrap(sync.setStoryPhoto),
+      removeStoryPhoto: wrap(sync.removeStoryPhoto),
       documentRequests: wrap(sync.documentRequests),
       setDocumentRequestStatus: wrap(sync.setDocumentRequestStatus),
     };

@@ -24,6 +24,7 @@ import type {
   OutboxRow,
   PartnerApplicationRow,
   DocumentRequestRow,
+  StoryPhotoRow,
   PartnerRow,
   PaymentAttemptRow,
   PayoutRow,
@@ -101,6 +102,13 @@ export interface CasesRepo {
   waitingDocumentRequests(): Promise<number>;
   insertDocumentRequest(row: DocumentRequestRow): Promise<void>;
   updateDocumentRequest(id: Id, patch: Pick<DocumentRequestRow, 'status' | 'handledBy' | 'handledAt'>): Promise<void>;
+  /** The «قصص نجاح» photo of a case (0014), or null. */
+  storyPhoto(caseId: Id): Promise<StoryPhotoRow | null>;
+  /** When each of these cases' photos was uploaded (no bytes): their cache versions. */
+  storyPhotoTimes(caseIds: readonly Id[]): Promise<Map<Id, Date>>;
+  /** Adds or replaces it. */
+  putStoryPhoto(row: StoryPhotoRow): Promise<void>;
+  deleteStoryPhoto(caseId: Id): Promise<void>;
 }
 
 /** The approved-partner registry. Renaming a partner renames it on its cases too (a trigger in SQL). */

@@ -38,13 +38,16 @@ export class FollowupsService {
       cases.push(...page.items);
       cursor = page.nextCursor;
     } while (cursor && cases.length < BOARD_LIMIT);
-    const rows = await db.read.cases.followups(cases.map((item) => item.id));
+    const [rows, photos] = await Promise.all([
+      db.read.cases.followups(cases.map((item) => item.id)),
+      db.read.cases.storyPhotoTimes(cases.map((item) => item.id)),
+    ]);
     const names = await this.names(db.read, rows);
     const today = cairoDay(clock.now());
     return cases
       .map((item) => {
         const own = rows.filter((row) => row.caseId === item.id);
-        return this.toCase(item, own, names, today);
+        return this.toCase(item, own, names, today, photos.get(item.id) ?? null);
       })
       .sort(compareFollowups);
   }
@@ -99,9 +102,9 @@ export class FollowupsService {
   private async readLog(tx: Tx, caseId: string, today: string): Promise<FollowupLog> {
     const item = await tx.cases.byId(caseId);
     if (!item || !followed(item.status)) throw new DomainError('NOT_FOUND', 'Case not found');
-    const rows = await tx.cases.followups([caseId]);
+    const [rows, photos] = await Promise.all([tx.cases.followups([caseId]), tx.cases.storyPhotoTimes([caseId])]);
     const names = await this.names(tx, rows);
-    return this.toCase(item, rows, names, today);
+    return this.toCase(item, rows, names, today, photos.get(caseId) ?? null);
   }
 
   private async names(tx: Tx, rows: readonly CaseFollowupRow[]): Promise<Map<string, string>> {
@@ -124,7 +127,7 @@ export class FollowupsService {
   }
 
   /** `rows` are this case's entries, newest first. */
-  private toCase(item: CaseRow, rows: readonly CaseFollowupRow[], names: Map<string, string>, today: string): FollowupCase {
+  private toCase(item: CaseRow, rows: readonly CaseFollowupRow[], names: Map<string, string>, today: string, photoAt: Date | null): FollowupCase {
     const entries = rows.map((row) => this.toEntry(row, names));
     const last = entries[0] ?? null;
     return {
@@ -142,6 +145,7 @@ export class FollowupsService {
       last,
       entries,
       nextDueOn: last?.nextDueOn ?? null,
+      storyPhotoVersion: photoAt ? photoAt.getTime().toString(36) : null,
     };
   }
 }

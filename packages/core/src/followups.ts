@@ -53,6 +53,8 @@ export interface FollowupCase {
   entries: CaseFollowup[];
   /** The latest check's next date. */
   nextDueOn: string | null;
+  /** Closed cases: the real photo for its «قصص نجاح» story, when one was uploaded. */
+  storyPhotoVersion: string | null;
 }
 
 /** One case's follow-up log (the board's entry for it). */

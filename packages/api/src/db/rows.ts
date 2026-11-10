@@ -20,6 +20,7 @@ import type {
   PartnerAssociation,
   PartnerApplicationStatus,
   PartnerProfile,
+  StoryPhotoType,
   DocumentRequestStatus,
   PartnerLogoType,
   PartnerStatus,
@@ -172,6 +173,15 @@ export interface PartnerApplicationRow {
   handledBy: Id | null;
   handledAt: Timestamp | null;
   createdAt: Timestamp;
+}
+
+/** A real photo for a closed case's «قصص نجاح» story (0014_story_photos.sql). */
+export interface StoryPhotoRow {
+  caseId: Id;
+  photo: Uint8Array;
+  photoType: StoryPhotoType;
+  uploadedBy: Id;
+  uploadedAt: Timestamp;
 }
 
 /** A request to see a case's documents (0012_document_requests.sql). The number is staff only. */

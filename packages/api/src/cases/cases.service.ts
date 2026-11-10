@@ -14,6 +14,8 @@ import {
   caseNeedMinor,
   isPubliclyVisible,
   permissionsFor,
+  STORY_CONTRIBUTORS_SHOWN,
+  STORY_PHOTO_MAX_BYTES,
   type AdminCase,
   type CaseDetail,
   type CaseDocumentPublic,
@@ -26,10 +28,11 @@ import {
   type Page,
   type PayeeType,
   type PublicDonation,
+  type StoryPhotoType,
   type SuccessStory,
   type TimelineEvent,
 } from '@yusr/core';
-import type { SubmitCaseInput } from '@yusr/core/schemas';
+import type { StoryPhotoInput, SubmitCaseInput } from '@yusr/core/schemas';
 import { primaryRole, requirePermission, type CallContext, type RequestActor } from '../common/actor';
 import type { FieldCipher } from '../common/cipher';
 import type { Clock } from '../common/clock';
@@ -120,11 +123,89 @@ export class CasesService {
       .filter((item): item is CaseRow & { closedAt: Date } => item.closedAt !== null)
       .sort((a, b) => b.closedAt.getTime() - a.closedAt.getTime())
       .slice(0, limit);
-    const followups = await db.read.cases.followups(closed.map((item) => item.id));
-    return closed.map((item) => {
-      const confirmed = followups.find((row) => row.caseId === item.id && row.outcome === 'confirmed');
-      return { ...toCaseSummary(item), story: item.story, closedAt: item.closedAt.toISOString(), confirmedAt: confirmed?.recordedAt.toISOString() ?? null };
+    const ids = closed.map((item) => item.id);
+    const [followups, photos] = await Promise.all([db.read.cases.followups(ids), db.read.cases.storyPhotoTimes(ids)]);
+    return Promise.all(
+      closed.map(async (item) => {
+        const confirmed = followups.find((row) => row.caseId === item.id && row.outcome === 'confirmed');
+        const photo = photos.get(item.id);
+        return {
+          ...toCaseSummary(item),
+          story: item.story,
+          closedAt: item.closedAt.toISOString(),
+          confirmedAt: confirmed?.recordedAt.toISOString() ?? null,
+          photoVersion: photo ? photo.getTime().toString(36) : null,
+          contributors: await this.contributors(item.id),
+        };
+      }),
+    );
+  }
+
+  /** Names as the case page shows them (first name and initial), newest first; null for anonymous gifts. */
+  private async contributors(caseId: string): Promise<Array<string | null>> {
+    const { db } = this.deps;
+    const donations = await db.read.donations.recentForCase(caseId, STORY_CONTRIBUTORS_SHOWN);
+    return Promise.all(
+      donations.map(async (donation) => {
+        if (donation.anonymous) return null;
+        const full = donation.donorId ? ((await db.read.users.byId(donation.donorId))?.displayName ?? null) : (donation.guestContact?.name ?? null);
+        return publicDonorName(full);
+      }),
+    );
+  }
+
+  /** A closed case's «قصص نجاح» photo, for the website (404 when it has none or is not closed). */
+  async publicStoryPhoto(caseId: string): Promise<{ type: StoryPhotoType; bytes: Uint8Array; version: string }> {
+    const { db } = this.deps;
+    const item = await db.read.cases.byId(caseId).catch(() => null);
+    const photo = item?.status === 'closed' ? await db.read.cases.storyPhoto(caseId) : null;
+    if (!photo) throw new DomainError('NOT_FOUND', 'Photo not found');
+    return { type: photo.photoType, bytes: photo.photo, version: photo.uploadedAt.getTime().toString(36) };
+  }
+
+  /** Staff (cases:edit) add or replace the real photo of a closed case's story; faces are blurred before upload. */
+  async setStoryPhoto(caseId: string, input: StoryPhotoInput, context: CallContext): Promise<{ version: string }> {
+    const actor = requirePermission(context.actor, 'cases:edit');
+    const bytes = Uint8Array.from(Buffer.from(input.dataBase64, 'base64'));
+    if (bytes.length === 0 || bytes.length > STORY_PHOTO_MAX_BYTES || !looksLike(input.contentType, bytes)) {
+      throw new DomainError('VALIDATION_FAILED', 'Send a JPEG or WebP picture up to 450 KB', { field: 'photo' });
+    }
+    const { db, clock } = this.deps;
+    const now = clock.now();
+    await db.transaction(async (tx) => {
+      const item = await tx.cases.byId(caseId);
+      if (!item) throw new DomainError('NOT_FOUND', 'Case not found');
+      if (item.status !== 'closed') throw new DomainError('VALIDATION_FAILED', 'Only closed cases have a success story');
+      await tx.cases.putStoryPhoto({ caseId, photo: bytes, photoType: input.contentType, uploadedBy: actor.id, uploadedAt: now });
+      await tx.audit.record({
+        actorId: actor.id,
+        actorRole: primaryRole(actor),
+        action: 'case.story_photo_set',
+        entityType: 'case',
+        entityId: caseId,
+        after: { type: input.contentType, bytes: bytes.length },
+        ip: context.ip ?? null,
+        requestId: context.requestId ?? null,
+      });
     });
+    return { version: now.getTime().toString(36) };
+  }
+
+  async removeStoryPhoto(caseId: string, context: CallContext): Promise<{ removed: true }> {
+    const actor = requirePermission(context.actor, 'cases:edit');
+    await this.deps.db.transaction(async (tx) => {
+      await tx.cases.deleteStoryPhoto(caseId);
+      await tx.audit.record({
+        actorId: actor.id,
+        actorRole: primaryRole(actor),
+        action: 'case.story_photo_removed',
+        entityType: 'case',
+        entityId: caseId,
+        ip: context.ip ?? null,
+        requestId: context.requestId ?? null,
+      });
+    });
+    return { removed: true };
   }
 
   async detail(slug: string): Promise<CaseDetail> {
@@ -547,4 +628,11 @@ export class CasesService {
       });
     });
   }
+}
+
+/** JPEG starts FF D8 FF; WebP is a RIFF file whose form type is WEBP. */
+function looksLike(type: StoryPhotoType, bytes: Uint8Array): boolean {
+  if (type === 'image/jpeg') return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  const ascii = (from: number, to: number) => String.fromCharCode(...bytes.subarray(from, to));
+  return ascii(0, 4) === 'RIFF' && ascii(8, 12) === 'WEBP';
 }

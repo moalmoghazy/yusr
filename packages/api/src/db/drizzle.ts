@@ -295,6 +295,27 @@ function createTx(x: Executor): Tx & { raw: Executor } {
       insertDocumentRequest: async (row) => {
         await x.insert(t.documentRequests).values(row);
       },
+      storyPhoto: async (caseId) => first(await x.select().from(t.caseStoryPhotos).where(eq(t.caseStoryPhotos.caseId, caseId)).limit(1)),
+      storyPhotoTimes: async (caseIds) => {
+        if (caseIds.length === 0) return new Map();
+        const rows = await x
+          .select({ caseId: t.caseStoryPhotos.caseId, uploadedAt: t.caseStoryPhotos.uploadedAt })
+          .from(t.caseStoryPhotos)
+          .where(inArray(t.caseStoryPhotos.caseId, [...caseIds]));
+        return new Map(rows.map((row) => [row.caseId, row.uploadedAt]));
+      },
+      putStoryPhoto: async (row) => {
+        await x
+          .insert(t.caseStoryPhotos)
+          .values(row)
+          .onConflictDoUpdate({
+            target: t.caseStoryPhotos.caseId,
+            set: { photo: row.photo, photoType: row.photoType, uploadedBy: row.uploadedBy, uploadedAt: row.uploadedAt },
+          });
+      },
+      deleteStoryPhoto: async (caseId) => {
+        await x.delete(t.caseStoryPhotos).where(eq(t.caseStoryPhotos.caseId, caseId));
+      },
       updateDocumentRequest: async (id, patch) => {
         await x.update(t.documentRequests).set(patch).where(eq(t.documentRequests.id, id));
       },

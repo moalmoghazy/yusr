@@ -913,6 +913,47 @@
         }
       }
     },
+    "/v1/stories/{id}/photo": {
+      "get": {
+        "operationId": "stories.photo",
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "A closed case's «قصص نجاح» photo (WebP or JPEG, faces blurred)",
+        "description": "Link it with `?v=<photoVersion>` from GET /stories: each upload gets a new version, so it may be cached for a year.\n\nOpen to guests; a Bearer token is read when sent.",
+        "security": [
+          {},
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Done"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/donations/live": {
       "get": {
         "operationId": "donations.live",
@@ -3562,6 +3603,128 @@
               "application/json": {
                 "schema": {
                   "description": "FollowupLog (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/cases/{id}/story-photo": {
+      "put": {
+        "operationId": "admin.stories.photo",
+        "tags": [
+          "Operations · Follow-up"
+        ],
+        "summary": "Add or replace the real photo of a closed case’s «قصص نجاح» story (faces blurred before upload)",
+        "description": "JPEG or WebP, up to 450 KB (the hub shrinks pictures before sending). Only closed cases.\n\nRequires a staff session with two-factor authentication.\n\nPermission: `cases:edit`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "contentType": {
+                    "type": "string",
+                    "enum": [
+                      "image/webp",
+                      "image/jpeg"
+                    ]
+                  },
+                  "dataBase64": {
+                    "type": "string",
+                    "maxLength": 614404,
+                    "pattern": "^[A-Za-z0-9+/]+={0,2}$"
+                  }
+                },
+                "required": [
+                  "contentType",
+                  "dataBase64"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "cases:edit",
+        "responses": {
+          "200": {
+            "description": "{ version: string }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "{ version: string } (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "admin.stories.removePhoto",
+        "tags": [
+          "Operations · Follow-up"
+        ],
+        "summary": "Remove the story photo (the illustrated scene shows again)",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `cases:edit`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-permission": "cases:edit",
+        "responses": {
+          "200": {
+            "description": "{ removed: true }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "{ removed: true } (see @yusr/core)"
                 }
               }
             }
