@@ -13,6 +13,8 @@ import {
   SAUDI_REGIONS,
   toE164,
   toMinor,
+  YUSR_CODE_LENGTH,
+  YUSR_CODE_PREFIX,
   type CaseCategory,
   type DocumentKind,
   type Locale,
@@ -34,6 +36,10 @@ type Upload =
 const PROOF_KINDS = ['medical_report', 'price_quote', 'invoice', 'debt_proof', 'court_ruling', 'school_record'] as const satisfies readonly DocumentKind[];
 const CONTENT_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/heic'];
 const MAX_BYTES = 20 * 1024 * 1024;
+/** What the API accepts as a phone number (international format). */
+const PHONE_E164 = /^\+[1-9]\d{7,14}$/;
+type FieldKey =
+  'orgNumber' | 'yusrCode' | 'contactName' | 'contactPhone' | 'title' | 'story' | 'goal' | 'pseudonym' | 'nationalId' | 'deadline' | 'documents' | 'consent';
 const TITLE_MIN = 8;
 const STORY_MIN = 80;
 const GOAL_MIN_MINOR = 1_000_00;
@@ -79,6 +85,7 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
   const [proofKind, setProofKind] = useState<(typeof PROOF_KINDS)[number]>('medical_report');
   const [uploads, setUploads] = useState<Partial<Record<Slot, Upload>>>({});
   const [consent, setConsent] = useState(false);
+  const [touched, setTouched] = useState<ReadonlySet<FieldKey>>(new Set());
   const [sending, setSending] = useState(false);
   const [problem, setProblem] = useState<{ message: string; fields: string[]; detail?: string } | null>(null);
   const [done, setDone] = useState<SubmitCaseResult | null>(null);
@@ -97,30 +104,78 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
   const contactE164 = toE164(contactPhone, currency === 'SAR' ? 'SA' : 'EG');
   const credentials: PartnerCredentials = { registrationNumber: normalizeRegistrationNumber(orgNumber), yusrCode: normalizeYusrCode(yusrCode) };
   const credentialsReady = credentials.registrationNumber !== '' && isYusrCode(credentials.yusrCode);
-  const associationValid = credentialsReady && contactName.trim().length >= 2 && contactE164 !== null;
-  const ready =
-    associationValid &&
-    title.trim().length >= TITLE_MIN &&
-    story.trim().length >= STORY_MIN &&
-    goalValid &&
-    nationalIdValid &&
-    pseudonymValid &&
-    deadlineValid &&
-    Boolean(idDoc && proofDoc) &&
-    consent;
-  /** What still stands between the form and the send button, in the order the steps ask for it. */
-  const missing = [
-    !credentialsReady && t('submit.missing.partner'),
-    credentialsReady && !associationValid && t('submit.missing.contact'),
-    title.trim().length < TITLE_MIN && t('submit.missing.caseTitle', { min: f.number(TITLE_MIN) }),
-    story.trim().length < STORY_MIN && t('submit.missing.story', { min: f.number(STORY_MIN), count: f.number(story.trim().length) }),
-    !goalValid && t('submit.missing.goal'),
-    !nationalIdValid && t('submit.missing.nationalId'),
-    !pseudonymValid && t('submit.missing.pseudonym'),
-    !deadlineValid && t('submit.missing.deadline'),
-    !(idDoc && proofDoc) && t('submit.missing.documents'),
-    !consent && t('submit.missing.consent'),
-  ].filter((item): item is string => Boolean(item));
+  const phoneValid = contactE164 !== null && PHONE_E164.test(contactE164);
+  const nidDigits = currency === 'SAR' ? 10 : 14;
+  const hasLetters = (value: string) => /[^\d\s٠-٩۰-۹+\-().,٫٬]/.test(value);
+
+  /** Every problem the form can see by itself, in the words shown under the field and above the send button. */
+  const errors: Partial<Record<FieldKey, string>> = {
+    orgNumber: credentials.registrationNumber === '' ? t('submit.errors.orgNumber') : undefined,
+    yusrCode: !isYusrCode(credentials.yusrCode) ? t('submit.errors.yusrCode', { prefix: YUSR_CODE_PREFIX, length: f.number(YUSR_CODE_LENGTH) }) : undefined,
+    contactName: contactName.trim().length < 2 ? t('submit.errors.contactName') : undefined,
+    contactPhone:
+      contactPhone.trim() === ''
+        ? t('submit.errors.phoneRequired')
+        : hasLetters(contactPhone)
+          ? t('submit.errors.phoneLetters')
+          : !phoneValid
+            ? t('submit.errors.phone', { example: currency === 'SAR' ? '0501234567' : '01012345678' })
+            : undefined,
+    title:
+      title.trim().length < TITLE_MIN
+        ? t('submit.errors.minLength', { field: t('submit.fields.title'), min: f.number(TITLE_MIN), count: f.number(title.trim().length) })
+        : undefined,
+    story:
+      story.trim().length < STORY_MIN
+        ? t('submit.errors.minLength', { field: t('submit.fields.story'), min: f.number(STORY_MIN), count: f.number(story.trim().length) })
+        : undefined,
+    goal:
+      goal.trim() === ''
+        ? t('submit.errors.goalRequired')
+        : hasLetters(goal)
+          ? t('submit.errors.goalLetters')
+          : !goalValid
+            ? t('submit.errors.goalRange', {
+                min: f.money(GOAL_MIN_MINOR, currency, { fractionDigits: 0 }),
+                max: f.money(GOAL_MAX_MINOR, currency, { compact: true }),
+              })
+            : undefined,
+    pseudonym: !pseudonymValid ? t('submit.errors.pseudonym') : undefined,
+    nationalId: !nationalIdValid ? t('submit.errors.nationalId', { digits: f.number(nidDigits), count: f.number(nationalId.length) }) : undefined,
+    deadline: !deadlineValid ? t('submit.errors.deadline') : undefined,
+    documents: !(idDoc && proofDoc) ? t('submit.errors.documents') : undefined,
+    consent: !consent ? t('submit.errors.consent') : undefined,
+  };
+  const ready = Object.values(errors).every((error) => !error);
+  const FILLED: Partial<Record<FieldKey, boolean>> = {
+    orgNumber: orgNumber !== '',
+    yusrCode: yusrCode !== '',
+    contactName: contactName !== '',
+    contactPhone: contactPhone !== '',
+    title: title !== '',
+    story: story !== '',
+    goal: goal !== '',
+    pseudonym: pseudonym !== '',
+    nationalId: nationalId !== '',
+    deadline: deadline !== '',
+  };
+  /** Shown under a field once something is typed in it, or once it has been left empty. */
+  const shown = (key: FieldKey) => (errors[key] && (touched.has(key) || FILLED[key]) ? errors[key] : undefined);
+  const touch = (key: FieldKey) => () => setTouched((current) => (current.has(key) ? current : new Set(current).add(key)));
+  const LABELS: Record<FieldKey, string> = {
+    orgNumber: t('submit.association.registrationNumber'),
+    yusrCode: t('submit.partner.code'),
+    contactName: t('submit.association.contactName'),
+    contactPhone: t('submit.association.contactPhone'),
+    title: t('submit.fields.title'),
+    story: t('submit.fields.story'),
+    goal: t('submit.fields.goal'),
+    pseudonym: t('submit.fields.pseudonym'),
+    nationalId: t('submit.fields.nationalId'),
+    deadline: t('submit.fields.deadline'),
+    documents: t('submit.steps.documents'),
+    consent: t('submit.errors.consentLabel'),
+  };
   const flagged = (field: string) => problem?.fields.some((name) => name === field || name.startsWith(`${field}.`)) || undefined;
   /** An API error in the form's words: a wrong code (or number) gets its own explanation. */
   const describe = (code: string, fields: string[]) => {
@@ -299,13 +354,20 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
           </div>
         )}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label={t('submit.association.registrationNumber')} htmlFor={`${ids}-org-number`} hint={t('submit.association.registrationHint')}>
+          <Field
+            label={t('submit.association.registrationNumber')}
+            htmlFor={`${ids}-org-number`}
+            hint={t('submit.association.registrationHint')}
+            error={shown('orgNumber')}
+          >
             <input
               id={`${ids}-org-number`}
               maxLength={40}
               value={orgNumber}
               onChange={(event) => changeCredentials(() => setOrgNumber(event.target.value))}
-              aria-invalid={flagged('association') || flagged('association.registrationNumber') || flagged(CODE_FIELD)}
+              onBlur={touch('orgNumber')}
+              aria-invalid={Boolean(shown('orgNumber')) || flagged('association') || flagged(CODE_FIELD)}
+              aria-describedby={`${ids}-org-number-hint`}
               autoComplete="off"
               dir="ltr"
               className={cn(control, 'h-11 text-start font-mono')}
@@ -316,6 +378,7 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
             htmlFor={`${ids}-yusr-code`}
             hint={flagged(CODE_FIELD) ? t('submit.partner.codeInvalid') : t('submit.partner.codeHint')}
             invalid={flagged(CODE_FIELD)}
+            error={flagged(CODE_FIELD) ? undefined : shown('yusrCode')}
           >
             <input
               id={`${ids}-yusr-code`}
@@ -323,7 +386,8 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
               value={yusrCode}
               placeholder="YSR-XXXXXXXX"
               onChange={(event) => changeCredentials(() => setYusrCode(event.target.value.toUpperCase()))}
-              aria-invalid={flagged(CODE_FIELD) || (yusrCode !== '' && !isYusrCode(normalizeYusrCode(yusrCode))) || undefined}
+              onBlur={touch('yusrCode')}
+              aria-invalid={flagged(CODE_FIELD) || Boolean(shown('yusrCode')) || undefined}
               aria-describedby={`${ids}-yusr-code-hint`}
               autoComplete="off"
               autoCapitalize="characters"
@@ -332,13 +396,15 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
               className={cn(control, 'h-11 text-start font-mono uppercase tracking-wider')}
             />
           </Field>
-          <Field label={t('submit.association.contactName')} htmlFor={`${ids}-contact`}>
+          <Field label={t('submit.association.contactName')} htmlFor={`${ids}-contact`} error={shown('contactName')}>
             <input
               id={`${ids}-contact`}
               maxLength={80}
               value={contactName}
               onChange={(event) => setContactName(event.target.value)}
-              aria-invalid={flagged('association')}
+              onBlur={touch('contactName')}
+              aria-invalid={Boolean(shown('contactName')) || flagged('association.contactName')}
+              aria-describedby={`${ids}-contact-hint`}
               autoComplete="name"
               dir="auto"
               className={cn(control, 'h-11')}
@@ -349,7 +415,7 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
           label={t('submit.association.contactPhone')}
           htmlFor={`${ids}-contact-phone`}
           hint={t('submit.association.contactHint')}
-          invalid={contactPhone !== '' && contactE164 === null}
+          error={shown('contactPhone')}
         >
           <input
             id={`${ids}-contact-phone`}
@@ -358,7 +424,9 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
             autoComplete="tel"
             value={contactPhone}
             onChange={(event) => setContactPhone(event.target.value)}
-            aria-invalid={(contactPhone !== '' && contactE164 === null) || flagged('association')}
+            onBlur={touch('contactPhone')}
+            aria-invalid={Boolean(shown('contactPhone')) || flagged('association.contactPhone')}
+            aria-describedby={`${ids}-contact-phone-hint`}
             dir="ltr"
             className={cn(control, 'h-11 text-start')}
           />
@@ -382,14 +450,16 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
           </div>
         </fieldset>
 
-        <Field label={t('submit.fields.title')} htmlFor={`${ids}-title`} hint={`${f.number(title.length)} / ${f.number(120)}`}>
+        <Field label={t('submit.fields.title')} htmlFor={`${ids}-title`} hint={`${f.number(title.length)} / ${f.number(120)}`} error={shown('title')}>
           <input
             id={`${ids}-title`}
             maxLength={120}
             value={title}
             placeholder={t('submit.fields.titlePlaceholder')}
             onChange={(event) => setTitle(event.target.value)}
-            aria-invalid={flagged('title')}
+            onBlur={touch('title')}
+            aria-invalid={Boolean(shown('title')) || flagged('title')}
+            aria-describedby={`${ids}-title-hint`}
             dir="auto"
             className={cn(control, 'h-11')}
           />
@@ -402,6 +472,7 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
               ? t('submit.fields.storyMin', { count: f.number(STORY_MIN) })
               : `${f.number(story.trim().length)} / ${f.number(6000)}`
           }
+          error={shown('story')}
         >
           <textarea
             id={`${ids}-story`}
@@ -410,7 +481,9 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
             value={story}
             placeholder={t('submit.fields.storyPlaceholder')}
             onChange={(event) => setStory(event.target.value)}
-            aria-invalid={flagged('story')}
+            onBlur={touch('story')}
+            aria-invalid={Boolean(shown('story')) || flagged('story')}
+            aria-describedby={`${ids}-story-hint`}
             dir="auto"
             className={cn(control, 'py-2.5 leading-relaxed')}
           />
@@ -442,7 +515,7 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
               min: f.money(GOAL_MIN_MINOR, currency, { fractionDigits: 0 }),
               max: f.money(GOAL_MAX_MINOR, currency, { compact: true }),
             })}
-            invalid={goal !== '' && !goalValid}
+            error={shown('goal')}
           >
             <span className="relative block">
               <input
@@ -451,7 +524,9 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
                 autoComplete="off"
                 value={goal}
                 onChange={(event) => setGoal(event.target.value)}
-                aria-invalid={(goal !== '' && !goalValid) || flagged('goalMinor')}
+                onBlur={touch('goal')}
+                aria-invalid={Boolean(shown('goal')) || flagged('goalMinor')}
+                aria-describedby={`${ids}-goal-hint`}
                 className={cn(control, 'h-11 pe-14 font-bold tabular-nums')}
               />
               <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">{f.currencyLabel(currency)}</span>
@@ -468,18 +543,21 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label={t('submit.fields.pseudonym')} htmlFor={`${ids}-pseudonym`} hint={t('submit.fields.pseudonymHint')}>
+          <Field label={t('submit.fields.pseudonym')} htmlFor={`${ids}-pseudonym`} hint={t('submit.fields.pseudonymHint')} error={shown('pseudonym')}>
             <input
               id={`${ids}-pseudonym`}
               maxLength={60}
               value={pseudonym}
               placeholder={t('submit.fields.pseudonymPlaceholder')}
               onChange={(event) => setPseudonym(event.target.value)}
+              onBlur={touch('pseudonym')}
+              aria-invalid={Boolean(shown('pseudonym')) || flagged('beneficiary.pseudonym')}
+              aria-describedby={`${ids}-pseudonym-hint`}
               dir="auto"
               className={cn(control, 'h-11')}
             />
           </Field>
-          <Field label={t('submit.fields.nationalId')} htmlFor={`${ids}-nid`} hint={t('submit.fields.nationalIdHint')} invalid={!nationalIdValid}>
+          <Field label={t('submit.fields.nationalId')} htmlFor={`${ids}-nid`} hint={t('submit.fields.nationalIdHint')} error={shown('nationalId')}>
             <input
               id={`${ids}-nid`}
               inputMode="numeric"
@@ -488,7 +566,9 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
               value={nationalId}
               // Accepts Arabic-Indic digits too: «٢٩٠٠١٠١…» becomes 2900101….
               onChange={(event) => setNationalId(event.target.value.replace(/[٠-٩]/g, (digit) => String(digit.charCodeAt(0) - 0x0660)).replace(/\D/g, ''))}
-              aria-invalid={!nationalIdValid || flagged('beneficiary')}
+              onBlur={touch('nationalId')}
+              aria-invalid={Boolean(shown('nationalId')) || flagged('beneficiary.nationalId')}
+              aria-describedby={`${ids}-nid-hint`}
               dir="ltr"
               className={cn(control, 'h-11 font-mono tracking-wider')}
             />
@@ -500,13 +580,15 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
           {t('submit.fields.urgent')}
         </label>
         {urgent && (
-          <Field label={t('submit.fields.deadline')} htmlFor={`${ids}-deadline`} invalid={deadline !== '' && !deadlineValid}>
+          <Field label={t('submit.fields.deadline')} htmlFor={`${ids}-deadline`} error={shown('deadline')}>
             <input
               id={`${ids}-deadline`}
               type="date"
               min={today}
               value={deadline}
               onChange={(event) => setDeadline(event.target.value)}
+              onBlur={touch('deadline')}
+              aria-invalid={Boolean(shown('deadline'))}
               className={cn(control, 'h-11 sm:max-w-xs')}
             />
           </Field>
@@ -602,13 +684,22 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
             </span>
           </p>
         )}
-        {!ready && missing.length > 0 && (
-          <div className="flex flex-col gap-1.5 rounded-control bg-warning-soft p-3 text-sm text-warning-soft-foreground" role="status">
-            <p className="font-bold">{t('submit.missing.title')}</p>
-            <ul className="flex list-disc flex-col gap-1 ps-5">
-              {missing.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
+        {!ready && (
+          <div className="flex flex-col gap-2 rounded-control bg-warning-soft p-3 text-sm text-warning-soft-foreground" role="status" aria-live="polite">
+            <p className="font-bold">{t('submit.errors.title')}</p>
+            <ul className="flex flex-col gap-1.5">
+              {(Object.keys(LABELS) as FieldKey[])
+                .filter((key) => errors[key])
+                .map((key) => (
+                  <li key={key} className="flex items-start gap-2">
+                    <Icon name="alert" size={15} className="mt-0.5 shrink-0" />
+                    {/* The length messages already name their field. */}
+                    <span>
+                      {key !== 'title' && key !== 'story' && <b>{LABELS[key]}: </b>}
+                      {errors[key]}
+                    </span>
+                  </li>
+                ))}
             </ul>
           </div>
         )}
@@ -687,17 +778,39 @@ function PathCard({
   );
 }
 
-function Field({ label, htmlFor, hint, invalid, children }: { label: string; htmlFor: string; hint?: string; invalid?: boolean; children: ReactNode }) {
+function Field({
+  label,
+  htmlFor,
+  hint,
+  invalid,
+  error,
+  children,
+}: {
+  label: string;
+  htmlFor: string;
+  hint?: string;
+  invalid?: boolean;
+  /** Shown at once under the field, in place of the hint, while what is typed is wrong. */
+  error?: string;
+  children: ReactNode;
+}) {
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={htmlFor} className="text-sm font-semibold">
         {label}
       </label>
       {children}
-      {hint && (
-        <p id={`${htmlFor}-hint`} className={cn('text-xs', invalid ? 'text-destructive' : 'text-muted-foreground')}>
-          {hint}
+      {error ? (
+        <p id={`${htmlFor}-hint`} className="flex items-start gap-1.5 text-xs font-semibold text-destructive" aria-live="polite">
+          <Icon name="alert" size={14} className="mt-px shrink-0" />
+          {error}
         </p>
+      ) : (
+        hint && (
+          <p id={`${htmlFor}-hint`} className={cn('text-xs', invalid ? 'text-destructive' : 'text-muted-foreground')}>
+            {hint}
+          </p>
+        )
       )}
     </div>
   );

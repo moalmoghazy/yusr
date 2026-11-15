@@ -61,13 +61,12 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
         <div className="container-page relative grid grid-cols-1 items-center gap-12 lg:items-start py-12 md:py-16 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
           <div className="flex flex-col gap-5">
             <SupervisionBadge locale={locale} />
-            {/* In Arabic the opening line is set in Palestine, like the main titles (font-wordmark). */}
             <h1
               className={cn(
                 'font-bold',
                 locale === 'en'
                   ? 'font-display text-[clamp(2.05rem,1.2rem+2.6vw,3.3rem)] leading-[1.15]'
-                  : 'font-wordmark text-[clamp(2.05rem,1.2rem+2.6vw,3.2rem)] leading-[1.55]',
+                  : 'font-display text-[clamp(2.05rem,1.2rem+2.6vw,3.2rem)] leading-[1.35]',
               )}
             >
               {t('landing.heroTitle')}
@@ -353,7 +352,7 @@ function PartnersMarquee({ locale, partners }: { locale: Locale; partners: Publi
             'font-bold',
             locale === 'en'
               ? 'font-display text-[clamp(2.05rem,1.2rem+2.6vw,3.3rem)] leading-[1.15]'
-              : 'font-wordmark text-[clamp(2.05rem,1.2rem+2.6vw,3.2rem)] leading-[1.55]',
+              : 'font-display text-[clamp(2.05rem,1.2rem+2.6vw,3.2rem)] leading-[1.35]',
           )}
         >
           {t('landing.partnersTitle')}

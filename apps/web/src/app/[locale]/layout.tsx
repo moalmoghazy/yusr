@@ -4,7 +4,6 @@ import { defaultTheme } from '@yusr/theme';
 import { cn, DemoBanner, textFor } from '@yusr/ui';
 import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Mono, IBM_Plex_Sans_Arabic, Reem_Kufi } from 'next/font/google';
-import localFont from 'next/font/local';
 import { cookies } from 'next/headers';
 import { Suspense, type ReactNode } from 'react';
 import { PageLoading } from '@/components/page-loading';
@@ -22,31 +21,6 @@ import '../globals.css';
 const sans = IBM_Plex_Sans_Arabic({ subsets: ['arabic', 'latin'], weight: ['400', '500', '600', '700'], variable: '--font-plex-arabic', display: 'swap' });
 // The logo face: the English name beside the mark stays in Reem Kufi whatever the headings use.
 const logo = Reem_Kufi({ subsets: ['arabic', 'latin'], weight: ['700'], variable: '--font-reem-kufi', display: 'swap' });
-// Palestine: the main page titles and the opening line, in Arabic. Its Latin letters are blank, so
-// the face covers Arabic and digits only and anything else falls back to the text face. Its decimal
-// mark ٫ is blank too, so it is left out (the text face draws it).
-const wordmark = localFont({
-  src: '../../fonts/palestine-regular.otf',
-  weight: '400',
-  variable: '--font-palestine',
-  // No metric-matched Arial fallback: it has no unicode-range, so on Windows (where Arial has Arabic letters)
-  // every character outside this face's range was drawn in Arial instead of falling through to the next face.
-  adjustFontFallback: false,
-  display: 'swap',
-  declarations: [{ prop: 'unicode-range', value: 'U+0020-0040, U+0600-066A, U+066C-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFF' }],
-});
-// KAF FODA's digits (the face «يُسر» is drawn in) for the home's stats band, in Arabic: only ٠–٩ and the thousands mark ٬; the
-// words beside them («مليون ج.م») are in Palestine.
-const digits = localFont({
-  src: '../../fonts/kaf-foda-digits.ttf',
-  weight: '700',
-  variable: '--font-kaf-digits',
-  // No metric-matched Arial fallback: it has no unicode-range, so on Windows (where Arial has Arabic letters)
-  // every character outside this face's range was drawn in Arial instead of falling through to the next face.
-  adjustFontFallback: false,
-  display: 'swap',
-  declarations: [{ prop: 'unicode-range', value: 'U+0660-0669, U+066C' }],
-});
 const mono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-plex-mono', display: 'swap' });
 
 export function generateStaticParams() {
@@ -88,12 +62,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
   const theme = themeFrom((await cookies()).get(THEME_COOKIE)?.value);
   const { t } = textFor(locale);
   return (
-    <html
-      lang={locale}
-      dir={dirOf(locale)}
-      className={cn(sans.variable, logo.variable, wordmark.variable, digits.variable, mono.variable, theme !== 'system' && theme)}
-      suppressHydrationWarning
-    >
+    <html lang={locale} dir={dirOf(locale)} className={cn(sans.variable, logo.variable, mono.variable, theme !== 'system' && theme)} suppressHydrationWarning>
       <body className="min-h-dvh">
         <a
           href="#main"
