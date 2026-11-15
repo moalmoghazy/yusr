@@ -10,19 +10,7 @@ import {
   type PublicPartner,
   type SuccessStory,
 } from '@yusr/core';
-import {
-  buttonClasses,
-  CaseCard,
-  cn,
-  DonationProgress,
-  Icon,
-  LogoMark,
-  storySlideData,
-  storySlideLabels,
-  textFor,
-  type CaseCardProps,
-  type IconName,
-} from '@yusr/ui';
+import { buttonClasses, CaseCard, cn, DonationProgress, Icon, storySlideData, storySlideLabels, textFor, type CaseCardProps, type IconName } from '@yusr/ui';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { FeaturedRotator } from '@/components/featured-rotator';
@@ -73,15 +61,6 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
         <div className="container-page relative grid grid-cols-1 items-center gap-12 lg:items-start py-12 md:py-16 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
           <div className="flex flex-col gap-5">
             <SupervisionBadge locale={locale} />
-            <p
-              className={cn(
-                'inline-flex items-center gap-2 font-semibold text-primary',
-                locale === 'en' ? 'text-[0.76rem] uppercase tracking-[0.04em]' : 'text-[0.86rem]',
-              )}
-            >
-              <LogoMark size={20} />
-              {t('landing.eyebrow')}
-            </p>
             {/* In Arabic the opening line is set in Palestine, like the main titles (font-wordmark). */}
             <h1
               className={cn(

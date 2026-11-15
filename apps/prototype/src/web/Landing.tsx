@@ -5,7 +5,6 @@ import { useRead } from '../app/backend';
 import { useNow } from '../app/clock';
 import { useL, useT } from '../app/i18n';
 import { usePrototype } from '../app/prefs';
-import { LogoMark } from '../ui/brand';
 import { categoryIcon, CountdownChip, DonationProgress } from '../ui/case-ui';
 import { Icon } from '../ui/icons';
 import { Avatar, Button, cx, useAnimatedNumber } from '../ui/primitives';
@@ -92,9 +91,6 @@ function Hero({ onBrowse, onHow }: { onBrowse: () => void; onHow: () => void }) 
       <div className="container hero-grid">
         <div className="hero-copy">
           <SupervisionBadge />
-          <p className="eyebrow">
-            <LogoMark size={20} /> {t('landing.eyebrow')}
-          </p>
           <h1 className="hero-title">{t('landing.heroTitle')}</h1>
           <p className="hero-body">{t('landing.heroBody')}</p>
           <div className="hero-ctas">

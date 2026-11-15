@@ -1,17 +1,11 @@
 import type { Locale } from '@yusr/core';
-import { brand, lockup, markShine, markViewBox, shineBandPath, wordmark, type LockupLayout, type LogoGeometry, type WordmarkGeometry } from '@yusr/theme';
+import { brand, markViewBox, shineBandPath, type LogoGeometry } from '@yusr/theme';
 import { useId } from 'react';
 import { cn } from './cn';
+import { ScriptLogo } from './script-logo';
 import { textFor } from './text';
 
 const round = (value: number) => Math.round(value * 100) / 100;
-
-/** The header loop's exit: a soft edge (`soft` units) starts just right of the word and travels past its left end. */
-const WIPE = (() => {
-  const soft = 24;
-  const start = wordmark.bounds.x + wordmark.bounds.width + 2;
-  return { soft, start, travel: wordmark.bounds.width + soft + 6 };
-})();
 
 /**
  * The light inside the bowl (@yusr/theme LogoShine): turquoise and gold bands, kept on the bowl's stroke
@@ -125,16 +119,6 @@ function MarkShapes({
   );
 }
 
-/** The approved lettering of «يُسر»: the letters with the dots of ي, and the golden ḍamma (see @yusr/theme wordmark.ts). */
-function WordmarkShapes({ word, ink, drop }: { word: WordmarkGeometry; ink: string; drop: string }) {
-  return (
-    <>
-      <path d={word.ink.d} fill={ink} fillRule="evenodd" />
-      <path d={word.damma.d} fill={drop} fillRule="evenodd" />
-    </>
-  );
-}
-
 export interface LogoMarkProps {
   /** Rendered size in px; below the geometry's `dotsMinSize` the dots are simplified. */
   size?: number;
@@ -173,100 +157,9 @@ export function LogoMark({ size = 32, bowl = 'var(--primary)', drop = 'var(--hig
 }
 
 /**
- * Mark + name, named for assistive tech. The name is set in the logo face (Reem Kufi) beside the
- * mark; with `wordmark="lettered"` the Arabic name is instead the approved lettering, drawn on the
- * mark's grid (@yusr/theme wordmark.ts). `size` is the mark's size in px, as for <LogoMark>.
+ * The logo, «خطّ اليُسر» (the word «يُسر» written by hand, @yusr/theme script-logo.ts), named for assistive
+ * tech. `size` is about the height of the word in px; `inverse` sets it in white for the brand colour.
  */
-export function Logo({
-  locale,
-  size = 30,
-  inverse = false,
-  className,
-  wordmark: style = brand.wordmark,
-  animated = false,
-}: {
-  locale: Locale;
-  size?: number;
-  inverse?: boolean;
-  className?: string;
-  wordmark?: 'typeset' | 'lettered';
-  /**
-   * The header's loop (Arabic lettered lockup): «يُسر» slides out of the mark fading in, rests, and fades
-   * out from right to left (`.logo-word` and `.logo-wipe` in the web stylesheet; still under reduced motion, and the word simply shows
-   * without the stylesheet).
-   */
-  animated?: boolean;
-}) {
-  const maskId = `ysr-lockup-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
-  const ink = inverse ? '#FFFFFF' : 'var(--primary)';
-  // On the brand colour the bowl is white, so its bright band is the dark theme's turquoise.
-  const shine = inverse ? markShine('inverse').shine : 'var(--logo-shine)';
-  const label = textFor(locale).t('a11y.logo');
-  if (locale === 'ar' && style === 'lettered') {
-    const layout: LockupLayout = lockup;
-    const scale = size / 64;
-    return (
-      <svg
-        role="img"
-        aria-label={label}
-        viewBox={layout.viewBox}
-        width={round(layout.width * scale)}
-        height={round(layout.height * scale)}
-        className={cn('shrink-0', className)}
-        focusable="false"
-      >
-        {animated ? (
-          <>
-            <defs>
-              {/* The word is only seen left of the mark, so it seems to come out of it. */}
-              <clipPath id={`${maskId}-clip`}>
-                <rect x={-120} y={-20} width={120 + brand.logo.bounds.x + 1} height={110} />
-              </clipPath>
-              {/* To leave, a soft edge sweeps across the word from right to left, fading it out (.logo-wipe). */}
-              <linearGradient id={`${maskId}-wipe-g`} gradientUnits="userSpaceOnUse" x1={WIPE.start} x2={WIPE.start + WIPE.soft} y1={0} y2={0}>
-                <stop offset={0} stopColor="#fff" />
-                <stop offset={1} stopColor="#000" />
-              </linearGradient>
-              <mask id={`${maskId}-wipe`} maskUnits="userSpaceOnUse" x={-120} y={-20} width={200} height={110}>
-                <rect
-                  x={-400}
-                  y={-20}
-                  width={500}
-                  height={110}
-                  fill={`url(#${maskId}-wipe-g)`}
-                  className="logo-wipe"
-                  style={{ ['--logo-wipe-travel' as string]: `${round(-WIPE.travel)}px` }}
-                />
-              </mask>
-            </defs>
-            <g clipPath={`url(#${maskId}-clip)`}>
-              <g mask={`url(#${maskId}-wipe)`}>
-                <g className="logo-word" style={{ ['--logo-word-travel' as string]: `${round(-wordmark.bounds.x + brand.logo.bounds.x + 2)}px` }}>
-                  <WordmarkShapes word={wordmark} ink={ink} drop="var(--highlight)" />
-                </g>
-              </g>
-            </g>
-          </>
-        ) : (
-          <WordmarkShapes word={wordmark} ink={ink} drop="var(--highlight)" />
-        )}
-        <g transform={`translate(${layout.markX} 0)`}>
-          <MarkShapes logo={brand.logo} bowl={ink} drop="var(--highlight)" shine={shine} size={size} maskId={maskId} />
-        </g>
-      </svg>
-    );
-  }
-  // In Arabic the mark leads on the right (the page is right-to-left); in English, on the left.
-  return (
-    <span role="img" aria-label={label} className={cn('inline-flex items-center gap-2', className)}>
-      <LogoMark size={size} bowl={ink} shine={shine} />
-      <span
-        aria-hidden
-        className={cn('font-logo font-bold leading-none', inverse ? 'text-white' : 'text-primary')}
-        style={{ fontSize: size * (locale === 'ar' ? 0.84 : 0.78) }}
-      >
-        {brand.name[locale]}
-      </span>
-    </span>
-  );
+export function Logo({ locale, size = 30, inverse = false, className }: { locale: Locale; size?: number; inverse?: boolean; className?: string }) {
+  return <ScriptLogo label={textFor(locale).t('a11y.logo')} height={round(size * 1.2)} ink={inverse ? '#FFFFFF' : undefined} className={className} />;
 }

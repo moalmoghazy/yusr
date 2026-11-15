@@ -329,7 +329,6 @@ export const en: Messages = {
     loadMore: 'Load more',
   },
   landing: {
-    eyebrow: 'Giving with open books',
     supervision: {
       lead: 'Our cases come from associations registered with',
       authority: 'Egypt’s Ministry of Social Solidarity',

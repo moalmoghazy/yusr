@@ -1,5 +1,5 @@
 import { CATEGORY_META, type CaseCategory, type CategoryTone } from '@yusr/core';
-import { andalusianPattern, brand } from '@yusr/theme';
+import { andalusianPattern } from '@yusr/theme';
 import type { CSSProperties } from 'react';
 import { useId } from 'react';
 import { cn } from './cn';
@@ -31,22 +31,15 @@ const GLYPH_SCALE = 3.4;
 const GLYPH_X = 40;
 const GLYPH_Y = (180 - 24 * GLYPH_SCALE) / 2;
 
-/** The Yusr mark in the motif's box, for the loop where it turns into the category's motif: centred on the motif and as wide as it. */
-const LOGO = brand.logo;
-const MARK_SCALE = (24 * GLYPH_SCALE * 0.92) / Math.max(LOGO.bounds.width, LOGO.bounds.height);
-const MARK_X = GLYPH_X + 12 * GLYPH_SCALE - MARK_SCALE * (LOGO.bounds.x + LOGO.bounds.width / 2);
-const MARK_Y = GLYPH_Y + 12 * GLYPH_SCALE - MARK_SCALE * (LOGO.bounds.y + LOGO.bounds.height / 2);
-
 /**
  * The illustrated case cover. Yusr never shows beneficiaries' photos — dignity first — so
  * each category has a motif set on the brand's Andalusian lattice. Every cover puts its motif
  * in the same place (start of the card, vertically centred) so a row of cards lines up; the
  * lattice drifts left to right and fades out, like the home hero (`.case-cover-drift` in the
- * web stylesheet; still under reduced motion). The motif itself is a loop: the bowl of the Yusr mark is
- * drawn, then turns into the motif, and back (`.cover-morph-*`; without the animation only the motif shows). Deterministic: the seed only shifts the lattice
+ * web stylesheet; still under reduced motion). The motif draws itself and rests, in a loop (`.cover-morph-icon`;
+ * without the animation it simply shows). Deterministic: the seed only shifts the lattice
  * and the light, so the server and client draw the same cover.
  */
-const r2 = (value: number) => Math.round(value * 100) / 100;
 
 /** Neighbouring covers start the loop at different moments, so a row of cards doesn't move in step. */
 const morphTiming = (seed: number): CSSProperties => ({ ['--morph-delay' as string]: `${-((seed * 1.7) % 9).toFixed(1)}s` });
@@ -98,13 +91,6 @@ export function CaseCover({ category, seed, className, label }: CaseCoverProps) 
       <circle cx={orbX} cy={orbY} r={70 + variant * 12} fill="currentColor" opacity={0.09} />
       <circle cx={320 - orbX / 2} cy={170 - orbY / 3} r={36 + variant * 6} fill="currentColor" opacity={0.07} />
       <g className={tone.glyph} style={morphTiming(seed)}>
-        {/* The Yusr mark, which turns into the motif and back (hidden without the stylesheet's animation). */}
-        <g transform={`translate(${r2(MARK_X)} ${r2(MARK_Y)}) scale(${r2(MARK_SCALE)})`} className="cover-morph-mark" style={{ opacity: 0 }}>
-          <path d={LOGO.bowl.d} pathLength={1} fill="none" stroke="currentColor" strokeWidth={LOGO.bowl.strokeWidth} strokeLinecap="round" />
-          {LOGO.dots?.items.map((dot) => (
-            <circle key={dot.cx} cx={dot.cx} cy={dot.cy} r={dot.r} fill="currentColor" />
-          ))}
-        </g>
         <g
           transform={`translate(${GLYPH_X} ${GLYPH_Y}) scale(${GLYPH_SCALE})`}
           className="cover-morph-icon"
@@ -118,14 +104,6 @@ export function CaseCover({ category, seed, className, label }: CaseCoverProps) 
             <Tag key={index} {...attrs} pathLength={1} />
           ))}
         </g>
-        {/* The earlier marks' golden ḍamma: falls onto the mark like a drop of water, and fades as the mark turns into the motif. */}
-        {LOGO.drop && LOGO.guides.drop && (
-          <g transform={`translate(${r2(MARK_X)} ${r2(MARK_Y)}) scale(${r2(MARK_SCALE)})`}>
-            <g className="cover-morph-drop" style={{ opacity: 0, transformOrigin: `${LOGO.guides.drop.cx}px ${LOGO.guides.drop.cy}px` }}>
-              <path d={LOGO.drop.d} transform={LOGO.drop.transform} className="fill-highlight" />
-            </g>
-          </g>
-        )}
       </g>
     </svg>
   );

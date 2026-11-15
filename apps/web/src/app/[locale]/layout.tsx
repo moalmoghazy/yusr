@@ -60,7 +60,7 @@ export async function generateMetadata({ params }: { params: LocaleParams }): Pr
   const { t } = textFor(locale);
   return {
     metadataBase: new URL(siteUrl()),
-    title: { default: `${t('common.appName')} — ${t('landing.eyebrow')}`, template: `%s · ${t('common.appName')}` },
+    title: { default: t('common.appName'), template: `%s · ${t('common.appName')}` },
     description: t('landing.heroBody'),
     alternates: { canonical: `/${locale}`, languages: { ar: '/ar', en: '/en', 'x-default': '/ar' } },
     openGraph: {

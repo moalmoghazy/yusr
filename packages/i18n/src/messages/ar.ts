@@ -397,7 +397,6 @@ export const ar = {
     loadMore: 'عرض المزيد',
   },
   landing: {
-    eyebrow: 'منصة عطاء بمعايير شفافة',
     supervision: {
       lead: 'حالاتنا من جمعيات أهلية مشهرة لدى',
       authority: 'وزارة التضامن الاجتماعي المصرية',

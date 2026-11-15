@@ -20,6 +20,8 @@ export function ScriptLogo({
   writing = false,
   delayMs = 0,
   highlight,
+  ink,
+  accent,
   className,
 }: {
   label: string;
@@ -27,6 +29,10 @@ export function ScriptLogo({
   writing?: boolean;
   delayMs?: number;
   highlight?: (typeof SCRIPT_LOGO.parts)[number]['id'][];
+  /** The word's colour (the site's primary by default; white on the brand colour). */
+  ink?: string;
+  /** The ḍamma's colour (the site's highlight by default). */
+  accent?: string;
   className?: string;
 }) {
   const id = `ysl-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
@@ -71,7 +77,7 @@ export function ScriptLogo({
           <path
             key={part.id}
             d={part.fill}
-            fill={SCRIPT_LOGO_COLORS[part.color].css}
+            fill={(part.color === 'ink' ? ink : accent) ?? SCRIPT_LOGO_COLORS[part.color].css}
             opacity={dim ? 0.18 : undefined}
             mask={writing && part.pen ? `url(#${id}-${part.id})` : undefined}
             className={writing && !part.pen ? 'script-damma' : undefined}

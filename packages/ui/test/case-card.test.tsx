@@ -143,12 +143,12 @@ describe('CaseCard', () => {
     assert.equal(new Set(patterns).size, 2, 'each cover has its own lattice pattern');
   });
 
-  it('puts every cover motif in the same place, over a drifting lattice, with the mark loop hidden until animated', () => {
+  it('puts every cover motif in the same place, over a drifting lattice, with no trace of the old ي mark', () => {
     const motif = (coverSeed: number) => {
       const html = renderToStaticMarkup(<CaseCard item={{ ...fixture(), coverSeed }} locale="ar" href={HREF} now={NOW} />);
-      // The Yusr mark only appears through the stylesheet's loop; without it, the motif alone.
-      assert.equal(html.match(/fill-highlight/g), null, 'the current mark has no falling ḍamma');
-      assert.match(html, /class="cover-morph-mark" style="opacity:0"/);
+      // The motif alone: the old mark's bowl and ḍamma are gone.
+      assert.equal(html.match(/fill-highlight/g), null);
+      assert.ok(!html.includes('cover-morph-mark') && html.includes('class="cover-morph-icon"'));
       assert.ok(html.includes('class="case-cover-drift"'));
       return html.match(/transform="(translate\([^"]+scale\([^"]+)"/)?.[1];
     };
@@ -221,25 +221,14 @@ describe('Logo', () => {
     assert.ok(tiny.includes('<line '));
   });
 
-  it('can set the Arabic name in the logo face, and always sets the English one there', async () => {
+  it('draws «خطّ اليُسر» for the logo, named, in the site colours (white when inverse)', async () => {
     const { Logo } = await import('../src/index');
-    const ar = renderToStaticMarkup(<Logo locale="ar" size={32} wordmark="typeset" />);
-    assert.ok(ar.includes('aria-label="شعار يُسر"') && ar.includes('role="img"'));
-    assert.ok(ar.includes('>يُسر</span>') && ar.includes('font-logo'), 'the logo face, not the heading face');
-    assert.equal((ar.match(/<radialGradient /g) ?? []).length, 2, 'the mark’s light');
-    const en = renderToStaticMarkup(<Logo locale="en" size={32} />);
-    assert.ok(en.includes('>Yusr</span>') && en.includes('font-logo'));
-  });
-
-  it('draws the approved lettering of «يُسر» beside the mark by default', async () => {
-    const { Logo } = await import('../src/index');
-    const { lockup, wordmark } = await import('@yusr/theme');
+    const { SCRIPT_LOGO } = await import('@yusr/theme');
     const ar = renderToStaticMarkup(<Logo locale="ar" size={32} />);
-    assert.ok(ar.includes(`d="${wordmark.ink.d}"`) && ar.includes(`d="${wordmark.damma.d}"`), 'the word is drawn');
-    assert.ok(ar.includes(`translate(${lockup.markX} 0)`), 'the mark shares the word’s grid');
-    assert.equal((ar.match(/<radialGradient /g) ?? []).length, 2, 'the mark’s light');
-    const inverse = renderToStaticMarkup(<Logo locale="ar" size={32} inverse />);
-    assert.ok(inverse.includes('stroke="#FFFFFF"') && !inverse.includes('var(--logo-shine)'), 'on the brand colour the light is fixed');
-    assert.ok(!ar.includes('يُسر<'), 'no text: the word is drawn');
+    assert.ok(ar.includes('aria-label="شعار يُسر"') && ar.includes('role="img"'));
+    for (const part of SCRIPT_LOGO.parts) assert.ok(ar.includes(`d="${part.fill}"`), part.id);
+    assert.ok(ar.includes('var(--primary') && ar.includes('var(--highlight'));
+    const inverse = renderToStaticMarkup(<Logo locale="en" size={32} inverse />);
+    assert.ok(inverse.includes('fill="#FFFFFF"') && inverse.includes('var(--highlight'));
   });
 });

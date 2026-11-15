@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CaseCard } from '@/components/CaseCard';
 import { DonateSheet, type DonateTarget } from '@/components/DonateSheet';
 import { Icon } from '@/components/Icon';
-import { Lockup, LogoMark } from '@/components/LogoMark';
+import { Lockup } from '@/components/LogoMark';
 import { HeroPattern } from '@/components/HeroPattern';
 import { ErrorState, Loading } from '@/components/States';
 import { SupervisionBadge } from '@/components/SupervisionBadge';
@@ -61,12 +61,6 @@ export default function Home() {
 
         <View style={[styles.pad, { gap: 14 }]}>
           <SupervisionBadge />
-          <View style={styles.brand}>
-            <LogoMark size={18} />
-            <Text variant="label" weight="semibold" color={theme.colors.primary}>
-              {t('landing.eyebrow')}
-            </Text>
-          </View>
           <Text variant="display" accessibilityRole="header">
             {t('landing.heroTitle')}
           </Text>
@@ -155,8 +149,8 @@ function SectionHeader({ title, icon, onSeeAll }: { title: string; icon: 'clock'
 const styles = StyleSheet.create({
   pad: { paddingHorizontal: 20 },
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  brand: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   stats: { flexDirection: 'row', gap: 10 },
   stat: { flex: 1, gap: 2, paddingVertical: 12, paddingHorizontal: 12, borderWidth: StyleSheet.hairlineWidth },
+  brand: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 });

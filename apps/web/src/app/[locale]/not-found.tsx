@@ -1,4 +1,4 @@
-import { buttonClasses, Icon, LogoMark } from '@yusr/ui';
+import { buttonClasses, Icon, ScriptLogo } from '@yusr/ui';
 import Link from 'next/link';
 
 /**
@@ -8,7 +8,7 @@ import Link from 'next/link';
 export default function NotFound() {
   return (
     <section className="container-page flex min-h-[60dvh] flex-col items-center justify-center gap-5 py-16 text-center">
-      <LogoMark size={64} />
+      <ScriptLogo label="يُسر · Yusr" height={72} />
       <h1 className="font-display text-3xl font-bold">
         <span lang="ar">الصفحة غير موجودة</span> · <span lang="en">Page not found</span>
       </h1>

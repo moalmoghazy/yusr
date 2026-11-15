@@ -3,7 +3,6 @@ import { Icon, ScriptLogo, textFor } from '@yusr/ui';
 import type { Metadata } from 'next';
 import { StarCloseup } from '@/components/star-closeup';
 import type { IconName } from '@yusr/ui';
-import { QuestionMark } from '@/components/question-mark';
 import { WritingLogo } from '@/components/writing-logo';
 import { pageLocale, type LocaleParams } from '@/lib/page';
 
@@ -44,7 +43,7 @@ export default async function AboutPage({ params }: { params: LocaleParams }) {
       <section aria-labelledby="about-title" className="flex flex-col gap-6 py-2 md:py-6">
         <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,1fr)_auto]">
           <div className="flex max-w-3xl flex-col gap-4">
-            <ScriptLogo label={brand.name[locale]} height={48} />
+            <ScriptLogo label={brand.name[locale]} height={48} className="lg:hidden" />
             <h1 id="about-title" className="font-display text-3xl font-bold leading-[1.4] md:text-4xl">
               {t('about.question')}
             </h1>
@@ -52,7 +51,13 @@ export default async function AboutPage({ params }: { params: LocaleParams }) {
             <p className="text-[1.05rem] leading-[1.9] text-muted-foreground">{t('about.body')}</p>
           </div>
           <div className="hidden justify-center lg:flex">
-            <QuestionMark rtl={locale === 'ar'} />
+            <div className="relative grid size-64 place-items-center xl:size-72">
+              <svg viewBox="0 0 100 100" aria-hidden focusable="false" className="absolute inset-0 size-full">
+                <circle cx="50" cy="50" r="48" className="logo-ring" />
+                <circle cx="50" cy="50" r="40" className="logo-ring logo-ring-2" />
+              </svg>
+              <WritingLogo label={brand.name[locale]} height={96} loop />
+            </div>
           </div>
         </div>
         <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
