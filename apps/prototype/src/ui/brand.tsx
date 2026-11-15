@@ -1,206 +1,143 @@
-import { brand, lockup, markShine, markViewBox, shineBandPath, wordmark, type LogoGeometry, type WordmarkGeometry } from '@yusr/theme';
+import { SCRIPT_LOGO, SCRIPT_LOGO_COLORS, brand } from '@yusr/theme';
 import { useI18n } from '@yusr/i18n/react';
-import { useId } from 'react';
+import { useEffect, useId, useState, type CSSProperties } from 'react';
+import { usePrototype } from '../app/prefs';
 import { cx } from './primitives';
 
-/** The bright band's colour: white ink means the bowl sits on the brand colour. */
-const shineFor = (bowl: string) => (bowl.toUpperCase() === '#FFFFFF' ? markShine('inverse').shine : 'var(--logo-shine)');
+type PartId = (typeof SCRIPT_LOGO.parts)[number]['id'];
+
+/** Wide enough for the round pen to cover each letter's stroke; a short pause between letters. */
+const PEN_WIDTH = 58;
+const LIFT_MS = 70;
+/** The whole writing, then (looping) the rest before it fades and is written again. */
+export const WRITING_MS = SCRIPT_LOGO.parts.reduce((sum, part) => sum + part.ms + LIFT_MS, 0);
+const HOLD_MS = 4000;
+const FADE_MS = 500;
 
 /**
- * The light inside the bowl (as @yusr/ui MarkShine on the website): turquoise and gold bands kept on the
- * bowl's stroke, fading up its right arm. Ids derive from `id`, unique in the page.
+ * «خطّ اليُسر», the logo (as @yusr/ui ScriptLogo on the website): the word «يُسر» written by hand, turquoise
+ * with a sand-gold ḍamma. With `writing`, each letter is revealed along the pen in order (ي and its dots, س,
+ * ر, then the ḍamma drops in; `.script-pen` / `.script-damma` in brand.css). `highlight` dims all but some.
  */
-export function MarkShine({
-  logo = brand.logo,
-  shine,
-  gold,
-  id,
-  className,
-}: {
-  logo?: LogoGeometry;
-  shine: string;
-  gold: string;
-  id: string;
-  className?: string;
-}) {
-  if (!logo.shine) return null;
-  const { bands, top, fade } = logo.shine;
-  return (
-    <>
-      <defs>
-        {bands.map((band, index) => (
-          <radialGradient
-            key={index}
-            id={`${id}-b${index}`}
-            gradientUnits="userSpaceOnUse"
-            cx={0}
-            cy={0}
-            r={1}
-            gradientTransform={`translate(${band.cx} ${band.cy}) scale(${band.rx} ${band.ry})`}
-          >
-            {band.stops.map(([offset, opacity], stop) => (
-              <stop key={stop} offset={offset} style={{ stopColor: band.tone === 'gold' ? gold : shine, stopOpacity: opacity }} />
-            ))}
-          </radialGradient>
-        ))}
-        <linearGradient id={`${id}-f`} gradientUnits="userSpaceOnUse" x1={fade.x1} y1={fade.y1} x2={fade.x2} y2={fade.y2}>
-          <stop offset={0} stopColor="#fff" />
-          <stop offset={1} stopColor="#000" />
-        </linearGradient>
-        <mask id={`${id}-m`} maskUnits="userSpaceOnUse" x={0} y={0} width={64} height={64}>
-          <path d={logo.bowl.d} fill="none" stroke={`url(#${id}-f)`} strokeWidth={logo.bowl.strokeWidth} strokeLinecap="round" />
-        </mask>
-      </defs>
-      <g mask={`url(#${id}-m)`} className={className}>
-        {bands.map((band, index) => (
-          <path key={index} d={shineBandPath(band, top)} fill={`url(#${id}-b${index})`} />
-        ))}
-      </g>
-    </>
-  );
-}
-
-/**
- * The shapes of the mark for a given geometry: the bowl with its light (and, in the earlier versions, the two
- * dots of ي and the golden ḍamma). `size` is the rendered size in px, used to simplify the dots when the mark gets small.
- */
-export function MarkShapes({
-  logo = brand.logo,
-  bowl,
-  drop,
-  shine = shineFor(bowl),
-  size,
-  maskId,
-  dotClassName,
-}: {
-  logo?: LogoGeometry;
-  bowl: string;
-  drop: string;
-  shine?: string;
-  size: number;
-  maskId: string;
-  dotClassName?: string;
-}) {
-  const small = size < logo.dotsMinSize;
-  const dots = logo.dots;
-  const cutout = dots?.style === 'cutout';
-  return (
-    <>
-      {cutout && !small && <DotsMask id={maskId} logo={logo} holeClassName={dotClassName} />}
-      <path
-        d={logo.bowl.d}
-        fill="none"
-        stroke={bowl}
-        strokeWidth={logo.bowl.strokeWidth}
-        strokeLinecap="round"
-        mask={cutout && !small ? `url(#${maskId})` : undefined}
-      />
-      <MarkShine logo={logo} shine={shine} gold={drop} id={`${maskId}-shine`} />
-      {dots &&
-        !cutout &&
-        (small ? (
-          // Too small for two dots: they join into one short stroke, as ي is written by hand in Ruqʿa.
-          <line
-            x1={dots.items[0].cx}
-            y1={dots.items[0].cy}
-            x2={dots.items[1].cx}
-            y2={dots.items[1].cy}
-            stroke={bowl}
-            strokeWidth={dots.items[0].r * 2}
-            strokeLinecap="round"
-          />
-        ) : (
-          dots.items.map((dot) => <circle key={dot.cx} cx={dot.cx} cy={dot.cy} r={dot.r} fill={bowl} className={dotClassName} />)
-        ))}
-      {logo.drop && <path d={logo.drop.d} fill={drop} transform={logo.drop.transform} />}
-    </>
-  );
-}
-
-export function LogoMark({
-  size = 32,
-  bowl = 'var(--primary)',
-  drop = 'var(--highlight)',
-  className,
+export function ScriptMark({
+  height = 40,
+  ink = SCRIPT_LOGO_COLORS.ink.css,
+  accent = SCRIPT_LOGO_COLORS.accent.css,
+  writing = false,
+  delayMs = 0,
+  highlight,
   title,
-  logo = brand.logo,
+  className,
 }: {
-  size?: number;
-  bowl?: string;
-  drop?: string;
-  className?: string;
+  height?: number;
+  ink?: string;
+  accent?: string;
+  writing?: boolean;
+  delayMs?: number;
+  highlight?: readonly PartId[];
   title?: string;
-  logo?: LogoGeometry;
+  className?: string;
 }) {
-  const maskId = `yd${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+  const id = `ysm${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+  const starts = SCRIPT_LOGO.parts.reduce<number[]>(
+    (list, part, index) => [...list, index === 0 ? delayMs : list[index - 1]! + SCRIPT_LOGO.parts[index - 1]!.ms + LIFT_MS],
+    [],
+  );
+  const timing = (index: number) =>
+    ({ ['--pen-at' as string]: `${starts[index]}ms`, ['--pen-ms' as string]: `${SCRIPT_LOGO.parts[index]!.ms}ms` }) as CSSProperties;
   return (
     <svg
-      viewBox={markViewBox(logo)}
-      width={size}
-      height={size}
-      className={cx('logo-mark', className)}
+      viewBox={SCRIPT_LOGO.viewBox}
+      height={height}
+      width={Math.round((height * SCRIPT_LOGO.width) / SCRIPT_LOGO.height)}
+      className={cx('script-logo', writing && 'is-writing', className)}
       role={title ? 'img' : undefined}
       aria-label={title}
       aria-hidden={title ? undefined : true}
     >
-      <MarkShapes logo={logo} bowl={bowl} drop={drop} size={size} maskId={maskId} />
+      {writing && (
+        <defs>
+          {SCRIPT_LOGO.parts.map((part, index) =>
+            part.pen ? (
+              <mask key={part.id} id={`${id}-${part.id}`} maskUnits="userSpaceOnUse" x="0" y="0" width={SCRIPT_LOGO.width} height={SCRIPT_LOGO.height}>
+                <path
+                  d={part.pen}
+                  pathLength={1}
+                  fill="none"
+                  stroke="#fff"
+                  strokeWidth={PEN_WIDTH}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="script-pen"
+                  style={timing(index)}
+                />
+              </mask>
+            ) : null,
+          )}
+        </defs>
+      )}
+      {SCRIPT_LOGO.parts.map((part, index) => (
+        <path
+          key={part.id}
+          d={part.fill}
+          fill={part.color === 'ink' ? ink : accent}
+          opacity={highlight && !highlight.includes(part.id) ? 0.18 : undefined}
+          mask={writing && part.pen ? `url(#${id}-${part.id})` : undefined}
+          className={writing && !part.pen ? 'script-damma' : undefined}
+          style={writing && !part.pen ? timing(index) : undefined}
+        />
+      ))}
     </svg>
   );
 }
 
-/** The approved lettering of «يُسر» (see @yusr/theme wordmark.ts): the letters with the dots of ي, the golden ḍamma. */
-export function WordmarkShapes({ ink, drop, word = wordmark }: { ink: string; drop: string; word?: WordmarkGeometry }) {
-  return (
-    <>
-      <path d={word.ink.d} fill={ink} fillRule="evenodd" />
-      <path d={word.damma.d} fill={drop} fillRule="evenodd" />
-    </>
-  );
-}
-
-const round = (value: number) => Math.round(value * 100) / 100;
-
-/**
- * The name alone (splash screens, receipts): set in the logo face, or the approved lettering when
- * brand.wordmark is 'lettered'. `height` is in px.
- */
-export function Wordmark({
-  height,
-  ink = 'var(--primary)',
-  drop = 'var(--highlight)',
-  className,
-}: {
-  height: number;
-  ink?: string;
-  drop?: string;
-  className?: string;
-}) {
-  if (brand.wordmark === 'typeset') {
-    return (
-      <span className={cx('wordmark-text', className)} style={{ color: ink, fontSize: height * 0.8 }} lang="ar" dir="rtl">
-        {brand.name.ar}
-      </span>
+/** The logo writing itself, again and again: written, held, faded, written again (still under reduced motion). */
+export function WritingMark({ height, ink, still = false, className }: { height: number; ink?: string; still?: boolean; className?: string }) {
+  const [run, setRun] = useState(0);
+  const [fading, setFading] = useState(false);
+  useEffect(() => {
+    if (still) return;
+    const fade = window.setTimeout(() => setFading(true), (run === 0 ? 150 : 0) + WRITING_MS + HOLD_MS);
+    const again = window.setTimeout(
+      () => {
+        setFading(false);
+        setRun((value) => value + 1);
+      },
+      (run === 0 ? 150 : 0) + WRITING_MS + HOLD_MS + FADE_MS,
     );
-  }
-  const { x, y, width, height: h } = wordmark.bounds;
+    return () => {
+      window.clearTimeout(fade);
+      window.clearTimeout(again);
+    };
+  }, [run, still]);
   return (
-    <svg viewBox={`${x} ${y} ${width} ${h}`} height={height} width={round((height * width) / h)} className={cx('wordmark', className)} aria-hidden>
-      <WordmarkShapes ink={ink} drop={drop} />
-    </svg>
+    <ScriptMark
+      key={run}
+      height={height}
+      ink={ink}
+      writing={!still}
+      delayMs={run === 0 ? 150 : 0}
+      className={cx('script-loop', fading && 'is-fading', className)}
+    />
   );
 }
 
-/**
- * Mark + name. The name is set in the logo face (Reem Kufi) beside the mark — the mark leads in the
- * reading direction. With brand.wordmark = 'lettered', «يُسر» is instead the approved lettering,
- * drawn on the mark's grid. `size` is the mark's size in px.
- */
+/** The logo at about `size` px tall (kept for the places that drew the earlier square mark). */
+export function LogoMark({ size = 32, bowl, drop, className, title }: { size?: number; bowl?: string; drop?: string; className?: string; title?: string }) {
+  return <ScriptMark height={Math.round(size * 0.8)} ink={bowl} accent={drop} className={className} title={title} />;
+}
+
+/** The name alone (splash screens, receipts): the logo itself. */
+export function Wordmark({ height, ink, drop, className }: { height: number; ink?: string; drop?: string; className?: string }) {
+  return <ScriptMark height={height} ink={ink} accent={drop} className={className} />;
+}
+
+/** The header logo: «خطّ اليُسر» in both languages (it is the name in Arabic letters). */
 export function Lockup({
-  lang,
   size = 30,
-  bowl = 'var(--primary)',
-  drop = 'var(--highlight)',
-  ink = bowl,
+  bowl,
+  drop,
+  ink,
   className,
 }: {
   lang: 'ar' | 'en';
@@ -210,54 +147,16 @@ export function Lockup({
   ink?: string;
   className?: string;
 }) {
-  const maskId = `yl${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
-  if (lang === 'ar' && brand.wordmark === 'lettered') {
-    const scale = size / 64;
-    return (
-      <svg
-        viewBox={lockup.viewBox}
-        width={round(lockup.width * scale)}
-        height={round(lockup.height * scale)}
-        className={cx('lockup-svg', className)}
-        aria-hidden
-      >
-        <WordmarkShapes ink={ink} drop={drop} />
-        <g transform={`translate(${lockup.markX} 0)`}>
-          <MarkShapes bowl={bowl} drop={drop} size={size} maskId={maskId} />
-        </g>
-      </svg>
-    );
-  }
-  return (
-    <span className={cx('lockup', className)} dir={lang === 'ar' ? 'rtl' : 'ltr'} lang={lang}>
-      <LogoMark size={size} bowl={bowl} drop={drop} />
-      <span className="lockup-word" style={{ color: ink, fontSize: size * (lang === 'ar' ? 0.84 : 0.78) }}>
-        {brand.name[lang]}
-      </span>
-    </span>
-  );
+  return <ScriptMark height={Math.round(size * 1.2)} ink={ink ?? bowl} accent={drop} className={className} />;
 }
 
-/** The header logo; the word follows the interface language. */
+/** The header logo, writing itself on a loop (the website's header does the same). */
 export function Logo({ size = 30, inverse = false, className }: { size?: number; inverse?: boolean; className?: string }) {
-  const { locale, t } = useI18n();
+  const { t } = useI18n();
+  const { reducedMotion } = usePrototype();
   return (
-    <span className={cx('logo', inverse && 'logo-inverse', className)} aria-label={t('a11y.logo')} role="img">
-      <Lockup lang={locale} size={size} bowl={inverse ? '#FFFFFF' : 'var(--primary)'} />
+    <span className={cx('logo', inverse && 'logo-inverse', className)} aria-label={`${t('a11y.logo')} · ${brand.name.en}`} role="img">
+      <WritingMark height={Math.round(size * 1.2)} ink={inverse ? '#FFFFFF' : undefined} still={reducedMotion} />
     </span>
-  );
-}
-
-/** For the cut-out variant: keeps the bowl and punches the two dots of ي out of it, so they stay hollow on any background. */
-export function DotsMask({ id, logo = brand.logo, holeClassName }: { id: string; logo?: LogoGeometry; holeClassName?: string }) {
-  return (
-    <defs>
-      <mask id={id} maskUnits="userSpaceOnUse" x={-8} y={-8} width={80} height={80}>
-        <rect x={-8} y={-8} width={80} height={80} fill="#fff" />
-        {logo.dots?.items.map((dot) => (
-          <circle key={dot.cx} cx={dot.cx} cy={dot.cy} r={dot.r} fill="#000" className={holeClassName} />
-        ))}
-      </mask>
-    </defs>
   );
 }

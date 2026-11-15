@@ -172,9 +172,9 @@ export const protoEn: Widen<typeof protoAr> = {
     },
     brand: {
       eyebrow: 'Visual identity',
-      title: 'The light of ease',
+      title: 'The hand of ease',
       story:
-        'The mark is the curve of the letter yā’ in يُسر, “ease”, and at the same time a pair of open hands. A light of two colours rests in them: clear turquoise at their edge, then the gold of the ḍamma, the small mark that turns يسر into يُسر. The light fills the hands from below and fades as it climbs one side, as if the gift were being poured in.',
+        'The logo is the word يُسر, “ease”, itself, written in one hand like a signature: the yā’ and its two dots, the flowing teeth of the sīn, the rā’ stretching out like a smoothed road, and the gold ḍamma written last, because it is what turns يسر into يُسر, the way a gift comes to complete the meaning.',
       anatomy: {
         bowl: 'The curve of yā’ / open hands',
         shine: 'Clear turquoise light at the hands’ edge',

@@ -1,11 +1,11 @@
-import { brand } from '@yusr/theme';
+import { brand, SCRIPT_LOGO_COLORS } from '@yusr/theme';
 import { useMemo, useState } from 'react';
 import { useT } from '../app/i18n';
 import { SURFACES, usePrototype } from '../app/prefs';
-import { DotsMask, MarkShine } from '../ui/brand';
+import { ScriptMark } from '../ui/brand';
 import { Icon, type IconName } from '../ui/icons';
 import { DocSectionHead, PageNav } from '../ui/page-nav';
-import { Button, cx } from '../ui/primitives';
+import { Button } from '../ui/primitives';
 import { ColorSection } from './ColorSection';
 import { LogoSection } from './LogoSection';
 import { PatternSection } from './PatternSection';
@@ -15,7 +15,7 @@ import { ComponentsSection, TypeSection } from './Specimens';
 const SECTIONS = ['logo', 'pattern', 'color', 'type', 'components', 'playground', 'principles'] as const;
 
 /**
- * The brand book: the story behind the mark, the palette with live contrast,
+ * The brand book: the story behind the logo, the palette with live contrast,
  * type, components and a playground that re-themes the entire prototype.
  */
 export function BrandPage() {
@@ -56,7 +56,15 @@ function BrandHero() {
           </p>
         </div>
         <figure className="brand-hero-figure">
-          <AnimatedMark key={run} play={!reducedMotion} label={`${brand.name[locale]} — ${t('proto.brand.title')}`} />
+          <ScriptMark
+            key={run}
+            height={150}
+            ink={SCRIPT_LOGO_COLORS.ink.dark}
+            accent={SCRIPT_LOGO_COLORS.accent.dark}
+            writing={!reducedMotion}
+            delayMs={300}
+            title={`${brand.name[locale]} — ${t('proto.brand.title')}`}
+          />
           {!reducedMotion && (
             <button type="button" className="hero-replay" onClick={() => setRun((value) => value + 1)}>
               <Icon name="refresh" size={14} /> {t('proto.brand.replay')}
@@ -65,40 +73,6 @@ function BrandHero() {
         </figure>
       </div>
     </header>
-  );
-}
-
-/** The mark draws itself: the bowl opens, then its light rises into it with a gold ripple (earlier marks: the dots appear and the golden ḍamma settles). */
-function AnimatedMark({ play, label }: { play: boolean; label: string }) {
-  const { logo } = brand;
-  const cutout = logo.dots?.style === 'cutout';
-  return (
-    <svg viewBox="-18 -18 100 100" className={cx('hero-mark', play && 'is-playing')} role="img" aria-label={label}>
-      <defs>
-        <radialGradient id="hero-glow" cx="50%" cy="42%" r="50%">
-          <stop offset="0" style={{ stopColor: 'var(--highlight)', stopOpacity: 0.34 }} />
-          <stop offset="0.55" style={{ stopColor: 'var(--highlight)', stopOpacity: 0.08 }} />
-          <stop offset="1" style={{ stopColor: 'var(--highlight)', stopOpacity: 0 }} />
-        </radialGradient>
-      </defs>
-      <circle cx="32" cy="30" r="50" fill="url(#hero-glow)" className="hm-glow" />
-      <circle cx="32" cy="32" r="44" className="hm-ring" />
-      <circle cx="32" cy="32" r="35" className="hm-ring hm-ring-2" />
-      {cutout && <DotsMask id="hero-dots" holeClassName="hm-hole" />}
-      <path d={logo.bowl.d} pathLength={100} className="hm-bowl" strokeWidth={logo.bowl.strokeWidth} mask={cutout ? 'url(#hero-dots)' : undefined} />
-      <MarkShine logo={logo} shine="var(--logo-shine)" gold="var(--highlight)" id="hero-shine" className="hm-light" />
-      {!cutout && logo.dots?.items.map((dot) => <circle key={dot.cx} cx={dot.cx} cy={dot.cy} r={dot.r} className="hm-dot" />)}
-      {logo.guides.drop ? (
-        <circle cx={logo.guides.drop.cx} cy={logo.guides.drop.cy} r={logo.guides.drop.r} className="hm-ripple" />
-      ) : (
-        <circle cx={logo.guides.bowl.cx} cy={logo.guides.bowl.cy + logo.guides.bowl.ry} r={logo.bowl.strokeWidth} className="hm-ripple" />
-      )}
-      {logo.drop && (
-        <g className="hm-drop">
-          <path d={logo.drop.d} transform={logo.drop.transform} />
-        </g>
-      )}
-    </svg>
   );
 }
 

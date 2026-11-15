@@ -1890,3 +1890,152 @@ html[lang='en'] .brand-hero-story {
     height: 160px;
   }
 }
+
+/* «خطّ اليُسر» writing itself (ui/brand.tsx ScriptMark): each letter revealed along its pen in order,
+   then the ḍamma drops in. Without motion the finished logo shows. */
+.script-logo {
+  display: block;
+  flex-shrink: 0;
+}
+.script-loop {
+  transition: opacity 500ms ease-out;
+}
+.script-loop.is-fading {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .script-logo.is-writing .script-pen {
+    stroke-dasharray: 1 1;
+    stroke-dashoffset: 1;
+    animation: script-write var(--pen-ms) cubic-bezier(0.45, 0.05, 0.4, 1) var(--pen-at) forwards;
+  }
+  .script-logo.is-writing .script-damma {
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: script-drop var(--pen-ms) cubic-bezier(0.3, 1.4, 0.5, 1) var(--pen-at) forwards;
+  }
+}
+@keyframes script-write {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes script-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-40%) scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The logo section («خطّ اليُسر»). */
+.script-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 32px;
+  align-items: start;
+}
+.script-intro-copy h3 {
+  font-size: 1.6rem;
+  margin: 0 0 8px;
+}
+.script-intro-copy p {
+  line-height: 1.9;
+}
+.script-colors {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.script-colors li {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control, 10px);
+}
+.script-colors li > span:last-child {
+  display: flex;
+  flex-direction: column;
+}
+.script-swatch {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.script-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.script-steps li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control, 10px);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.script-steps b {
+  color: var(--highlight);
+}
+.script-uses {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.script-use {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.script-use-stage {
+  display: grid;
+  place-items: center;
+  min-height: 150px;
+  border-radius: var(--radius-card, 16px);
+  border: 1px solid var(--border);
+}
+.script-app-icon {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 22px;
+}
+.brand-hero-figure {
+  gap: 28px;
+  padding-block: 24px;
+}
+.brand-hero-figure .script-logo {
+  max-width: 100%;
+  height: auto;
+}
+.brand-hero-figure .hero-replay {
+  position: static;
+}
+@media (max-width: 760px) {
+  .script-intro,
+  .script-colors {
+    grid-template-columns: 1fr;
+  }
+  .script-uses {
+    grid-template-columns: 1fr 1fr;
+  }
+}
