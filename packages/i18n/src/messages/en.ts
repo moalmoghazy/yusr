@@ -991,6 +991,7 @@ export const en: Messages = {
     upload: 'Upload a file',
     consent: 'We confirm the details are accurate, that the association has researched the case in the field, and agree to Yusr’s review',
     send: 'Send request',
+    checkFields: 'We couldn’t accept the request. Check: {fields}',
     missing: {
       title: 'Before you can send, still missing:',
       partner: 'The association’s registration number and Yusr code (step 1)',
@@ -999,6 +1000,7 @@ export const en: Messages = {
       story: 'A story of at least {min} characters, {count} so far (step 2)',
       goal: 'The amount needed (step 2)',
       nationalId: 'A 14-digit national ID, or leave it empty (step 2)',
+      pseudonym: 'The name shown to donors: two letters at least, or leave it empty (step 2)',
       deadline: 'The deadline for an urgent case (step 2)',
       documents: 'Upload the ID photo and the proof document (step 3)',
       consent: 'Tick the declaration',

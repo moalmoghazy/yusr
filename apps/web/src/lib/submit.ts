@@ -8,7 +8,13 @@ import { DEFAULT_LOCALE, isLocale } from './i18n';
 
 /** Which fields a schema failure points at: the association's ones by their full path (association.yusrCode). */
 function invalidFields(issues: ReadonlyArray<{ path: ReadonlyArray<PropertyKey> }>): string[] {
-  return [...new Set(issues.map((issue) => (issue.path[0] === 'association' ? issue.path.map(String).join('.') : String(issue.path[0] ?? ''))))];
+  return [
+    ...new Set(
+      issues.map((issue) =>
+        issue.path[0] === 'association' || issue.path[0] === 'beneficiary' ? issue.path.map(String).join('.') : String(issue.path[0] ?? ''),
+      ),
+    ),
+  ];
 }
 
 /**

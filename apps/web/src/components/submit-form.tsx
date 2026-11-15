@@ -80,7 +80,7 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
   const [uploads, setUploads] = useState<Partial<Record<Slot, Upload>>>({});
   const [consent, setConsent] = useState(false);
   const [sending, setSending] = useState(false);
-  const [problem, setProblem] = useState<{ message: string; fields: string[] } | null>(null);
+  const [problem, setProblem] = useState<{ message: string; fields: string[]; detail?: string } | null>(null);
   const [done, setDone] = useState<SubmitCaseResult | null>(null);
 
   const currency = region.startsWith('SA-') ? 'SAR' : 'EGP';
@@ -88,6 +88,8 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
   const goalMinor = goalMajor === null ? null : toMinor(goalMajor, currency);
   const goalValid = goalMinor !== null && goalMinor >= GOAL_MIN_MINOR && goalMinor <= GOAL_MAX_MINOR;
   const nationalIdValid = nationalId === '' || /^(\d{14}|\d{10})$/.test(nationalId);
+  /** Optional, but two letters at least when given (as the API asks). */
+  const pseudonymValid = pseudonym.trim() === '' || pseudonym.trim().length >= 2;
   const today = new Date().toISOString().slice(0, 10);
   const deadlineValid = !urgent || (deadline !== '' && deadline >= today);
   const idDoc = uploads.id?.status === 'done' ? uploads.id : null;
@@ -102,6 +104,7 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
     story.trim().length >= STORY_MIN &&
     goalValid &&
     nationalIdValid &&
+    pseudonymValid &&
     deadlineValid &&
     Boolean(idDoc && proofDoc) &&
     consent;
@@ -113,14 +116,39 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
     story.trim().length < STORY_MIN && t('submit.missing.story', { min: f.number(STORY_MIN), count: f.number(story.trim().length) }),
     !goalValid && t('submit.missing.goal'),
     !nationalIdValid && t('submit.missing.nationalId'),
+    !pseudonymValid && t('submit.missing.pseudonym'),
     !deadlineValid && t('submit.missing.deadline'),
     !(idDoc && proofDoc) && t('submit.missing.documents'),
     !consent && t('submit.missing.consent'),
   ].filter((item): item is string => Boolean(item));
-  const flagged = (field: string) => problem?.fields.includes(field) || undefined;
+  const flagged = (field: string) => problem?.fields.some((name) => name === field || name.startsWith(`${field}.`)) || undefined;
   /** An API error in the form's words: a wrong code (or number) gets its own explanation. */
-  const describe = (code: string, fields: string[]) =>
-    fields.includes(CODE_FIELD) ? t('submit.partner.codeInvalid') : t(`errors.${code}` as 'errors.generic');
+  const describe = (code: string, fields: string[]) => {
+    if (fields.includes(CODE_FIELD)) return t('submit.partner.codeInvalid');
+    // Name the fields that were refused, in the form's own words, so nobody has to guess.
+    const labels = [...new Set(fields.map(fieldLabel).filter((label): label is string => Boolean(label)))];
+    return labels.length ? t('submit.checkFields', { fields: labels.join(locale === 'ar' ? '، ' : ', ') }) : t(`errors.${code}` as 'errors.generic');
+  };
+  function fieldLabel(field: string): string | null {
+    const [head, sub] = field.split('.');
+    if (head === 'association') {
+      if (sub === 'contactName') return t('submit.association.contactName');
+      if (sub === 'contactPhone') return t('submit.association.contactPhone');
+      return t('submit.association.registrationNumber');
+    }
+    if (head === 'beneficiary') return sub === 'nationalId' ? t('submit.fields.nationalId') : t('submit.fields.pseudonym');
+    const own: Record<string, string> = {
+      title: t('submit.fields.title'),
+      story: t('submit.fields.story'),
+      goalMinor: t('submit.fields.goal'),
+      region: t('submit.fields.region'),
+      currency: t('submit.fields.region'),
+      deadline: t('submit.fields.deadline'),
+      category: t('submit.fields.category'),
+      documents: t('submit.steps.documents'),
+    };
+    return own[head ?? ''] ?? null;
+  }
 
   /** Uploads are filed under the partner that made them: changing who is submitting starts them over. */
   function changeCredentials(update: () => void) {
@@ -189,7 +217,7 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
       setDone(result.result);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      setProblem({ message: describe(result.code, result.fields), fields: result.fields });
+      setProblem({ message: describe(result.code, result.fields), fields: result.fields, detail: 'detail' in result ? result.detail : undefined });
     }
   }
 
@@ -563,8 +591,15 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
             role="alert"
             className="flex items-start gap-2 rounded-control bg-destructive-soft p-3 text-sm font-medium text-destructive-soft-foreground"
           >
-            <Icon name="alert" size={18} className="mt-0.5" />
-            {problem.message}
+            <Icon name="alert" size={18} className="mt-0.5 shrink-0" />
+            <span className="flex flex-col gap-1">
+              {problem.message}
+              {problem.detail && (
+                <span dir="ltr" className="text-xs font-normal opacity-80">
+                  {problem.detail}
+                </span>
+              )}
+            </span>
           </p>
         )}
         {!ready && missing.length > 0 && (
