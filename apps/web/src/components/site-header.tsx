@@ -22,7 +22,7 @@ export function SiteHeader({ locale, theme, donor }: { locale: Locale; theme: Th
       <div className="container-page flex h-16 items-center justify-between gap-3">
         <Link href={href(locale)} className="rounded-control outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
           {/* «خطّ اليُسر» writes itself when the page opens, and again when the pointer comes back to it. */}
-          <WritingLogo label={t('a11y.logo')} height={44} className="max-sm:h-9 max-sm:w-auto" />
+          <WritingLogo label={t('a11y.logo')} height={44} loop className="max-sm:h-9 max-sm:w-auto" />
         </Link>
         <nav aria-label={t('nav.menu')} className="hidden items-center gap-1 md:flex">
           {links.map((link) => (
