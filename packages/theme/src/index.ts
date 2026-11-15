@@ -9,3 +9,4 @@ export * from './native';
 export * from './svg';
 export * from './pattern';
 export * from './wordmark';
+export * from './script-logo';

@@ -1,10 +1,10 @@
-import { brand } from '@yusr/theme';
-import { Icon, LogoMark, textFor } from '@yusr/ui';
+import { brand, SCRIPT_LOGO_COLORS } from '@yusr/theme';
+import { Icon, ScriptLogo, textFor } from '@yusr/ui';
 import type { Metadata } from 'next';
-import { AnimatedMark } from '@/components/animated-mark';
 import { StarCloseup } from '@/components/star-closeup';
 import type { IconName } from '@yusr/ui';
 import { QuestionMark } from '@/components/question-mark';
+import { WritingLogo } from '@/components/writing-logo';
 import { pageLocale, type LocaleParams } from '@/lib/page';
 
 export async function generateMetadata({ params }: { params: LocaleParams }): Promise<Metadata> {
@@ -17,6 +17,14 @@ export async function generateMetadata({ params }: { params: LocaleParams }): Pr
   };
 }
 
+/** «كيف يُكتب»: the logo's letters in writing order, each step lighting its own. */
+const WRITING_STEPS = [
+  ['ya', ['ya', 'ya-dot-1', 'ya-dot-2']],
+  ['seen', ['seen']],
+  ['ra', ['ra']],
+  ['damma', ['damma']],
+] as const;
+
 const VALUES: ReadonlyArray<{ key: 'fair' | 'lasting' | 'open' | 'dignity'; icon: IconName }> = [
   { key: 'fair', icon: 'users' },
   { key: 'lasting', icon: 'heart' },
@@ -25,8 +33,8 @@ const VALUES: ReadonlyArray<{ key: 'fair' | 'lasting' | 'open' | 'dignity'; icon
 ];
 
 /**
- * About Yusr: who we are and what we are for, then the visual identity — the mark «الضمّة الذهبية»
- * drawn live (its ḍamma follows the pointer) and the pattern «روضة العطاء», each with its story.
+ * About Yusr: who we are and what we are for, then the visual identity — the logo «خطّ اليُسر» writing
+ * itself in its own green and orange, its colours and how it is written, and the pattern «روضة العطاء».
  */
 export default async function AboutPage({ params }: { params: LocaleParams }) {
   const locale = await pageLocale(params);
@@ -36,7 +44,7 @@ export default async function AboutPage({ params }: { params: LocaleParams }) {
       <section aria-labelledby="about-title" className="flex flex-col gap-6 py-2 md:py-6">
         <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,1fr)_auto]">
           <div className="flex max-w-3xl flex-col gap-4">
-            <LogoMark size={40} />
+            <ScriptLogo label={brand.name[locale]} height={48} />
             <h1 id="about-title" className="font-display text-3xl font-bold leading-[1.4] md:text-4xl">
               {t('about.question')}
             </h1>
@@ -66,18 +74,71 @@ export default async function AboutPage({ params }: { params: LocaleParams }) {
         aria-labelledby="identity-logo"
         className="grid grid-cols-1 items-center gap-8 rounded-card border border-border bg-card px-5 py-8 md:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
       >
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-5">
           <h3 id="identity-logo" className="flex flex-col gap-1">
-            <span className="text-sm font-semibold text-highlight-soft-foreground">{t('identity.logo')}</span>
+            <span className="text-sm font-semibold" style={{ color: SCRIPT_LOGO_COLORS.accent }}>
+              {t('identity.logo')}
+            </span>
             <span className="font-display text-3xl font-bold leading-[1.4]">{t('identity.logoName')}</span>
           </h3>
           <p className="text-[1.05rem] leading-[1.9] text-muted-foreground">{t('identity.logoStory')}</p>
-          <p className="flex items-center gap-3 font-display text-xl font-bold text-highlight-soft-foreground">
-            <span aria-hidden className="h-px w-10 bg-highlight" />
+          <p className="flex items-center gap-3 font-display text-xl font-bold" style={{ color: SCRIPT_LOGO_COLORS.ink }}>
+            <span aria-hidden className="h-px w-10" style={{ background: SCRIPT_LOGO_COLORS.accent }} />
             {brand.tagline[locale]}
           </p>
+          <div className="flex flex-col gap-2">
+            <h4 className="text-sm font-bold">{t('identity.colors')}</h4>
+            <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {(
+                [
+                  ['ink', t('identity.ink'), t('identity.inkNote')],
+                  ['accent', t('identity.accent'), t('identity.accentNote')],
+                ] as const
+              ).map(([key, name, note]) => (
+                <li key={key} className="flex items-center gap-3 rounded-control border border-border p-2.5">
+                  <span aria-hidden className="size-10 shrink-0 rounded-control" style={{ background: SCRIPT_LOGO_COLORS[key] }} />
+                  <span className="flex min-w-0 flex-col">
+                    <span className="text-sm font-bold">{name}</span>
+                    <span className="text-xs text-muted-foreground">{note}</span>
+                    <span dir="ltr" className="font-mono text-xs text-muted-foreground">
+                      {SCRIPT_LOGO_COLORS[key]}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-        <AnimatedMark label={`${brand.name[locale]} — ${t('identity.logoName')}`} replayLabel={t('identity.replay')} />
+        <div className="flex flex-col items-center gap-8">
+          <div
+            className="grid w-full place-items-center rounded-card py-10"
+            style={{ background: `color-mix(in srgb, ${SCRIPT_LOGO_COLORS.ink} 7%, transparent)` }}
+          >
+            <WritingLogo
+              label={`${brand.name[locale]} — ${t('identity.logoName')}`}
+              height={170}
+              delayMs={400}
+              replayLabel={t('identity.replay')}
+              className="max-w-full"
+            />
+          </div>
+          <div className="flex w-full flex-col gap-3">
+            <h4 className="text-sm font-bold">{t('identity.writing')}</h4>
+            <ol className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {WRITING_STEPS.map(([key, parts], index) => (
+                <li key={key} className="flex flex-col items-center gap-2 rounded-control border border-border p-3 text-center">
+                  <ScriptLogo label={t(`identity.steps.${key}`)} height={34} highlight={[...parts]} />
+                  <span className="text-xs font-semibold">
+                    <span className="me-1 tabular-nums" style={{ color: SCRIPT_LOGO_COLORS.accent }}>
+                      {index + 1}
+                    </span>
+                    {t(`identity.steps.${key}`)}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
       </section>
 
       <section

@@ -1,10 +1,11 @@
 import type { Locale } from '@yusr/core';
-import { buttonClasses, Icon, Logo, textFor } from '@yusr/ui';
+import { buttonClasses, Icon, textFor } from '@yusr/ui';
 import Link from 'next/link';
 import { href, type ThemePreference } from '@/lib/i18n';
 import { LocaleSwitch } from './locale-switch';
 import { NavLink } from './nav-link';
 import { ThemeSwitch } from './theme-switch';
+import { WritingLogo } from './writing-logo';
 
 /** `donor`: the signed-in donor's name, or null; the account link reads «عطائي» or «تسجيل الدخول». */
 export function SiteHeader({ locale, theme, donor }: { locale: Locale; theme: ThemePreference; donor: { name: string } | null }) {
@@ -20,8 +21,8 @@ export function SiteHeader({ locale, theme, donor }: { locale: Locale; theme: Th
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/70 backdrop-blur-[6px]">
       <div className="container-page flex h-16 items-center justify-between gap-3">
         <Link href={href(locale)} className="rounded-control outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
-          {/* Arabic: the lettered lockup is wide and short, so it gets a larger mark size than the English one. */}
-          <Logo locale={locale} size={locale === 'ar' ? 58 : 44} animated className="max-sm:h-8 max-sm:w-auto" />
+          {/* «خطّ اليُسر» writes itself when the page opens, and again when the pointer comes back to it. */}
+          <WritingLogo label={t('a11y.logo')} height={44} className="max-sm:h-9 max-sm:w-auto" />
         </Link>
         <nav aria-label={t('nav.menu')} className="hidden items-center gap-1 md:flex">
           {links.map((link) => (
