@@ -19,4 +19,5 @@ export * from './share';
 export * from './contact';
 export * from './partners';
 export * from './followups';
+export * from './oversight';
 export * from './document-requests';

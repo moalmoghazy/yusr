@@ -9,11 +9,14 @@ import type {
   RecordFollowupInput,
   StoryPhotoInput,
   CaseStoryInput,
+  OversightReviewInput,
   UpdatePartnerInput,
 } from '@yusr/core/schemas';
 import type {
   AdminCase,
   AdminStory,
+  OversightItem,
+  OversightReview,
   AdminDonation,
   AdminOverview,
   AuditEntry,
@@ -155,6 +158,9 @@ export interface AdminClient {
   removeStoryPhoto(caseId: string): Promise<{ removed: true }>;
   /** The hub's «قصص النجاح» page: closed cases as stories, published or not. */
   stories(): Promise<AdminStory[]>;
+  /** «قسم المراجعة والتدقيق على العمل» (super admin): what the review rules raise, and the verdicts. */
+  oversight(): Promise<OversightItem[]>;
+  recordOversightReview(input: OversightReviewInput): Promise<OversightReview>;
   saveStory(caseId: string, input: CaseStoryInput): Promise<{ saved: true }>;
   /** Requests to see case documents, newest first, with how many still wait (documents:share). */
   documentRequests(limit?: number): Promise<DocumentRequestInbox>;

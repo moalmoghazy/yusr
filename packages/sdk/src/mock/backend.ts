@@ -5,6 +5,7 @@
  * maker-checker approvals, balanced ledger postings and automatic "funded" transitions.
  */
 import {
+  oversightBoard,
   ACCOUNTS,
   DEMO_FX,
   DomainError,
@@ -42,6 +43,8 @@ import {
   type Actor,
   type AdminCase,
   type AdminStory,
+  type OversightItem,
+  type OversightReview,
   type StoryText,
   type AdminDonation,
   type AdminOverview,
@@ -100,6 +103,7 @@ import type {
   PartnerProfileInput,
   StoryPhotoInput,
   CaseStoryInput,
+  OversightReviewInput,
   DocumentRequestInput,
   PartnerLogoInput,
   PartnerShowcaseInput,
@@ -1202,6 +1206,8 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
   /** «قصص نجاح» photos by case id (the prototype keeps only their versions). */
   const storyPhotos = new Map<string, string>();
   /** «قصص نجاح» text and visibility edited in the hub. */
+  /** «قسم المراجعة والتدقيق»: the super admin's verdicts, newest last. */
+  const oversightReviews: OversightReview[] = [];
   const storyEdits = new Map<string, { text: StoryText; published: boolean; updatedAt: string; updatedBy: string }>();
   const isFollowed = (status: CaseStatus): status is FollowupCase['status'] => (FOLLOWUP_STATUSES as readonly CaseStatus[]).includes(status);
   const followupCase = (item: AdminCase): FollowupCase => {
@@ -1963,6 +1969,29 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
         logAudit(actorRef, 'case.story_photo_set', 'case', caseId, item.reference, null, { type: input.contentType });
         return { version };
       },
+      oversight: (): OversightItem[] => {
+        ensure('oversight:review');
+        return oversightBoard({ cases: api.cases(), tasks: api.verificationTasks(), followups: api.followups(), reviews: oversightReviews }, new Date(clock()));
+      },
+      recordOversightReview: (input: OversightReviewInput): OversightReview => {
+        ensure('oversight:review');
+        const item = mustCase(input.caseId);
+        const note = (input.note ?? '').trim();
+        if (input.verdict !== 'approved' && note.length < 3) throw new DomainError('VALIDATION_FAILED', 'Say what needs doing', { field: 'note' });
+        const review: OversightReview = {
+          id: `rev-${oversightReviews.length + 1}`,
+          area: input.area,
+          subjectId: input.subjectId,
+          caseId: input.caseId,
+          verdict: input.verdict,
+          note,
+          reviewer: { id: actor.id, name: actor.name },
+          createdAt: iso(clock()),
+        };
+        oversightReviews.push(review);
+        logAudit(actorRef, `oversight.${input.verdict}`, 'case', input.caseId, item.reference, null, { area: input.area, verdict: input.verdict });
+        return review;
+      },
       stories: (): AdminStory[] => {
         ensure('cases:read');
         return closedStories().map(({ item, story }) => {
@@ -2100,6 +2129,8 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       setStoryPhoto: wrap(sync.setStoryPhoto),
       removeStoryPhoto: wrap(sync.removeStoryPhoto),
       stories: wrap(sync.stories),
+      oversight: wrap(sync.oversight),
+      recordOversightReview: wrap(sync.recordOversightReview),
       saveStory: wrap(sync.saveStory),
       documentRequests: wrap(sync.documentRequests),
       setDocumentRequestStatus: wrap(sync.setDocumentRequestStatus),

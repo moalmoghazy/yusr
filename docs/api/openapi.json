@@ -39,6 +39,9 @@
       "name": "Operations · Follow-up"
     },
     {
+      "name": "Operations · Oversight"
+    },
+    {
       "name": "Operations · Document requests"
     },
     {
@@ -3887,6 +3890,133 @@
               "application/json": {
                 "schema": {
                   "description": "{ saved: true } (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/oversight": {
+      "get": {
+        "operationId": "admin.oversight.board",
+        "tags": [
+          "Operations · Oversight"
+        ],
+        "summary": "Cases, field verifications and follow-ups with what the review rules raise, and the verdicts given",
+        "description": "Requires a staff session with two-factor authentication.\n\nPermission: `oversight:review`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "x-permission": "oversight:review",
+        "responses": {
+          "200": {
+            "description": "OversightItem[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "OversightItem[] (see @yusr/core)"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/oversight/reviews": {
+      "post": {
+        "operationId": "admin.oversight.review",
+        "tags": [
+          "Operations · Oversight"
+        ],
+        "summary": "Record a verdict on a case, a field verification or a follow-up (append-only)",
+        "description": "A note is required unless the verdict is approved.\n\nRequires a staff session with two-factor authentication.\n\nPermission: `oversight:review`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "area": {
+                    "type": "string",
+                    "enum": [
+                      "cases",
+                      "verification",
+                      "followups"
+                    ]
+                  },
+                  "subjectId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "caseId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "verdict": {
+                    "type": "string",
+                    "enum": [
+                      "approved",
+                      "needs_action",
+                      "escalated"
+                    ]
+                  },
+                  "note": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "area",
+                  "subjectId",
+                  "caseId",
+                  "verdict"
+                ]
+              }
+            }
+          }
+        },
+        "x-permission": "oversight:review",
+        "responses": {
+          "200": {
+            "description": "OversightReview",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "OversightReview (see @yusr/core)"
                 }
               }
             }

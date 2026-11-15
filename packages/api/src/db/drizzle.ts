@@ -274,6 +274,10 @@ function createTx(x: Executor): Tx & { raw: Executor } {
       insertFollowup: async (row) => {
         await x.insert(t.caseFollowups).values(row);
       },
+      oversightReviews: async (limit) => x.select().from(t.oversightReviews).orderBy(desc(t.oversightReviews.createdAt)).limit(limit),
+      insertOversightReview: async (row) => {
+        await x.insert(t.oversightReviews).values(row);
+      },
       documentRequests: async (limit) => x.select().from(t.documentRequests).orderBy(desc(t.documentRequests.createdAt)).limit(limit),
       documentRequestById: async (id, lock) =>
         first(await locked(x.select().from(t.documentRequests).where(eq(t.documentRequests.id, id)).limit(1).$dynamic(), lock)),

@@ -18,6 +18,8 @@ import {
   type FollowupKind,
   type FollowupOutcome,
   type Localized,
+  type OversightArea,
+  type OversightVerdict,
   type PartnerAssociation,
   type PartnerApplicationStatus,
   type PartnerProfile,
@@ -358,6 +360,26 @@ export const caseFollowups = pgTable(
     recordedAt: at('recorded_at').notNull().defaultNow(),
   },
   (t) => [index('case_followups_case_idx').on(t.caseId, t.recordedAt)],
+);
+
+/** The super admin's verdicts on the team's work (0016_oversight_reviews.sql); append-only. */
+export const oversightReviews = pgTable(
+  'oversight_reviews',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    area: text('area').$type<OversightArea>().notNull(),
+    subjectId: uuid('subject_id').notNull(),
+    caseId: uuid('case_id')
+      .notNull()
+      .references(() => cases.id),
+    verdict: text('verdict').$type<OversightVerdict>().notNull(),
+    note: text('note').notNull(),
+    reviewerId: uuid('reviewer_id')
+      .notNull()
+      .references(() => users.id),
+    createdAt: at('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('oversight_reviews_subject_idx').on(t.area, t.subjectId, t.createdAt)],
 );
 
 export const caseUpdates = pgTable('case_updates', {

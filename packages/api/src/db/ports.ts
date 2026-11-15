@@ -11,6 +11,7 @@ import type {
   BeneficiaryRow,
   CaseDocumentRow,
   CaseFollowupRow,
+  OversightReviewRow,
   CaseFundSummary,
   CaseRow,
   CaseTransitionRow,
@@ -94,6 +95,9 @@ export interface CasesRepo {
   followups(caseIds: readonly Id[]): Promise<CaseFollowupRow[]>;
   /** Refused unless the case is funded or closed. */
   insertFollowup(row: CaseFollowupRow): Promise<void>;
+  /** The super admin's verdicts (0016), newest first. */
+  oversightReviews(limit: number): Promise<OversightReviewRow[]>;
+  insertOversightReview(row: OversightReviewRow): Promise<void>;
   /** Requests to see documents (0012), newest first. */
   documentRequests(limit: number): Promise<DocumentRequestRow[]>;
   documentRequestById(id: Id, lock?: LockMode): Promise<DocumentRequestRow | null>;

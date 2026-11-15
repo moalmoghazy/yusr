@@ -12,6 +12,7 @@ import { DEFAULT_OTP, OtpService, type OtpSender } from './auth/otp.service';
 import { CasesService } from './cases/cases.service';
 import { DocumentRequestsService } from './cases/document-requests.service';
 import { FollowupsService } from './cases/followups.service';
+import { OversightService } from './admin/oversight.service';
 import { VerificationService } from './cases/verification.service';
 import { FieldCipher } from './common/cipher';
 import { systemClock, type Clock } from './common/clock';
@@ -78,6 +79,8 @@ export interface Services {
   refunds: RefundsService;
   documents: DocumentsService;
   admin: AdminQueries;
+  /** «قسم المراجعة والتدقيق على العمل» (super admin only). */
+  oversight: OversightService;
   team: TeamService;
   dispatcher: Dispatcher;
   worker: OutboxWorker;
@@ -221,6 +224,7 @@ export async function createServices(config: AppConfig, options: { clock?: Clock
   const refunds = new RefundsService({ db, gateways, clock, ids });
   const documents = new DocumentsService({ db, storage, limiter, clock, ids, partners });
   const admin = new AdminQueries({ db, cases, donations, fx, clock });
+  const oversight = new OversightService({ db, clock, ids, cases, admin, followups });
   const team = new TeamService(db, clock);
   const me = new MeQueries({ db, clock, chatwootHmacToken: config.ops.chatwootHmacToken });
   const dispatcher = new Dispatcher({
@@ -262,6 +266,7 @@ export async function createServices(config: AppConfig, options: { clock?: Clock
     refunds,
     documents,
     admin,
+    oversight,
     team,
     dispatcher,
     worker,

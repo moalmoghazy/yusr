@@ -3,6 +3,8 @@ import { describe, it } from 'node:test';
 import { assertBalanced, type Posting } from '@yusr/core';
 import { SEED_CASES, seedAmounts } from '@yusr/sdk/mock';
 import { AdminQueries } from '../src/admin/admin.queries';
+import { OversightService } from '../src/admin/oversight.service';
+import { FollowupsService } from '../src/cases/followups.service';
 import { CasesService } from '../src/cases/cases.service';
 import { FieldCipher } from '../src/common/cipher';
 import { ManualClock } from '../src/common/clock';
@@ -44,7 +46,8 @@ async function seeded() {
     },
   });
   const admin = new AdminQueries({ db, cases, donations, fx: new StaticFx(), clock });
-  return { clock, db, cases, admin, summary };
+  const oversight = new OversightService({ db, clock, ids, cases, admin, followups: new FollowupsService({ db, clock, ids }) });
+  return { clock, db, cases, admin, oversight, summary };
 }
 
 const superAdmin = { id: stableId('staff:u_sara'), name: 'Sara', roles: ['super_admin' as const], mfa: true };
@@ -104,5 +107,28 @@ describe('demo seed', () => {
     const ledger = await admin.ledger({ limit: 20 }, context);
     assert.equal(ledger.length, 20);
     await assert.rejects(admin.ledger({}, { actor: { ...superAdmin, roles: ['content_moderator'] } }));
+  });
+
+  it('lets only the super admin review the work in «قسم المراجعة والتدقيق», and keeps every verdict', async () => {
+    const { oversight, clock } = await seeded();
+    const director = { actor: { id: '00000000-0000-4000-8000-00000000aaaa', name: 'المدير', roles: ['super_admin' as const], mfa: true } };
+    const moderator = { actor: { id: '00000000-0000-4000-8000-00000000aaab', name: 'مشرف', roles: ['content_moderator' as const], mfa: true } };
+    await assert.rejects(oversight.board(moderator), (error: { code?: string }) => error.code === 'FORBIDDEN');
+    const board = await oversight.board(director);
+    assert.ok(board.some((item) => item.area === 'cases'));
+    assert.ok(board.some((item) => item.area === 'followups'));
+    const target = board.find((item) => item.area === 'cases')!;
+    await assert.rejects(
+      oversight.record({ area: 'cases', subjectId: target.subjectId, caseId: target.caseId, verdict: 'approved', note: '' }, moderator),
+      (error: { code?: string }) => error.code === 'FORBIDDEN',
+    );
+    await oversight.record({ area: 'cases', subjectId: target.subjectId, caseId: target.caseId, verdict: 'needs_action', note: 'ارفع فاتورة الصرف' }, director);
+    clock.advance(60_000);
+    await oversight.record({ area: 'cases', subjectId: target.subjectId, caseId: target.caseId, verdict: 'approved', note: '' }, director);
+    const after = (await oversight.board(director)).find((item) => item.area === 'cases' && item.subjectId === target.subjectId)!;
+    assert.deepEqual(
+      after.reviews.map((review) => review.verdict),
+      ['approved', 'needs_action'],
+    );
   });
 });

@@ -30,6 +30,8 @@ export const PERMISSIONS = [
   'cases:follow_up',
   /** Answer donors' requests to see a case's documents (sent over WhatsApp as view-once images). */
   'documents:share',
+  /** «قسم المراجعة والتدقيق على العمل»: review cases, field verification and follow-up, and record verdicts. Super admin only. */
+  'oversight:review',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];

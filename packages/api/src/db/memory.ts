@@ -50,6 +50,7 @@ import type {
   PartnerApplicationRow,
   DocumentRequestRow,
   StoryPhotoRow,
+  OversightReviewRow,
   CaseStoryRow,
   PartnerRow,
   PaymentAttemptRow,
@@ -92,6 +93,7 @@ interface State {
   transitions: CaseTransitionRow[];
   documents: Map<Id, CaseDocumentRow>;
   followups: CaseFollowupRow[];
+  oversightReviews: OversightReviewRow[];
   documentRequests: Map<Id, DocumentRequestRow>;
   storyPhotos: Map<Id, StoryPhotoRow>;
   stories: Map<Id, CaseStoryRow>;
@@ -142,6 +144,7 @@ function emptyState(): State {
     transitions: [],
     documents: new Map(),
     followups: [],
+    oversightReviews: [],
     documentRequests: new Map(),
     storyPhotos: new Map(),
     stories: new Map(),
@@ -483,6 +486,11 @@ export class MemoryDatabase implements Database {
         const status = s().cases.get(row.caseId)?.status;
         if (status !== 'funded' && status !== 'closed') throw new DomainError('VALIDATION_FAILED', 'Only funded or closed cases take follow-ups');
         s().followups.push(clone(row));
+      },
+      oversightReviews: async (limit) => cloneAll([...s().oversightReviews].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, limit)),
+      insertOversightReview: async (row) => {
+        if (!s().cases.has(row.caseId)) throw new DomainError('NOT_FOUND', `case ${row.caseId} not found`);
+        s().oversightReviews.push(clone(row));
       },
       documentRequests: async (limit) =>
         cloneAll([...s().documentRequests.values()].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, limit)),

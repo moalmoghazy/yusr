@@ -8,6 +8,7 @@ import { CONTACT_CHANNELS } from './contact';
 import { DEDICATION_MAX_LENGTH } from './donation';
 import { DOCUMENT_REQUEST_STATUSES } from './document-requests';
 import { FOLLOWUP_KINDS, FOLLOWUP_OUTCOMES } from './followups';
+import { OVERSIGHT_AREAS, OVERSIGHT_VERDICTS } from './oversight';
 import {
   isYusrCode,
   normalizeRegistrationNumber,
@@ -188,6 +189,18 @@ export const caseStorySchema = z.object({
   published: z.boolean(),
 });
 export type CaseStoryInput = z.infer<typeof caseStorySchema>;
+
+/** A super admin's verdict in «قسم المراجعة والتدقيق»: a note is required unless the work is approved. */
+export const oversightReviewSchema = z
+  .object({
+    area: z.enum(OVERSIGHT_AREAS),
+    subjectId: idSchema,
+    caseId: idSchema,
+    verdict: z.enum(OVERSIGHT_VERDICTS),
+    note: z.string().trim().max(1000).default(''),
+  })
+  .refine((input) => input.verdict === 'approved' || input.note.length >= 3, { message: 'Say what needs doing', path: ['note'] });
+export type OversightReviewInput = z.infer<typeof oversightReviewSchema>;
 
 export const partnerShowcaseSchema = z
   .object({ showcased: z.boolean().optional(), newBadge: z.boolean().optional() })

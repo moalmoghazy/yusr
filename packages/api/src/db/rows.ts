@@ -15,6 +15,8 @@ import type {
   FollowupOutcome,
   Locale,
   Localized,
+  OversightArea,
+  OversightVerdict,
   PayeeType,
   PaymentMethod,
   PartnerAssociation,
@@ -215,6 +217,18 @@ export interface BeneficiaryRow {
   phoneCipher: Uint8Array | null;
   region: string;
   householdSize: number | null;
+  createdAt: Timestamp;
+}
+
+/** A super admin's verdict on a piece of work (0016_oversight_reviews.sql). */
+export interface OversightReviewRow {
+  id: Id;
+  area: OversightArea;
+  subjectId: Id;
+  caseId: Id;
+  verdict: OversightVerdict;
+  note: string;
+  reviewerId: Id;
   createdAt: Timestamp;
 }
 

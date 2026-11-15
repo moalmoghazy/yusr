@@ -10,7 +10,8 @@ import { adminApi, currentStaff } from '@/lib/session';
 /** Each section shows when the staff member holds any of its permissions (the API re-checks every call). */
 const SECTIONS: ReadonlyArray<{
   href: string;
-  key: 'overview' | 'cases' | 'verification' | 'followups' | 'stories' | 'documentRequests' | 'finance' | 'crm' | 'partners' | 'showcase' | 'audit';
+  key:
+    'overview' | 'cases' | 'verification' | 'followups' | 'stories' | 'oversight' | 'documentRequests' | 'finance' | 'crm' | 'partners' | 'showcase' | 'audit';
   icon: IconName;
   anyOf: readonly Permission[];
 }> = [
@@ -24,6 +25,7 @@ const SECTIONS: ReadonlyArray<{
   { href: '/people', key: 'crm', icon: 'users', anyOf: ['cases:read'] },
   { href: '/partners', key: 'partners', icon: 'hand-heart', anyOf: ['partners:manage'] },
   { href: '/showcase', key: 'showcase', icon: 'layers', anyOf: ['partners:manage'] },
+  { href: '/oversight', key: 'oversight', icon: 'shield-check', anyOf: ['oversight:review'] },
   { href: '/audit', key: 'audit', icon: 'history', anyOf: ['audit:read'] },
 ];
 
