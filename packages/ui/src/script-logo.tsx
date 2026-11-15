@@ -71,7 +71,7 @@ export function ScriptLogo({
           <path
             key={part.id}
             d={part.fill}
-            fill={SCRIPT_LOGO_COLORS[part.color]}
+            fill={SCRIPT_LOGO_COLORS[part.color].css}
             opacity={dim ? 0.18 : undefined}
             mask={writing && part.pen ? `url(#${id}-${part.id})` : undefined}
             className={writing && !part.pen ? 'script-damma' : undefined}

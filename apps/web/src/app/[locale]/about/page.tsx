@@ -76,14 +76,14 @@ export default async function AboutPage({ params }: { params: LocaleParams }) {
       >
         <div className="flex flex-col gap-5">
           <h3 id="identity-logo" className="flex flex-col gap-1">
-            <span className="text-sm font-semibold" style={{ color: SCRIPT_LOGO_COLORS.accent }}>
+            <span className="text-sm font-semibold" style={{ color: SCRIPT_LOGO_COLORS.accent.css }}>
               {t('identity.logo')}
             </span>
             <span className="font-display text-3xl font-bold leading-[1.4]">{t('identity.logoName')}</span>
           </h3>
           <p className="text-[1.05rem] leading-[1.9] text-muted-foreground">{t('identity.logoStory')}</p>
-          <p className="flex items-center gap-3 font-display text-xl font-bold" style={{ color: SCRIPT_LOGO_COLORS.ink }}>
-            <span aria-hidden className="h-px w-10" style={{ background: SCRIPT_LOGO_COLORS.accent }} />
+          <p className="flex items-center gap-3 font-display text-xl font-bold" style={{ color: SCRIPT_LOGO_COLORS.ink.css }}>
+            <span aria-hidden className="h-px w-10" style={{ background: SCRIPT_LOGO_COLORS.accent.css }} />
             {brand.tagline[locale]}
           </p>
           <div className="flex flex-col gap-2">
@@ -96,12 +96,12 @@ export default async function AboutPage({ params }: { params: LocaleParams }) {
                 ] as const
               ).map(([key, name, note]) => (
                 <li key={key} className="flex items-center gap-3 rounded-control border border-border p-2.5">
-                  <span aria-hidden className="size-10 shrink-0 rounded-control" style={{ background: SCRIPT_LOGO_COLORS[key] }} />
+                  <span aria-hidden className="size-10 shrink-0 rounded-control" style={{ background: SCRIPT_LOGO_COLORS[key].css }} />
                   <span className="flex min-w-0 flex-col">
                     <span className="text-sm font-bold">{name}</span>
                     <span className="text-xs text-muted-foreground">{note}</span>
                     <span dir="ltr" className="font-mono text-xs text-muted-foreground">
-                      {SCRIPT_LOGO_COLORS[key]}
+                      {SCRIPT_LOGO_COLORS[key].light} · {SCRIPT_LOGO_COLORS[key].dark}
                     </span>
                   </span>
                 </li>
@@ -112,7 +112,7 @@ export default async function AboutPage({ params }: { params: LocaleParams }) {
         <div className="flex flex-col items-center gap-8">
           <div
             className="grid w-full place-items-center rounded-card py-10"
-            style={{ background: `color-mix(in srgb, ${SCRIPT_LOGO_COLORS.ink} 7%, transparent)` }}
+            style={{ background: `color-mix(in srgb, ${SCRIPT_LOGO_COLORS.ink.css} 7%, transparent)` }}
           >
             <WritingLogo
               label={`${brand.name[locale]} — ${t('identity.logoName')}`}
@@ -129,7 +129,7 @@ export default async function AboutPage({ params }: { params: LocaleParams }) {
                 <li key={key} className="flex flex-col items-center gap-2 rounded-control border border-border p-3 text-center">
                   <ScriptLogo label={t(`identity.steps.${key}`)} height={34} highlight={[...parts]} />
                   <span className="text-xs font-semibold">
-                    <span className="me-1 tabular-nums" style={{ color: SCRIPT_LOGO_COLORS.accent }}>
+                    <span className="me-1 tabular-nums" style={{ color: SCRIPT_LOGO_COLORS.accent.css }}>
                       {index + 1}
                     </span>
                     {t(`identity.steps.${key}`)}

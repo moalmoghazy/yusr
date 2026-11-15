@@ -904,11 +904,11 @@ export const en: Messages = {
     patternName: 'The garden of giving',
     replay: 'Replay',
     logoStory:
-      'The logo is the word يُسر, “ease”, itself, written in one hand like a signature: the yā’ and its two dots, then the flowing teeth of the sīn, then the rā’ stretching out like a smoothed road. Green is the colour of growth and calm; the orange ḍamma above is the warmth of giving. It is what turns يسر into يُسر, so it is written last, the way a gift comes to complete the meaning.',
+      'The logo is the word يُسر, “ease”, itself, written in one hand like a signature: the yā’ and its two dots, then the flowing teeth of the sīn, then the rā’ stretching out like a smoothed road. It wears Yusr’s own colours: turquoise for trust and clarity, and the gold ḍamma above, the colour of sand and the warmth of giving. It is what turns يسر into يُسر, so it is written last, the way a gift comes to complete the meaning.',
     colors: 'Colours',
-    ink: 'Growth green',
-    inkNote: 'The word: growth and calm',
-    accent: 'Giving orange',
+    ink: 'Yusr turquoise',
+    inkNote: 'The word: trust and clarity',
+    accent: 'Sand gold',
     accentNote: 'The ḍamma: the warmth of giving',
     writing: 'How it is written',
     steps: {

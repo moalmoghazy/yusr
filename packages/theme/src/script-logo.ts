@@ -1,16 +1,22 @@
+import { darkColors, lightColors } from './tokens';
+
 /**
  * «خطّ اليُسر» — the logo approved on 2026-11-15 from the owner's Illustrator file (YUSR LOGO.ai): the
- * word «يُسر» written by hand in green, with an orange ḍamma. Each letter has its filled shape and the pen's
+ * word «يُسر» written by hand, drawn in the site's «فيروز ورمل» colours (turquoise word, sand-gold ḍamma; the file's
+ * own green/orange were swapped for them on 2026-11-15). Each letter has its filled shape and the pen's
  * path through it (the file's own centrelines), so it can be written stroke by stroke: the ي and its two
  * dots, then the س, then the long ر, and the ḍamma last. Coordinates are the file's, moved to the origin.
  */
 
-/** The logo's own colours (from the file): it keeps them on every background. */
+/**
+ * The logo's colours: the site's own tokens, so it follows light and dark. `css` is what the web reads
+ * (the generated `--primary` / `--highlight`), `light` and `dark` are their values for anything static.
+ */
 export const SCRIPT_LOGO_COLORS = {
-  /** «أخضر النماء» */
-  ink: '#40BB6A',
-  /** «برتقالي العطاء» — the ḍamma */
-  accent: '#F9A72B',
+  /** «فيروز يُسر»: the word, the site's primary. */
+  ink: { css: `var(--primary, ${lightColors.primary})`, light: lightColors.primary, dark: darkColors.primary },
+  /** «ذهب الرمل»: the ḍamma, the site's highlight. */
+  accent: { css: `var(--highlight, ${lightColors.highlight})`, light: lightColors.highlight, dark: darkColors.highlight },
 } as const;
 
 export interface ScriptLogoPart {
