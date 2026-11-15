@@ -105,6 +105,18 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
     deadlineValid &&
     Boolean(idDoc && proofDoc) &&
     consent;
+  /** What still stands between the form and the send button, in the order the steps ask for it. */
+  const missing = [
+    !credentialsReady && t('submit.missing.partner'),
+    credentialsReady && !associationValid && t('submit.missing.contact'),
+    title.trim().length < TITLE_MIN && t('submit.missing.caseTitle', { min: f.number(TITLE_MIN) }),
+    story.trim().length < STORY_MIN && t('submit.missing.story', { min: f.number(STORY_MIN), count: f.number(story.trim().length) }),
+    !goalValid && t('submit.missing.goal'),
+    !nationalIdValid && t('submit.missing.nationalId'),
+    !deadlineValid && t('submit.missing.deadline'),
+    !(idDoc && proofDoc) && t('submit.missing.documents'),
+    !consent && t('submit.missing.consent'),
+  ].filter((item): item is string => Boolean(item));
   const flagged = (field: string) => problem?.fields.includes(field) || undefined;
   /** An API error in the form's words: a wrong code (or number) gets its own explanation. */
   const describe = (code: string, fields: string[]) =>
@@ -527,7 +539,7 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
               t('submit.goalForDonors', { percent: f.percent(PLATFORM_FEE_BPS / 100) }),
               goalValid && goalMinor !== null ? f.money(caseAmountsFor(goalMinor).goalMinor, currency) : '—',
             ],
-            [t('submit.steps.documents'), t('units.documents', { count: Number(Boolean(idDoc)) + Number(Boolean(proofDoc)) })],
+            [t('submit.steps.documents'), [idDoc, proofDoc].flatMap((doc) => (doc ? [doc.name] : [])).join(locale === 'ar' ? '، ' : ', ') || '—'],
             [
               t('submit.fields.region'),
               l([...EGYPT_GOVERNORATES, ...SAUDI_REGIONS].find((entry) => entry.code === region)?.name ?? { ar: region, en: region }),
@@ -554,6 +566,16 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
             <Icon name="alert" size={18} className="mt-0.5" />
             {problem.message}
           </p>
+        )}
+        {!ready && missing.length > 0 && (
+          <div className="flex flex-col gap-1.5 rounded-control bg-warning-soft p-3 text-sm text-warning-soft-foreground" role="status">
+            <p className="font-bold">{t('submit.missing.title')}</p>
+            <ul className="flex list-disc flex-col gap-1 ps-5">
+              {missing.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
         )}
         <div className="flex justify-end">
           <button type="submit" disabled={!ready || sending} className={buttonClasses({ size: 'lg' })}>
