@@ -331,8 +331,9 @@ export const protoAr = {
       },
       progressNote: 'التقريب للأسفل دائمًا — لا تُعرض حالة بنسبة ١٠٠٪ قبل أن يكتمل تمويلها فعلًا.',
       presetNames: {
-        turquoise: 'فيروز ورمل',
-        emerald: 'زمرّدي (السابق)',
+        khatt: 'أخضر وبرتقالي «خطّ اليُسر»',
+        turquoise: 'فيروز ورمل (السابق)',
+        emerald: 'زمرّدي (الأقدم)',
         nile: 'النيل',
         olive: 'زيتوني',
         rosewood: 'عنّابي',

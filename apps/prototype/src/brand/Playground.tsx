@@ -8,6 +8,8 @@ import {
   displayFaceOf,
   displayStack,
   gold,
+  green,
+  orange,
   presets,
   teal,
   themeFromBrandColors,
@@ -27,8 +29,9 @@ import { Icon } from '../ui/icons';
 import { DocSectionHead } from '../ui/page-nav';
 import { Badge, Button, cx } from '../ui/primitives';
 
-/** The two colors each preset was derived from (turquoise is the hand-tuned default). */
+/** The two colors each preset was derived from («خطّ اليُسر» green and orange is the hand-tuned default). */
 const PRESET_SOURCE: Readonly<Record<PresetName, { primary: string; highlight: string }>> = {
+  khatt: { primary: green[600], highlight: orange[400] },
   turquoise: { primary: teal[600], highlight: gold[400] },
   emerald: { primary: '#13725F', highlight: '#E0A42F' },
   nile: { primary: '#1B5E8C', highlight: '#D9A441' },
@@ -64,7 +67,7 @@ type Mode = PresetName | 'custom';
 let remembered = { primary: '#1B5E8C', highlight: '#D9A441', radius: 1 };
 
 function modeOf(theme: Theme): Mode {
-  if (theme === defaultTheme) return 'turquoise';
+  if (theme === defaultTheme) return 'khatt';
   return (PRESET_NAMES as string[]).includes(theme.name) ? (theme.name as PresetName) : 'custom';
 }
 
@@ -276,8 +279,8 @@ export function Playground({ index }: { index: string }) {
                 variant="outline"
                 size="sm"
                 icon="refresh"
-                onClick={() => choosePreset('turquoise', DEFAULT_DISPLAY_FACE)}
-                disabled={mode === 'turquoise' && face === DEFAULT_DISPLAY_FACE}
+                onClick={() => choosePreset('khatt', DEFAULT_DISPLAY_FACE)}
+                disabled={mode === 'khatt' && face === DEFAULT_DISPLAY_FACE}
               >
                 {t('proto.brand.reset')}
               </Button>

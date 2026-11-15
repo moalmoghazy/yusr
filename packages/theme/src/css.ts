@@ -1,4 +1,5 @@
 import { patternCssUrl, patternStyleFor } from './pattern';
+import { SCRIPT_LOGO_BRAND } from './script-logo';
 import { markShine } from './svg';
 import type { ColorScheme, SemanticColors, Theme, ToneName } from './tokens';
 
@@ -28,6 +29,9 @@ function colorVariables(theme: Theme, scheme: ColorScheme): Record<string, strin
   }
   // The bright band inside the logo's bowl (the gold band is --highlight).
   vars['--logo-shine'] = markShine(scheme, theme).shine;
+  // «خطّ اليُسر» keeps its own green and orange on every background.
+  vars['--logo-ink'] = SCRIPT_LOGO_BRAND.ink;
+  vars['--logo-accent'] = SCRIPT_LOGO_BRAND.accent;
   vars['--y-shadow-sm'] = theme.shadow[scheme].sm;
   vars['--y-shadow-md'] = theme.shadow[scheme].md;
   vars['--y-shadow-lg'] = theme.shadow[scheme].lg;
@@ -102,9 +106,10 @@ export function tailwindThemeCss(theme: Theme): string {
     }
   }
   lines.push(
+    '  --color-logo-ink: var(--logo-ink);',
+    '  --color-logo-accent: var(--logo-accent);',
     '  --font-display: var(--y-font-display);',
     '  --font-logo: var(--y-font-logo);',
-    '  --font-wordmark: var(--y-font-wordmark);',
     '  --font-sans: var(--y-font-sans);',
     '  --font-mono: var(--y-font-mono);',
     '  --radius-sm: calc(var(--radius) - 4px);',

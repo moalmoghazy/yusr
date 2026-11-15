@@ -139,18 +139,16 @@ describe('CaseCard', () => {
     const ids = [...html.matchAll(/<h3 id="([^"]+)"/g)].map((match) => match[1]);
     assert.equal(ids.length, 2);
     assert.notEqual(ids[0], ids[1]);
-    const patterns = [...html.matchAll(/<pattern id="([^"]+)"/g)].map((match) => match[1]);
-    assert.equal(new Set(patterns).size, 2, 'each cover has its own lattice pattern');
   });
 
-  it('puts every cover motif in the same place, over a drifting lattice, with no trace of the old ي mark', () => {
+  it('puts every cover motif in the same place, over the ر sweep, with no lattice and no trace of the old ي mark', () => {
     const motif = (coverSeed: number) => {
       const html = renderToStaticMarkup(<CaseCard item={{ ...fixture(), coverSeed }} locale="ar" href={HREF} now={NOW} />);
       // The motif alone: the old mark's bowl and ḍamma are gone.
       assert.equal(html.match(/fill-highlight/g), null);
       assert.ok(!html.includes('cover-morph-mark') && html.includes('class="cover-morph-icon"'));
-      assert.ok(html.includes('class="case-cover-drift"'));
-      return html.match(/transform="(translate\([^"]+scale\([^"]+)"/)?.[1];
+      assert.ok(!html.includes('<pattern'), 'no lattice any more');
+      return html.match(/transform="(translate\([^"]+scale\([^"]+)" class="cover-morph-icon"/)?.[1];
     };
     assert.ok(motif(1));
     assert.equal(motif(1), motif(2));
@@ -227,8 +225,8 @@ describe('Logo', () => {
     const ar = renderToStaticMarkup(<Logo locale="ar" size={32} />);
     assert.ok(ar.includes('aria-label="شعار يُسر"') && ar.includes('role="img"'));
     for (const part of SCRIPT_LOGO.parts) assert.ok(ar.includes(`d="${part.fill}"`), part.id);
-    assert.ok(ar.includes('var(--primary') && ar.includes('var(--highlight'));
+    assert.ok(ar.includes('var(--logo-ink') && ar.includes('var(--logo-accent'));
     const inverse = renderToStaticMarkup(<Logo locale="en" size={32} inverse />);
-    assert.ok(inverse.includes('fill="#FFFFFF"') && inverse.includes('var(--highlight'));
+    assert.ok(inverse.includes('fill="#FFFFFF"') && inverse.includes('var(--logo-accent'));
   });
 });

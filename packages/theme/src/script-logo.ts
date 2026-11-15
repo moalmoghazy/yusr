@@ -1,22 +1,23 @@
-import { darkColors, lightColors } from './tokens';
-
 /**
  * «خطّ اليُسر» — the logo approved on 2026-11-15 from the owner's Illustrator file (YUSR LOGO.ai): the
- * word «يُسر» written by hand, drawn in the site's «فيروز ورمل» colours (turquoise word, sand-gold ḍamma; the file's
- * own green/orange were swapped for them on 2026-11-15). Each letter has its filled shape and the pen's
+ * word «يُسر» written by hand, green with an orange ḍamma; its two colours are the site's palette since 2026-11-15. Each letter has its filled shape and the pen's
  * path through it (the file's own centrelines), so it can be written stroke by stroke: the ي and its two
  * dots, then the س, then the long ر, and the ḍamma last. Coordinates are the file's, moved to the origin.
  */
 
+/** The logo's own colours, exactly as drawn (YUSR LOGO.ai): the brand from 2026-11-15. */
+export const SCRIPT_LOGO_BRAND = { ink: '#40BB6A', accent: '#F9A72B' } as const;
+
 /**
- * The logo's colours: the site's own tokens, so it follows light and dark. `css` is what the web reads
- * (the generated `--primary` / `--highlight`), `light` and `dark` are their values for anything static.
+ * The logo's colours for each surface: `css` is what the web reads (`--logo-ink` / `--logo-accent`, generated
+ * by css.ts), `light` and `dark` the values for anything static. The logo keeps its own green and orange on
+ * both backgrounds.
  */
 export const SCRIPT_LOGO_COLORS = {
-  /** «فيروز يُسر»: the word, the site's primary. */
-  ink: { css: `var(--primary, ${lightColors.primary})`, light: lightColors.primary, dark: darkColors.primary },
-  /** «ذهب الرمل»: the ḍamma, the site's highlight. */
-  accent: { css: `var(--highlight, ${lightColors.highlight})`, light: lightColors.highlight, dark: darkColors.highlight },
+  /** «أخضر النماء»: the word. */
+  ink: { css: `var(--logo-ink, ${SCRIPT_LOGO_BRAND.ink})`, light: SCRIPT_LOGO_BRAND.ink, dark: SCRIPT_LOGO_BRAND.ink },
+  /** «برتقالي العطاء»: the ḍamma. */
+  accent: { css: `var(--logo-accent, ${SCRIPT_LOGO_BRAND.accent})`, light: SCRIPT_LOGO_BRAND.accent, dark: SCRIPT_LOGO_BRAND.accent },
 } as const;
 
 export interface ScriptLogoPart {
@@ -81,3 +82,14 @@ export const SCRIPT_LOGO: { viewBox: string; width: number; height: number; part
     },
   ],
 };
+
+/**
+ * The long stroke of the ر, alone: the brush sweep the site borrows for its decoration (hero, section
+ * accents, case covers) so every flourish comes from the logo's own hand. A filled shape on `viewBox`.
+ */
+export const BRUSH_SWEEP = {
+  viewBox: '7 86 207 101',
+  width: 207,
+  height: 101,
+  d: SCRIPT_LOGO.parts.find((part) => part.id === 'ra')!.fill,
+} as const;

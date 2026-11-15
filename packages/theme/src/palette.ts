@@ -5,7 +5,38 @@
 
 export type Scale = Readonly<Record<50 | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900 | 950, string>>;
 
-/** Yusr turquoise (the «فيروز ورمل» brand, 2026-11): Pharaonic faience, calm and trusted. Kept under the name teal. */
+/** «أخضر النماء»: the green of the «خطّ اليُسر» logo (#40BB6A at 400), the brand from 2026-11-15. Text and filled
+ * buttons use 600–700, which read on white; 400 is the logo and the brush strokes. */
+export const green: Scale = {
+  50: '#EEF9F2',
+  100: '#D5F1DF',
+  200: '#ABE2BF',
+  300: '#7BD09B',
+  400: '#40BB6A',
+  500: '#2FA058',
+  600: '#1F7A43',
+  700: '#1C6A3C',
+  800: '#185532',
+  900: '#14462A',
+  950: '#0A2817',
+};
+
+/** «برتقالي العطاء»: the logo's ḍamma (#F9A72B at 400). Highlights and milestones, with dark text on it. */
+export const orange: Scale = {
+  50: '#FFF7EA',
+  100: '#FEEBC9',
+  200: '#FDD592',
+  300: '#FBBE5C',
+  400: '#F9A72B',
+  500: '#E58B0F',
+  600: '#C06C0A',
+  700: '#98520D',
+  800: '#7B4311',
+  900: '#663811',
+  950: '#3A1C05',
+};
+
+/** Yusr turquoise (the «فيروز ورمل» brand, 2026-11-06 to 2026-11-15): Pharaonic faience, calm and trusted. Kept under the name teal. */
 export const teal: Scale = {
   50: '#EEF8F8',
   100: '#D3EEEF',

@@ -1,12 +1,8 @@
 import { CATEGORY_META, type CaseCategory, type CategoryTone } from '@yusr/core';
-import { andalusianPattern } from '@yusr/theme';
+import { BRUSH_SWEEP } from '@yusr/theme';
 import type { CSSProperties } from 'react';
-import { useId } from 'react';
 import { cn } from './cn';
 import { ICON_NODES } from './icons';
-
-/** The brand lattice at thumbnail scale (no rosettes; they turn to noise this small). */
-const LATTICE = andalusianPattern(64);
 
 /** Full class names per tone — Tailwind only generates what it can read in the source. */
 const TONES: Readonly<Record<CategoryTone, { root: string; bg: string; glyph: string }>> = {
@@ -19,7 +15,7 @@ const TONES: Readonly<Record<CategoryTone, { root: string; bg: string; glyph: st
 
 export interface CaseCoverProps {
   category: CaseCategory;
-  /** The case's cover seed: shifts the lattice, the light and the motif so neighbouring cards differ. */
+  /** The case's cover seed: shifts the sweep and the light so neighbouring cards differ. */
   seed: number;
   className?: string;
   /** Accessible name; the cover is decorative (hidden) without one. */
@@ -33,11 +29,10 @@ const GLYPH_Y = (180 - 24 * GLYPH_SCALE) / 2;
 
 /**
  * The illustrated case cover. Yusr never shows beneficiaries' photos — dignity first — so
- * each category has a motif set on the brand's Andalusian lattice. Every cover puts its motif
- * in the same place (start of the card, vertically centred) so a row of cards lines up; the
- * lattice drifts left to right and fades out, like the home hero (`.case-cover-drift` in the
- * web stylesheet; still under reduced motion). The motif draws itself and rests, in a loop (`.cover-morph-icon`;
- * without the animation it simply shows). Deterministic: the seed only shifts the lattice
+ * each category has a motif over a sweep of the ر from the logo. Every cover puts its motif
+ * in the same place (start of the card, vertically centred) so a row of cards lines up. The motif
+ * draws itself and rests, in a loop (`.cover-morph-icon`; without the animation it simply shows).
+ * Deterministic: the seed only shifts the sweep
  * and the light, so the server and client draw the same cover.
  */
 
@@ -45,13 +40,13 @@ const GLYPH_Y = (180 - 24 * GLYPH_SCALE) / 2;
 const morphTiming = (seed: number): CSSProperties => ({ ['--morph-delay' as string]: `${-((seed * 1.7) % 9).toFixed(1)}s` });
 
 export function CaseCover({ category, seed, className, label }: CaseCoverProps) {
-  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
-  const patternId = `ysr-cover-${uid}`;
-  const fadeId = `ysr-cover-fade-${uid}`;
   const tone = TONES[CATEGORY_META[category].tone];
   const variant = seed % 4;
   const orbX = 60 + (seed % 7) * 26;
   const orbY = 40 + (seed % 5) * 22;
+  const sweepX = 40 + (seed % 5) * 12;
+  const sweepY = 10 + (seed % 3) * 12;
+  const sweepTilt = -8 + (seed % 4) * 4;
 
   return (
     <svg
@@ -63,30 +58,10 @@ export function CaseCover({ category, seed, className, label }: CaseCoverProps) 
       aria-hidden={label ? undefined : true}
       focusable="false"
     >
-      <defs>
-        <pattern
-          id={patternId}
-          width={LATTICE.tile}
-          height={LATTICE.tile}
-          patternUnits="userSpaceOnUse"
-          patternTransform={`translate(${(seed * 13) % LATTICE.tile} ${(seed * 7) % LATTICE.tile})`}
-        >
-          <path d={LATTICE.lattice} fill="none" stroke="currentColor" strokeWidth={1} strokeLinecap="round" strokeLinejoin="round" />
-          <path d={LATTICE.seeds} fill="currentColor" />
-        </pattern>
-        <linearGradient id={`${fadeId}-g`} x1="0" x2="1" y1="0" y2="0">
-          <stop offset="0.3" stopColor="#fff" />
-          <stop offset="1" stopColor="#fff" stopOpacity={0} />
-        </linearGradient>
-        <mask id={fadeId} maskUnits="userSpaceOnUse" x="0" y="0" width="320" height="180">
-          <rect width="320" height="180" fill={`url(#${fadeId}-g)`} />
-        </mask>
-      </defs>
       <rect width="320" height="180" className={tone.bg} />
-      <g mask={`url(#${fadeId})`}>
-        <g className="case-cover-drift" style={{ ['--cover-tile' as string]: `${LATTICE.tile}px` }}>
-          <rect x={-LATTICE.tile} width={320 + LATTICE.tile} height="180" fill={`url(#${patternId})`} opacity={0.2} />
-        </g>
+      {/* The ر's sweep from the logo behind the motif, a little different on every card. */}
+      <g transform={`translate(${sweepX} ${sweepY}) rotate(${sweepTilt} 103 50) scale(1.45)`} opacity={0.16}>
+        <path d={BRUSH_SWEEP.d} transform="translate(-7 -86)" fill="currentColor" />
       </g>
       <circle cx={orbX} cy={orbY} r={70 + variant * 12} fill="currentColor" opacity={0.09} />
       <circle cx={320 - orbX / 2} cy={170 - orbY / 3} r={36 + variant * 6} fill="currentColor" opacity={0.07} />

@@ -132,7 +132,9 @@ export function themeFromBrandColors(input: BrandColorInput, base: Theme = defau
 
 /** Ready-made alternatives that show how far a two-color swap goes. */
 export const presets = {
-  turquoise: defaultTheme,
+  khatt: defaultTheme,
+  /** «فيروز ورمل», 2026-11-06 to 2026-11-15 (the logo's green and orange replaced it). */
+  turquoise: themeFromBrandColors({ name: 'turquoise', primary: '#00707A', highlight: '#D9A441' }),
   /** The brand before November 2026 («فيروز ورمل» replaced it). */
   emerald: themeFromBrandColors({ name: 'emerald', primary: '#13725F', highlight: '#E0A42F' }),
   nile: themeFromBrandColors({ name: 'nile', primary: '#1B5E8C', highlight: '#D9A441' }),

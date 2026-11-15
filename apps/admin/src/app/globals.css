@@ -20,8 +20,3 @@
     -webkit-font-smoothing: antialiased;
   }
 }
-
-@utility bg-brand-pattern {
-  background-image: var(--y-pattern);
-  background-size: var(--y-pattern-size);
-}

@@ -316,8 +316,9 @@ export const protoEn: Widen<typeof protoAr> = {
       },
       progressNote: 'Always rounded down: a case never shows 100% until it is actually funded.',
       presetNames: {
-        turquoise: 'Turquoise & sand',
-        emerald: 'Emerald (previous)',
+        khatt: '«Hand of ease» green & orange',
+        turquoise: 'Turquoise & sand (previous)',
+        emerald: 'Emerald (earlier)',
         nile: 'Nile',
         olive: 'Olive',
         rosewood: 'Rosewood',

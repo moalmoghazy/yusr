@@ -37,7 +37,7 @@ export function LogoSection({ index }: { index: string }) {
                     <strong>{t(`identity.${key}`)}</strong>
                     <small className="muted">{t(`identity.${key}Note`)}</small>
                     <small className="mono muted" dir="ltr">
-                      {SCRIPT_LOGO_COLORS[key].light} · {SCRIPT_LOGO_COLORS[key].dark}
+                      {SCRIPT_LOGO_COLORS[key].light}
                     </small>
                   </span>
                 </li>
@@ -62,17 +62,17 @@ export function LogoSection({ index }: { index: string }) {
         <h3 className="doc-h3">{t('proto.brand.variants')}</h3>
         <div className="script-uses">
           <Use label={t('proto.brand.onLight')} background="#FFFFFF">
-            <ScriptMark height={64} ink={theme.colors.light.primary} accent={theme.colors.light.highlight} />
+            <ScriptMark height={64} />
           </Use>
           <Use label={t('proto.brand.onDark')} background={deep}>
-            <ScriptMark height={64} ink={theme.colors.dark.primary} accent={theme.colors.dark.highlight} />
+            <ScriptMark height={64} />
           </Use>
           <Use label={t('proto.brand.appIcon')} background="var(--muted)">
             <span
               className="script-app-icon"
               style={{ background: `linear-gradient(160deg, ${theme.colors.light.primary}, ${theme.colors.light.primaryHover})` }}
             >
-              <ScriptMark height={34} ink="#FFFFFF" accent={theme.colors.light.highlight} />
+              <ScriptMark height={34} ink="#FFFFFF" />
             </span>
           </Use>
           <Use label={t('proto.brand.mono')} background="var(--muted)">

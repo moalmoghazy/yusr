@@ -1,7 +1,6 @@
 import { brand, SCRIPT_LOGO_COLORS } from '@yusr/theme';
 import { Icon, ScriptLogo, textFor } from '@yusr/ui';
 import type { Metadata } from 'next';
-import { StarCloseup } from '@/components/star-closeup';
 import type { IconName } from '@yusr/ui';
 import { WritingLogo } from '@/components/writing-logo';
 import { pageLocale, type LocaleParams } from '@/lib/page';
@@ -106,7 +105,7 @@ export default async function AboutPage({ params }: { params: LocaleParams }) {
                     <span className="text-sm font-bold">{name}</span>
                     <span className="text-xs text-muted-foreground">{note}</span>
                     <span dir="ltr" className="font-mono text-xs text-muted-foreground">
-                      {SCRIPT_LOGO_COLORS[key].light} · {SCRIPT_LOGO_COLORS[key].dark}
+                      {SCRIPT_LOGO_COLORS[key].light}
                     </span>
                   </span>
                 </li>
@@ -143,30 +142,6 @@ export default async function AboutPage({ params }: { params: LocaleParams }) {
               ))}
             </ol>
           </div>
-        </div>
-      </section>
-
-      <section
-        aria-labelledby="identity-pattern"
-        className="relative grid grid-cols-1 gap-8 overflow-hidden rounded-card border border-border bg-card px-5 pt-8 md:px-10 md:pt-10 lg:min-h-[30rem] lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:pb-10"
-      >
-        <div className="relative z-10 flex flex-col justify-center gap-4">
-          <h3 id="identity-pattern" className="flex flex-col gap-1">
-            <span className="text-sm font-semibold text-highlight-soft-foreground">{t('identity.pattern')}</span>
-            <span className="font-display text-3xl font-bold leading-[1.4]">{t('identity.patternName')}</span>
-          </h3>
-          <p className="text-[1.05rem] leading-[1.9] text-muted-foreground">{t('identity.patternStory')}</p>
-          <figure className="flex flex-col gap-1">
-            {/* The verse is always in Arabic; the English page adds a translation beneath it. */}
-            <blockquote lang="ar" dir="rtl" className="text-start text-xl leading-[2] text-highlight-soft-foreground">
-              {t('identity.verse')}
-            </blockquote>
-            <figcaption className="text-sm text-muted-foreground">{t('identity.verseSource')}</figcaption>
-          </figure>
-        </div>
-        {/* Bleeds to the card's edge and fades out towards the text: to the side on wide screens, upwards on phones. */}
-        <div className="relative -mx-5 h-80 [mask-image:linear-gradient(to_bottom,transparent,black_25%)] md:-mx-10 lg:absolute lg:inset-y-0 lg:end-0 lg:mx-0 lg:h-auto lg:w-1/2 lg:[mask-image:linear-gradient(to_left,black_70%,transparent)] lg:rtl:[mask-image:linear-gradient(to_right,black_70%,transparent)]">
-          <StarCloseup label={t('identity.starLabel')} replayLabel={t('identity.replay')} />
         </div>
       </section>
     </div>
