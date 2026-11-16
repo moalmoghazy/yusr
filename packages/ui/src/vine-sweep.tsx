@@ -63,17 +63,21 @@ export interface VineSweepProps {
   flip?: boolean;
   /** The small sprig for under section titles, instead of the full branch. */
   sprig?: boolean;
+  /** Stretch to fill its box (a whole band's background); the stem and tendrils keep their width in px. */
+  fill?: boolean;
 }
 
-export function VineSweep({ className, growing = false, delayMs = 0, durationMs = 2200, flip = false, sprig = false }: VineSweepProps) {
+export function VineSweep({ className, growing = false, delayMs = 0, durationMs = 2200, flip = false, sprig = false, fill = false }: VineSweepProps) {
   const shape = sprig ? VINE_SPRIG : VINE;
   const [, , width] = shape.viewBox.split(' ').map(Number) as [number, number, number, number];
   const timing = { '--yv-at': `${delayMs}ms`, '--yv-ms': `${durationMs}ms` } as CSSProperties;
-  const stroke = sprig ? 2 : 3.2;
+  const stroke = fill ? 7 : sprig ? 2 : 3.2;
+  const tendril = fill ? 4.5 : 2.2;
+  const vectorEffect = fill ? 'non-scaling-stroke' : undefined;
   return (
     <svg
       viewBox={shape.viewBox}
-      preserveAspectRatio={sprig ? 'none' : 'xMidYMid meet'}
+      preserveAspectRatio={sprig || fill ? 'none' : 'xMidYMid meet'}
       aria-hidden
       focusable="false"
       className={cn('pointer-events-none overflow-visible', growing && 'yv-grow', className)}
@@ -81,10 +85,29 @@ export function VineSweep({ className, growing = false, delayMs = 0, durationMs 
     >
       {growing && <style>{STYLE}</style>}
       <g transform={flip ? `translate(${width} 0) scale(-1 1)` : undefined}>
-        <path className="yv-stem" d={shape.stem} pathLength={1} fill="none" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" />
+        <path
+          className="yv-stem"
+          d={shape.stem}
+          pathLength={1}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          vectorEffect={vectorEffect}
+        />
         {'tendrils' in shape &&
           shape.tendrils.map((d) => (
-            <path key={d} className="yv-tendril" d={d} pathLength={1} fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" />
+            <path
+              key={d}
+              className="yv-tendril"
+              d={d}
+              pathLength={1}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={tendril}
+              strokeLinecap="round"
+              vectorEffect={vectorEffect}
+            />
           ))}
         {shape.leaves.map((leaf, index) => (
           <path

@@ -172,18 +172,6 @@ html[lang='ar'] .font-wordmark {
   }
 }
 
-/* The hero's «الغصن المتعرّش» grows once, then sways very slowly. */
-@media (prefers-reduced-motion: no-preference) {
-  .hero-sweep {
-    animation: hero-sweep-breathe 9s ease-in-out 2.2s infinite;
-  }
-}
-@keyframes hero-sweep-breathe {
-  50% {
-    transform: translateY(-6px) rotate(-1.2deg);
-  }
-}
-
 /* «كيف نعمل» in the hero (page.tsx, HowItWorks): each step appears in turn, then a glowing gold line
    runs down to the next one. --step is the step's index; one step every --how-beat. */
 .how-step {

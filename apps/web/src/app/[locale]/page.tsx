@@ -29,6 +29,7 @@ import { HowReveal } from '@/components/how-reveal';
 import { NewsTicker, type NewsItem } from '@/components/news-ticker';
 import { StoryReel, type ReelStory } from '@/components/story-reel';
 import { SupervisionBadge } from '@/components/supervision-badge';
+import { VineLoop } from '@/components/vine-loop';
 import { PartnerCardButton, PartnerCardDialog } from '@/components/partner-card';
 import { catalog, fresh } from '@/lib/api';
 import { href } from '@/lib/i18n';
@@ -66,21 +67,9 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
     <>
       {/* ---------------------------------------------------------------- hero */}
       <section className="relative overflow-hidden">
-        {/* «الغصن المتعرّش» grows across the hero's background, and a second, smaller one climbs the other way. */}
+        {/* «الغصن المتعرّش» across the hero's whole background, growing, resting, fading and growing again. */}
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-          <VineSweep
-            growing
-            delayMs={300}
-            durationMs={2600}
-            className="hero-sweep absolute bottom-2 start-[1%] h-44 w-auto text-logo-ink opacity-[0.16] md:h-64"
-          />
-          <VineSweep
-            growing
-            flip
-            delayMs={1600}
-            durationMs={2000}
-            className="absolute top-4 end-[2%] hidden h-24 w-auto text-logo-ink opacity-[0.14] sm:block md:h-32"
-          />
+          <VineLoop fill delayMs={300} durationMs={3600} periodMs={11000} className="absolute inset-x-0 top-[6%] bottom-[4%] text-logo-ink opacity-[0.13]" />
         </div>
         <div className="container-page relative grid grid-cols-1 items-center gap-12 lg:items-start py-12 md:py-16 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
           <div className="flex flex-col gap-5">
