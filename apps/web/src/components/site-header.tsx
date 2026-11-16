@@ -2,6 +2,7 @@ import type { Locale } from '@yusr/core';
 import { buttonClasses, Icon, textFor } from '@yusr/ui';
 import Link from 'next/link';
 import { href, type ThemePreference } from '@/lib/i18n';
+import { LiquidGlass } from './liquid-glass';
 import { LocaleSwitch } from './locale-switch';
 import { NavLink } from './nav-link';
 import { ThemeSwitch } from './theme-switch';
@@ -17,9 +18,9 @@ export function SiteHeader({ locale, theme, donor }: { locale: Locale; theme: Th
     { href: href(locale, '/about'), label: t('nav.about') },
   ];
   return (
-    // A floating pane of «liquid glass» (globals.css, `.liquid-glass`) that the page scrolls under.
+    // A floating pane of «liquid glass» (components/liquid-glass.tsx) that the page scrolls under.
     <header className="pointer-events-none sticky top-0 z-40 px-2 pt-2.5 sm:px-4 sm:pt-3">
-      <div className="liquid-glass pointer-events-auto mx-auto max-w-[78rem] rounded-[1.75rem]">
+      <LiquidGlass className="pointer-events-auto mx-auto max-w-[78rem] rounded-[1.75rem]">
         <div className="flex h-16 items-center justify-between gap-3 px-3 sm:px-5">
           <Link href={href(locale)} className="rounded-control outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
             {/* «خطّ اليُسر» writes itself when the page opens, and again when the pointer comes back to it. */}
@@ -56,7 +57,7 @@ export function SiteHeader({ locale, theme, donor }: { locale: Locale; theme: Th
             </NavLink>
           ))}
         </nav>
-      </div>
+      </LiquidGlass>
     </header>
   );
 }
