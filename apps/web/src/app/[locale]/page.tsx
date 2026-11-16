@@ -116,25 +116,8 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
       {partners.length > 0 && <PartnersMarquee locale={locale} partners={partners} />}
       <StatsBand locale={locale} stats={stats} />
 
-      {/* ---------------------------------------------------------------- urgent */}
-      {urgent.items.length > 0 && (
-        <section className="container-page py-14" aria-labelledby="urgent-title">
-          <SectionHead id="urgent-title" title={t('landing.urgentTitle')} body={t('landing.urgentBody')}>
-            <Link href={href(locale, '/cases?urgentOnly=true')} className={buttonClasses({ variant: 'ghost', size: 'sm' })}>
-              {t('common.seeAll')}
-              <Icon name="arrow-forward" size={16} />
-            </Link>
-          </SectionHead>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {urgent.items.map((item) => (
-              <CaseCard key={item.id} {...cardProps(item)} />
-            ))}
-          </div>
-        </section>
-      )}
-
       {/* ---------------------------------------------------------------- categories */}
-      <section className="container-page py-6" aria-labelledby="categories-title">
+      <section className="container-page pt-14" aria-labelledby="categories-title">
         <SectionHead id="categories-title" title={t('landing.categoriesTitle')} />
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {CASE_CATEGORIES.map((category) => (
@@ -153,6 +136,23 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
           ))}
         </ul>
       </section>
+
+      {/* ---------------------------------------------------------------- urgent */}
+      {urgent.items.length > 0 && (
+        <section className="container-page py-14" aria-labelledby="urgent-title">
+          <SectionHead id="urgent-title" title={t('landing.urgentTitle')} body={t('landing.urgentBody')}>
+            <Link href={href(locale, '/cases?urgentOnly=true')} className={buttonClasses({ variant: 'ghost', size: 'sm' })}>
+              {t('common.seeAll')}
+              <Icon name="arrow-forward" size={16} />
+            </Link>
+          </SectionHead>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {urgent.items.map((item) => (
+              <CaseCard key={item.id} {...cardProps(item)} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {stories.length > 0 && <SuccessStories locale={locale} stories={stories} />}
 
