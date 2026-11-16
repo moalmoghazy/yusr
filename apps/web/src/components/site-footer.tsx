@@ -9,25 +9,25 @@ const PAYMENT_METHODS: ReadonlyArray<{ key: PaymentMethod | 'paymob'; icon?: Ico
   { key: 'card', icon: 'credit-card' },
   { key: 'vodafone_cash', mark: 'vodafone_cash' },
   { key: 'instapay', mark: 'instapay' },
-  { key: 'fawry', icon: 'store' },
+  { key: 'fawry', mark: 'fawry' },
   { key: 'apple_pay', mark: 'apple_pay' },
   { key: 'mada', mark: 'mada' },
   { key: 'paymob', mark: 'paymob' },
 ];
 
-/** Under the footer's link columns. */
+/** Under the footer's columns, across its whole width: the ways to pay share the row equally. */
 function PaymentMethods({ locale }: { locale: Locale }) {
   const { t } = textFor(locale);
   return (
-    <section aria-labelledby="pay-with-title" className="flex flex-col gap-3 md:col-span-2 md:col-start-2">
+    <section aria-labelledby="pay-with-title" className="flex flex-col gap-3 md:col-span-3">
       <h2 id="pay-with-title" className="font-bold text-foreground">
         {t('footer.payWith')}
       </h2>
-      <ul className="flex flex-wrap gap-2">
+      <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
         {PAYMENT_METHODS.map(({ key, icon, mark }) => (
           <li
             key={key}
-            className="group inline-flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-1.5 text-sm font-semibold transition-colors hover:border-primary/30"
+            className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-full border border-border bg-card px-3.5 py-1.5 text-sm font-semibold transition-colors hover:border-primary/30"
           >
             {mark ? <PaymentMark name={mark} size={18} /> : <Icon name={icon!} size={17} className="text-primary" />}
             {key === 'paymob' ? t('footer.paymob') : t(`payment.methods.${key}`)}
