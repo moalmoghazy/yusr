@@ -102,6 +102,16 @@ html[lang='ar'] .font-wordmark {
   }
 }
 
+/* Footer payment logos (the services' own artwork): tinted to Yusr's green at rest, real colours on hover. */
+.pay-logo {
+  filter: grayscale(1) sepia(1) hue-rotate(70deg) saturate(2.4) brightness(0.92);
+  transition: filter 0.2s;
+}
+.group:hover .pay-logo,
+.group:focus-visible .pay-logo {
+  filter: none;
+}
+
 /* «تبرعات تتم الآن»: the dot breathes between the logo's two colours (still with reduced motion). */
 @keyframes live-dot {
   0%,

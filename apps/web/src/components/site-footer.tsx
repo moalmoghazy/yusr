@@ -4,15 +4,24 @@ import { Icon, Logo, PaymentMark, StoreBadge, STORE_GLYPHS, textFor, type IconNa
 import Link from 'next/link';
 import { href } from '@/lib/i18n';
 
-/** «الدفع متاح عبر»: each way to pay, with its service's mark where it has one (brand colours on hover). */
-const PAYMENT_METHODS: ReadonlyArray<{ key: PaymentMethod | 'paymob'; icon?: IconName; mark?: PaymentMarkName }> = [
+/**
+ * «الدفع متاح عبر»: each way to pay, with its service's mark. `logo` is the service's own artwork the owner
+ * supplied (public/payment-logos, width/height in px at 20px tall, and its corner rounding); `mark` is a
+ * drawn @yusr/ui mark. Both are tinted to Yusr's green at rest and show their real colours on hover.
+ */
+const PAYMENT_METHODS: ReadonlyArray<{
+  key: PaymentMethod | 'paymob';
+  icon?: IconName;
+  mark?: PaymentMarkName;
+  logo?: { src: string; width: number; round: string };
+}> = [
   { key: 'card', icon: 'credit-card' },
-  { key: 'vodafone_cash', mark: 'vodafone_cash' },
-  { key: 'instapay', mark: 'instapay' },
-  { key: 'fawry', mark: 'fawry' },
+  { key: 'vodafone_cash', logo: { src: '/payment-logos/vodafone.png', width: 20, round: 'rounded-full' } },
+  { key: 'instapay', logo: { src: '/payment-logos/instapay.png', width: 50, round: '' } },
+  { key: 'fawry', logo: { src: '/payment-logos/fawry.png', width: 20, round: 'rounded-[5px]' } },
   { key: 'apple_pay', mark: 'apple_pay' },
   { key: 'mada', mark: 'mada' },
-  { key: 'paymob', mark: 'paymob' },
+  { key: 'paymob', logo: { src: '/payment-logos/paymob.png', width: 20, round: 'rounded-[5px]' } },
 ];
 
 /** Under the footer's columns, across its whole width: the ways to pay share the row equally. */
@@ -24,12 +33,19 @@ function PaymentMethods({ locale }: { locale: Locale }) {
         {t('footer.payWith')}
       </h2>
       <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
-        {PAYMENT_METHODS.map(({ key, icon, mark }) => (
+        {PAYMENT_METHODS.map(({ key, icon, mark, logo }) => (
           <li
             key={key}
             className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-full border border-border bg-card px-3.5 py-1.5 text-sm font-semibold transition-colors hover:border-primary/30"
           >
-            {mark ? <PaymentMark name={mark} size={18} /> : <Icon name={icon!} size={17} className="text-primary" />}
+            {logo ? (
+              // eslint-disable-next-line @next/next/no-img-element -- a tiny static logo; next/image adds nothing here
+              <img src={logo.src} alt="" width={logo.width} height={20} className={`pay-logo shrink-0 ${logo.round}`} />
+            ) : mark ? (
+              <PaymentMark name={mark} size={18} />
+            ) : (
+              <Icon name={icon!} size={17} className="text-primary" />
+            )}
             {key === 'paymob' ? t('footer.paymob') : t(`payment.methods.${key}`)}
           </li>
         ))}
