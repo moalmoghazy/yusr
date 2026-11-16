@@ -172,7 +172,7 @@ html[lang='ar'] .font-wordmark {
   }
 }
 
-/* The hero's brush sweep is written once, then breathes very slowly. */
+/* The hero's «الغصن المتعرّش» grows once, then sways very slowly. */
 @media (prefers-reduced-motion: no-preference) {
   .hero-sweep {
     animation: hero-sweep-breathe 9s ease-in-out 2.2s infinite;

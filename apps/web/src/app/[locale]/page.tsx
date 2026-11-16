@@ -18,7 +18,7 @@ import {
   storySlideData,
   storySlideLabels,
   textFor,
-  BrushSweep,
+  VineSweep,
   type CaseCardProps,
   type IconName,
 } from '@yusr/ui';
@@ -66,20 +66,20 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
     <>
       {/* ---------------------------------------------------------------- hero */}
       <section className="relative overflow-hidden">
-        {/* The ر's long stroke from the logo, written across the hero, with the ḍamma's orange beneath. */}
+        {/* «الغصن المتعرّش» grows across the hero's background, and a second, smaller one climbs the other way. */}
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-          <BrushSweep
-            writing
+          <VineSweep
+            growing
             delayMs={300}
-            durationMs={1800}
-            className="hero-sweep absolute bottom-4 start-[2%] h-36 w-auto text-logo-ink opacity-[0.12] md:h-52"
+            durationMs={2600}
+            className="hero-sweep absolute bottom-2 start-[1%] h-44 w-auto text-logo-ink opacity-[0.16] md:h-64"
           />
-          <BrushSweep
-            writing
+          <VineSweep
+            growing
             flip
-            delayMs={1500}
-            durationMs={1400}
-            className="absolute top-6 end-[3%] hidden h-20 w-auto text-logo-accent opacity-[0.16] sm:block md:h-28"
+            delayMs={1600}
+            durationMs={2000}
+            className="absolute top-4 end-[2%] hidden h-24 w-auto text-logo-ink opacity-[0.14] sm:block md:h-32"
           />
         </div>
         <div className="container-page relative grid grid-cols-1 items-center gap-12 lg:items-start py-12 md:py-16 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
@@ -161,8 +161,14 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
       {/* ---------------------------------------------------------------- associations: join as a partner */}
       <section className="container-page pb-6" aria-labelledby="cta-title">
         <div className="relative overflow-hidden rounded-card bg-primary px-6 py-10 text-primary-foreground md:px-10">
-          <BrushSweep className="absolute bottom-3 end-[3%] h-24 w-auto text-white opacity-[0.16] md:h-32" />
-          <BrushSweep flip className="absolute -top-1 end-[24%] hidden h-14 w-auto text-highlight opacity-40 md:block md:h-16" />
+          <VineSweep growing durationMs={2400} className="absolute bottom-2 end-[2%] h-28 w-auto text-white opacity-[0.18] md:h-36" />
+          <VineSweep
+            growing
+            flip
+            delayMs={900}
+            durationMs={1800}
+            className="absolute -top-2 end-[26%] hidden h-16 w-auto text-white opacity-[0.12] md:block md:h-20"
+          />
           <div className="relative flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex max-w-xl flex-col gap-2">
               <h2 id="cta-title" className="font-display text-2xl font-bold md:text-3xl">
@@ -273,8 +279,8 @@ function SectionHead({ id, title, body, children }: { id: string; title: string;
         <h2 id={id} className="font-display text-[1.9rem] font-bold leading-snug">
           {title}
         </h2>
-        {/* A short stroke of the ر in the ḍamma's orange, under every section title. */}
-        <BrushSweep className="-mt-1 h-3.5 w-24 text-highlight" stretch />
+        {/* A small sprig of «الغصن المتعرّش» under every section title. */}
+        <VineSweep sprig growing durationMs={1200} className="-mt-0.5 h-4 w-24 text-logo-ink" />
         {body && <p className="text-muted-foreground">{body}</p>}
       </div>
       {children}

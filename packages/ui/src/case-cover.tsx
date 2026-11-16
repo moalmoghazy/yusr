@@ -1,8 +1,8 @@
 import { CATEGORY_META, type CaseCategory, type CategoryTone } from '@yusr/core';
-import { BRUSH_SWEEP } from '@yusr/theme';
 import type { CSSProperties } from 'react';
 import { cn } from './cn';
 import { ICON_NODES } from './icons';
+import { VINE } from './vine-sweep';
 
 /** Full class names per tone — Tailwind only generates what it can read in the source. */
 const TONES: Readonly<Record<CategoryTone, { root: string; bg: string; glyph: string }>> = {
@@ -29,7 +29,7 @@ const GLYPH_Y = (180 - 24 * GLYPH_SCALE) / 2;
 
 /**
  * The illustrated case cover. Yusr never shows beneficiaries' photos — dignity first — so
- * each category has a motif over a sweep of the ر from the logo. Every cover puts its motif
+ * each category has a motif over «الغصن المتعرّش», Yusr's climbing-branch ornament. Every cover puts its motif
  * in the same place (start of the card, vertically centred) so a row of cards lines up. The motif
  * draws itself and rests, in a loop (`.cover-morph-icon`; without the animation it simply shows).
  * Deterministic: the seed only shifts the sweep
@@ -59,9 +59,18 @@ export function CaseCover({ category, seed, className, label }: CaseCoverProps) 
       focusable="false"
     >
       <rect width="320" height="180" className={tone.bg} />
-      {/* The ر's sweep from the logo behind the motif, a little different on every card. */}
-      <g transform={`translate(${sweepX} ${sweepY}) rotate(${sweepTilt} 103 50) scale(1.45)`} opacity={0.16}>
-        <path d={BRUSH_SWEEP.d} transform="translate(-7 -86)" fill="currentColor" />
+      {/* «الغصن المتعرّش» behind the motif, a little different on every card. */}
+      <g transform={`translate(${sweepX} ${sweepY + 20}) rotate(${sweepTilt} 120 60) scale(1.1)`} opacity={0.18}>
+        <path d={VINE.stem} fill="none" stroke="currentColor" strokeWidth={3.2} strokeLinecap="round" />
+        {VINE.tendrils.map((d) => (
+          <path key={d} d={d} fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" />
+        ))}
+        {VINE.leaves.map((leaf) => (
+          <path key={leaf.d} d={leaf.d} fill="currentColor" />
+        ))}
+        {VINE.berries.map(([cx, cy]) => (
+          <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={4.5} fill="currentColor" />
+        ))}
       </g>
       <circle cx={orbX} cy={orbY} r={70 + variant * 12} fill="currentColor" opacity={0.09} />
       <circle cx={320 - orbX / 2} cy={170 - orbY / 3} r={36 + variant * 6} fill="currentColor" opacity={0.07} />

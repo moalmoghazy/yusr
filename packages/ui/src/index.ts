@@ -21,7 +21,7 @@ export { DonationProgress, ProgressBar, type DonationProgressProps, type Progres
 export { CaseCover, type CaseCoverProps } from './case-cover';
 export { StoryScene, type StorySceneProps } from './story-scene';
 export { ScriptLogo } from './script-logo';
-export { BrushSweep } from './brush-sweep';
+export { VINE, VINE_SPRIG, VineSweep, type VineSweepProps } from './vine-sweep';
 export { STORY_SLIDE_GRID, StorySlide, storySlideData, storySlideLabels, type StorySlideData, type StorySlideLabels } from './story-slide';
 export { CategoryBadge, RegionLabel, StatusBadge, VerifiedBadge, ZakatBadge } from './case-badges';
 export { CountdownBadge, type CountdownBadgeProps } from './countdown';
