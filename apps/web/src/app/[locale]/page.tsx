@@ -204,10 +204,11 @@ function MoneyFlow({ locale }: { locale: Locale }) {
   const { t } = textFor(locale);
   return (
     <div id="transparency" className="flex scroll-mt-28 flex-col gap-2">
-      <ol className="flex flex-wrap items-center gap-x-2 gap-y-3" aria-label={t('landing.transparencyTitle')}>
+      {/* One row: long labels break onto a second line inside their step (narrow phones may still wrap the row). */}
+      <ol className="flex flex-wrap items-center gap-x-2 gap-y-3 sm:flex-nowrap" aria-label={t('landing.transparencyTitle')}>
         {FLOW_STEPS.map(([icon, key], index) => (
-          <li key={key} className="inline-flex items-center gap-2">
-            <span className="inline-flex items-center gap-2 text-sm font-semibold">
+          <li key={key} className="inline-flex min-w-0 items-center gap-2">
+            <span className="inline-flex max-w-[9.5rem] items-center gap-2 text-sm font-semibold leading-snug text-balance">
               <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary-soft text-primary-soft-foreground">
                 <Icon name={icon} size={16} />
               </span>
