@@ -108,13 +108,13 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
               </Link>
             </div>
             <MoneyFlow locale={locale} />
-            {partners.length > 0 && <PartnersMarquee locale={locale} partners={partners} />}
             <LatestNews locale={locale} stories={stories} funded={(settled?.items ?? []).filter((item) => item.status === 'funded')} now={now} />
           </div>
           <LiveBoard locale={locale} feed={feed} featured={featured} now={now} />
         </div>
       </section>
 
+      {partners.length > 0 && <PartnersMarquee locale={locale} partners={partners} />}
       <StatsBand locale={locale} stats={stats} />
 
       {/* ---------------------------------------------------------------- urgent */}
@@ -369,72 +369,66 @@ function PartnersMarquee({ locale, partners }: { locale: Locale; partners: Publi
   // Two identical passes: moving by exactly one pass, then starting over, looks endless.
   const items = [...pass, ...pass];
   return (
-    <section aria-labelledby="partners-title" className="mt-2 flex flex-col gap-3">
-      {/* Set like the hero's opening line and paragraph above it. */}
-      <div className="flex flex-col gap-2">
-        <h2
-          id="partners-title"
-          className={cn(
-            'font-bold',
-            locale === 'en'
-              ? 'font-display text-[clamp(2.05rem,1.2rem+2.6vw,3.3rem)] leading-[1.15]'
-              : 'font-display text-[clamp(2.05rem,1.2rem+2.6vw,3.2rem)] leading-[1.35]',
-          )}
-        >
-          {t('landing.partnersTitle')}
-        </h2>
-        <p className="max-w-[58ch] text-[1.08rem] text-muted-foreground">{t('landing.partnersBody')}</p>
-      </div>
-      <div className="partners-marquee" style={{ ['--partners-duration' as string]: `${pass.length * 5.75}s` }}>
-        <ul className="partners-track">
-          {items.map((partner, index) => (
-            // Only the first of each partner is read out; the repeats are for the eye.
-            <li
-              key={`${partner.id}-${index}`}
-              dir={locale === 'ar' ? 'rtl' : 'ltr'}
-              className="partners-item"
-              aria-hidden={index >= partners.length || undefined}
-              data-repeat={index >= partners.length || undefined}
-            >
-              <PartnerCardButton partnerId={partner.id} label={t('landing.partners.open', { name: partner.name })} repeat={index >= partners.length}>
-                <span className="relative shrink-0">
-                  {partner.isNew && <span className="partners-new">{t('landing.partners.new')}</span>}
-                  <span className="partners-logo grid size-21 place-items-center overflow-hidden rounded-[1.4rem] border border-border bg-white">
-                    {partner.logoVersion ? (
-                      // eslint-disable-next-line @next/next/no-img-element -- a tiny logo from our own route; next/image adds nothing here
-                      <img
-                        src={`/partner-logos/${encodeURIComponent(partner.id)}?v=${partner.logoVersion}`}
-                        alt=""
-                        width={84}
-                        height={84}
-                        loading="lazy"
-                        decoding="async"
-                        className="size-full object-contain"
-                      />
-                    ) : (
-                      <span aria-hidden className="font-display text-[1.875rem] font-bold text-primary">
-                        {initial(partner.name)}
-                      </span>
-                    )}
-                  </span>
-                </span>
-                <span className="partners-text flex min-w-0 flex-col gap-1">
-                  <span className="whitespace-nowrap text-[1.5rem] font-bold leading-snug" dir="auto">
-                    {partner.name}
-                  </span>
-                  <span className="whitespace-nowrap text-[1.125rem] text-muted-foreground">
-                    {t('landing.partners.registration')}{' '}
-                    <span dir="ltr" className="font-mono">
-                      {partner.registrationNumber}
+    // A full-width band right above the stats, dressed like them (card background, top rule, page width).
+    <section aria-labelledby="partners-title" className="border-t border-border bg-card">
+      <div className="container-page flex flex-col gap-4 py-10">
+        <div className="flex flex-col gap-1.5">
+          <h2 id="partners-title" className="font-display text-[1.9rem] font-bold leading-snug">
+            {t('landing.partnersTitle')}
+          </h2>
+          <p className="max-w-[70ch] text-muted-foreground">{t('landing.partnersBody')}</p>
+        </div>
+        <div className="partners-marquee" style={{ ['--partners-duration' as string]: `${pass.length * 5.75}s` }}>
+          <ul className="partners-track">
+            {items.map((partner, index) => (
+              // Only the first of each partner is read out; the repeats are for the eye.
+              <li
+                key={`${partner.id}-${index}`}
+                dir={locale === 'ar' ? 'rtl' : 'ltr'}
+                className="partners-item"
+                aria-hidden={index >= partners.length || undefined}
+                data-repeat={index >= partners.length || undefined}
+              >
+                <PartnerCardButton partnerId={partner.id} label={t('landing.partners.open', { name: partner.name })} repeat={index >= partners.length}>
+                  <span className="relative shrink-0">
+                    {partner.isNew && <span className="partners-new">{t('landing.partners.new')}</span>}
+                    <span className="partners-logo grid size-21 place-items-center overflow-hidden rounded-[1.4rem] border border-border bg-white">
+                      {partner.logoVersion ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- a tiny logo from our own route; next/image adds nothing here
+                        <img
+                          src={`/partner-logos/${encodeURIComponent(partner.id)}?v=${partner.logoVersion}`}
+                          alt=""
+                          width={84}
+                          height={84}
+                          loading="lazy"
+                          decoding="async"
+                          className="size-full object-contain"
+                        />
+                      ) : (
+                        <span aria-hidden className="font-display text-[1.875rem] font-bold text-primary">
+                          {initial(partner.name)}
+                        </span>
+                      )}
                     </span>
                   </span>
-                </span>
-              </PartnerCardButton>
-            </li>
-          ))}
-        </ul>
+                  <span className="partners-text flex min-w-0 flex-col gap-1">
+                    <span className="whitespace-nowrap text-[1.5rem] font-bold leading-snug" dir="auto">
+                      {partner.name}
+                    </span>
+                    <span className="whitespace-nowrap text-[1.125rem] text-muted-foreground">
+                      {t('landing.partners.registration')}{' '}
+                      <span dir="ltr" className="font-mono">
+                        {partner.registrationNumber}
+                      </span>
+                    </span>
+                  </span>
+                </PartnerCardButton>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <PartnerCardDialog locale={locale} partners={partners} />
       </div>
-      <PartnerCardDialog locale={locale} partners={partners} />
     </section>
   );
 }
