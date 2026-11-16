@@ -21,12 +21,17 @@ export function SiteHeader({ locale, theme, donor }: { locale: Locale; theme: Th
     // A floating pane of «liquid glass» (components/liquid-glass.tsx) that the page scrolls under.
     <header className="pointer-events-none sticky top-0 z-40 px-2 pt-2.5 sm:px-4 sm:pt-3">
       <LiquidGlass className="pointer-events-auto mx-auto max-w-[78rem] rounded-[1.75rem]">
-        {/* From md up: three columns, the menu in the middle and the logo centred in the space between the edge and the menu. */}
-        <div className="flex h-16 items-center justify-between gap-3 px-3 sm:px-5 md:grid md:grid-cols-[1fr_auto_1fr]">
-          <Link href={href(locale)} className="rounded-control outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 md:justify-self-center">
-            {/* «خطّ اليُسر» writes itself when the page opens, and again when the pointer comes back to it. */}
-            <WritingLogo label={t('a11y.logo')} height={44} loop className="max-sm:h-9 max-sm:w-auto" />
-          </Link>
+        {/* The menu and the buttons sit where the spread-out row puts them; from md up the logo is centred in
+            the space between the bar's edge and the menu (its box and the spacer before the buttons share the
+            free width equally, which is exactly where `justify-between` would leave the menu). */}
+        <div className="flex h-16 items-center justify-between gap-3 px-3 sm:px-5 md:justify-start md:gap-0">
+          {/* Nudged by half the bar's inner padding, so it is centred from the glass's own edge. */}
+          <div className="md:flex md:grow md:justify-center md:ltr:-translate-x-2.5 md:rtl:translate-x-2.5">
+            <Link href={href(locale)} className="block rounded-control outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
+              {/* «خطّ اليُسر» writes itself when the page opens, and again when the pointer comes back to it. */}
+              <WritingLogo label={t('a11y.logo')} height={44} loop className="max-sm:h-9 max-sm:w-auto" />
+            </Link>
+          </div>
           <nav aria-label={t('nav.menu')} className="hidden items-center gap-1 md:flex">
             {links.map((link) => (
               <NavLink key={link.href} href={link.href} exact={link.exact}>
@@ -34,7 +39,8 @@ export function SiteHeader({ locale, theme, donor }: { locale: Locale; theme: Th
               </NavLink>
             ))}
           </nav>
-          <div className="flex items-center gap-1.5 md:justify-self-end">
+          <span aria-hidden className="hidden md:block md:grow" />
+          <div className="flex items-center gap-1.5">
             <ThemeSwitch initial={theme} labels={{ title: t('nav.theme'), system: t('nav.system'), light: t('nav.light'), dark: t('nav.dark') }} />
             <LocaleSwitch locale={locale} label={t('nav.switchLanguage')} />
             <Link
