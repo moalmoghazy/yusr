@@ -12,6 +12,7 @@ export { ICON_NODES, DIRECTIONAL_ICONS, type IconName, type IconNode } from './i
 export { Icon, type IconProps } from './icon';
 export { STORE_GLYPHS, StoreBadge, type StoreBadgeProps, type StoreName } from './store-badge';
 export { PLATFORM_GLYPHS, PlatformIcon, type PlatformIconProps, type PlatformName } from './platform-icon';
+export { PAYMENT_MARKS, PaymentMark, type PaymentMarkName } from './payment-mark';
 export { Button, buttonClasses, type ButtonProps, type ButtonSize, type ButtonStyle, type ButtonVariant } from './button';
 export { Badge, type BadgeTone } from './badge';
 export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';

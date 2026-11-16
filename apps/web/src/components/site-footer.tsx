@@ -1,8 +1,42 @@
-import type { Locale } from '@yusr/core';
+import type { Locale, PaymentMethod } from '@yusr/core';
 import { brand } from '@yusr/theme';
-import { Logo, StoreBadge, STORE_GLYPHS, textFor, type StoreName } from '@yusr/ui';
+import { Icon, Logo, PaymentMark, StoreBadge, STORE_GLYPHS, textFor, type IconName, type PaymentMarkName, type StoreName } from '@yusr/ui';
 import Link from 'next/link';
 import { href } from '@/lib/i18n';
+
+/** «الدفع متاح عبر»: each way to pay, with its service's mark where it has one (brand colours on hover). */
+const PAYMENT_METHODS: ReadonlyArray<{ key: PaymentMethod | 'paymob'; icon?: IconName; mark?: PaymentMarkName }> = [
+  { key: 'card', icon: 'credit-card' },
+  { key: 'vodafone_cash', mark: 'vodafone_cash' },
+  { key: 'instapay', mark: 'instapay' },
+  { key: 'fawry', icon: 'store' },
+  { key: 'apple_pay', mark: 'apple_pay' },
+  { key: 'mada', mark: 'mada' },
+  { key: 'paymob', mark: 'paymob' },
+];
+
+/** Under the footer's link columns. */
+function PaymentMethods({ locale }: { locale: Locale }) {
+  const { t } = textFor(locale);
+  return (
+    <section aria-labelledby="pay-with-title" className="flex flex-col gap-3 md:col-span-2 md:col-start-2">
+      <h2 id="pay-with-title" className="font-bold text-foreground">
+        {t('footer.payWith')}
+      </h2>
+      <ul className="flex flex-wrap gap-2">
+        {PAYMENT_METHODS.map(({ key, icon, mark }) => (
+          <li
+            key={key}
+            className="group inline-flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-1.5 text-sm font-semibold transition-colors hover:border-primary/30"
+          >
+            {mark ? <PaymentMark name={mark} size={18} /> : <Icon name={icon!} size={17} className="text-primary" />}
+            {key === 'paymob' ? t('footer.paymob') : t(`payment.methods.${key}`)}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 export function SiteFooter({ locale }: { locale: Locale }) {
   const { t, f } = textFor(locale);
@@ -43,6 +77,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
             {t('footer.privacy')}
           </Link>
         </div>
+        <PaymentMethods locale={locale} />
       </div>
       <div className="border-t border-border">
         <div className="container-page flex flex-col gap-4 py-6 md:flex-row md:items-center md:justify-between">

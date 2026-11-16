@@ -1,7 +1,6 @@
 import {
   CASE_CATEGORIES,
   CATEGORY_META,
-  methodsForCurrency,
   regionByCode,
   type CaseSummary,
   type LiveDonation,
@@ -157,19 +156,6 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
 
       {stories.length > 0 && <SuccessStories locale={locale} stories={stories} />}
 
-      {/* ---------------------------------------------------------------- payments */}
-      <section className="container-page py-14" aria-labelledby="payments-title">
-        <SectionHead id="payments-title" title={t('landing.paymentsTitle')} body={t('landing.paymentsBody')} />
-        <ul className="flex flex-wrap gap-2">
-          {[...new Set([...methodsForCurrency('EGP'), ...methodsForCurrency('SAR'), ...methodsForCurrency('USD')])].map((method) => (
-            <li key={method} className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold">
-              <Icon name={METHOD_ICON[method] ?? 'credit-card'} size={16} className="text-primary" />
-              {t(`payment.methods.${method}`)}
-            </li>
-          ))}
-        </ul>
-      </section>
-
       <HowItWorks locale={locale} />
 
       {/* ---------------------------------------------------------------- associations: join as a partner */}
@@ -202,15 +188,6 @@ const CATEGORY_TILE = {
   gold: 'bg-tone-gold-soft text-tone-gold-soft-foreground',
   teal: 'bg-tone-teal-soft text-tone-teal-soft-foreground',
 } as const;
-
-const METHOD_ICON: Partial<Record<string, IconName>> = {
-  card: 'credit-card',
-  apple_pay: 'smartphone',
-  mada: 'credit-card',
-  vodafone_cash: 'wallet',
-  fawry: 'store',
-  instapay: 'landmark',
-};
 
 const FLOW_STEPS = [
   ['heart', 'donor'],

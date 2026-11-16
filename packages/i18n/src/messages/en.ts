@@ -1599,6 +1599,8 @@ export const en: Messages = {
     privacy: 'Privacy',
     rights: '© {year} Yusr. All rights reserved.',
     getApp: 'Get the Yusr app',
+    payWith: 'Pay with',
+    paymob: 'Paymob',
     stores: {
       downloadOn: 'Download on',
       soonOn: 'Coming soon to',

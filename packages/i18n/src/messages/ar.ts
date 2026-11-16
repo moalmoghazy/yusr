@@ -1642,6 +1642,8 @@ export const ar = {
     privacy: 'سياسة الخصوصية',
     rights: '© {year} يُسر. جميع الحقوق محفوظة.',
     getApp: 'حمّل تطبيق يُسر',
+    payWith: 'الدفع متاح عبر',
+    paymob: 'باي موب',
     stores: {
       downloadOn: 'حمّله من',
       soonOn: 'قريبًا على',
