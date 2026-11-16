@@ -71,9 +71,6 @@ export function SiteFooter({ locale }: { locale: Locale }) {
           <Link className="text-muted-foreground hover:text-primary" href={`${href(locale)}#how`}>
             {t('nav.howItWorks')}
           </Link>
-          <Link className="text-muted-foreground hover:text-primary" href={`${href(locale)}#transparency`}>
-            {t('nav.transparency')}
-          </Link>
           <Link className="text-muted-foreground hover:text-primary" href={href(locale, '/submit')}>
             {t('nav.submitCase')}
           </Link>
@@ -86,11 +83,11 @@ export function SiteFooter({ locale }: { locale: Locale }) {
           <Link className="text-muted-foreground hover:text-primary" href={href(locale, '/faq')}>
             {t('footer.faq')}
           </Link>
-          <Link className="text-muted-foreground hover:text-primary" href={href(locale, '/contact')}>
-            {t('footer.contact')}
-          </Link>
           <Link className="text-muted-foreground hover:text-primary" href={href(locale, '/privacy')}>
             {t('footer.privacy')}
+          </Link>
+          <Link className="text-muted-foreground hover:text-primary" href={href(locale, '/contact')}>
+            {t('footer.contact')}
           </Link>
         </div>
         <PaymentMethods locale={locale} />
