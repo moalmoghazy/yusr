@@ -9,9 +9,10 @@ import { clearedDonorCookies, DONOR_REFRESH_COOKIE, donorSessionCookies } from '
 import { apiEdge, apiTimeoutMs, apiUrl } from './env';
 import { DEFAULT_LOCALE, isLocale } from './i18n';
 
-export type SignInState =
-  | { step: 'phone'; error?: DomainErrorCode | 'generic' }
-  | { step: 'code'; phone: string; resendIn: number; demoCode?: string; error?: DomainErrorCode | 'generic' };
+/** `phoneRequired` / `phoneUnknown`: the number box was empty, or what was typed is not a mobile number we can use. */
+export type SignInError = DomainErrorCode | 'generic' | 'phoneRequired' | 'phoneUnknown';
+
+export type SignInState = { step: 'phone'; error?: SignInError } | { step: 'code'; phone: string; resendIn: number; demoCode?: string; error?: SignInError };
 
 async function authClient(locale: 'ar' | 'en') {
   const edge = apiEdge(await headers());
@@ -37,8 +38,9 @@ export async function signIn(previous: SignInState, form: FormData): Promise<Sig
   const auth = await authClient(locale);
   if (intent === 'send' || intent === 'resend') {
     const raw = intent === 'resend' && previous.step === 'code' ? previous.phone : String(form.get('phone') ?? '');
+    if (raw.trim() === '') return { step: 'phone', error: 'phoneRequired' };
     const phone = toE164(raw, 'EG');
-    if (!phone || !phoneSchema.safeParse(phone).success) return { step: 'phone', error: 'VALIDATION_FAILED' };
+    if (!phone || !phoneSchema.safeParse(phone).success) return { step: 'phone', error: 'phoneUnknown' };
     try {
       const challenge = await auth.requestOtp(phone, locale);
       return { step: 'code', phone, resendIn: challenge.resendInSeconds, ...(challenge.demoCode ? { demoCode: challenge.demoCode } : {}) };

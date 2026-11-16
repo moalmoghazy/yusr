@@ -93,7 +93,7 @@ export function SignInForm({ locale }: { locale: Locale }) {
       {state.error && (
         <p role="alert" className="flex items-start gap-2 rounded-control bg-destructive-soft p-3 text-sm text-destructive-soft-foreground">
           <Icon name="alert" size={18} className="mt-0.5 shrink-0" />
-          {t(`errors.${state.error}`)}
+          {state.error === 'phoneRequired' || state.error === 'phoneUnknown' ? t(`auth.${state.error}`) : t(`errors.${state.error}`)}
         </p>
       )}
     </form>

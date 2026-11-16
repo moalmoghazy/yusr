@@ -1033,6 +1033,8 @@ export const en: Messages = {
     title: 'Sign in to Yusr',
     phone: 'Mobile number',
     sendCode: 'Send code',
+    phoneRequired: 'Enter your mobile number first',
+    phoneUnknown: "This number isn't in Yusr's records",
     code: 'Verification code',
     verify: 'Verify & sign in',
     google: 'Continue with Google',
