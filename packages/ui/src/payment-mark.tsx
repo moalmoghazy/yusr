@@ -46,15 +46,16 @@ export const PAYMENT_MARKS = {
       { d: 'M23.6 6h6.2a5.1 5.1 0 0 1 0 10.2h-2.6V19h-3.6Zm3.6 3.2v3.8h2.4a1.9 1.9 0 0 0 0-3.8Z', color: '#6A2C91' },
     ],
   },
-  // Fawry: a yellow tile with a blue «f».
+  // Fawry (traced from the logo the owner supplied): a yellow tile, a white disc, and the blue arrow
+  // sweeping up to the right, with the arrow's tail coming back in at the top right.
   fawry: {
     viewBox: '0 0 24 24',
     parts: [
-      { d: 'M5 2h14a3 3 0 0 1 3 3v14a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V5a3 3 0 0 1 3-3Z', color: '#FFD100' },
+      { d: 'M4 1h16a3 3 0 0 1 3 3v16a3 3 0 0 1-3 3H4a3 3 0 0 1-3-3V4a3 3 0 0 1 3-3Z', color: '#FFD200' },
+      { d: 'M12 2.4a9.6 9.6 0 1 1 0 19.2 9.6 9.6 0 0 1 0-19.2Z', color: '#FFFFFF', knockout: true },
       {
-        d: 'M10.2 19V11H8.4V8.6h1.8V7.8c0-2.4 1.3-3.8 3.9-3.8.8 0 1.5.1 2 .3l-.4 2.4a3 3 0 0 0-1.2-.2c-.9 0-1.3.5-1.3 1.4v.7h2.4V11h-2.4v8Z',
-        color: '#005CA9',
-        knockout: true,
+        d: 'M3.4 16.2Q7.6 15.6 11 13.6l-.15-2 5.4-.5-1 5.5-1.5-1.75Q9.6 18.1 5.3 18.9ZM17.4 4.3q1.7.95 2.75 2.8l-1.95 4.25-.55-1.45h-2.4q2.55-2.65 2.15-5.6Z',
+        color: '#1B6E93',
       },
     ],
   },
