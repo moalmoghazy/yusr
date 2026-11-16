@@ -107,6 +107,7 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
                 {t('landing.heroSecondary')}
               </Link>
             </div>
+            <MoneyFlow locale={locale} />
             {partners.length > 0 && <PartnersMarquee locale={locale} partners={partners} />}
             <LatestNews locale={locale} stories={stories} funded={(settled?.items ?? []).filter((item) => item.status === 'funded')} now={now} />
           </div>
@@ -155,42 +156,6 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
       </section>
 
       {stories.length > 0 && <SuccessStories locale={locale} stories={stories} />}
-
-      {/* ---------------------------------------------------------------- transparency */}
-      <section id="transparency" className="border-y border-border bg-card" aria-labelledby="transparency-title">
-        <div className="container-page grid grid-cols-1 items-center gap-10 py-14 lg:grid-cols-2">
-          <div className="flex flex-col gap-4">
-            <h2 id="transparency-title" className="font-display text-3xl font-bold">
-              {t('landing.transparencyTitle')}
-            </h2>
-            <p className="text-muted-foreground">{t('landing.transparencyBody')}</p>
-            <p className="inline-flex items-start gap-2 text-sm font-semibold text-primary">
-              <Icon name="shield-check" size={18} className="mt-0.5" />
-              {t('case.paidDirectly')}
-            </p>
-          </div>
-          <ol className="flex flex-col gap-3" aria-label={t('landing.transparencyTitle')}>
-            {(
-              [
-                ['heart', t('landing.flow.donor')],
-                ['coins', t('landing.flow.fund')],
-                ['landmark', t('landing.flow.payee')],
-                ['receipt', t('landing.flow.receipt')],
-              ] as const
-            ).map(([icon, text], index, all) => (
-              <li key={icon} className="flex flex-col items-start gap-3">
-                <span className="inline-flex items-center gap-3 rounded-full border border-border bg-background px-4 py-2.5 font-semibold shadow-sm">
-                  <span className="grid size-8 place-items-center rounded-full bg-primary-soft text-primary-soft-foreground">
-                    <Icon name={icon} size={17} />
-                  </span>
-                  {text}
-                </span>
-                {index < all.length - 1 && <Icon name="chevron-down" size={18} className="ms-6 text-highlight" />}
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
 
       {/* ---------------------------------------------------------------- payments */}
       <section className="container-page py-14" aria-labelledby="payments-title">
@@ -246,6 +211,42 @@ const METHOD_ICON: Partial<Record<string, IconName>> = {
   fawry: 'store',
   instapay: 'landmark',
 };
+
+const FLOW_STEPS = [
+  ['heart', 'donor'],
+  ['coins', 'fund'],
+  ['landmark', 'payee'],
+  ['receipt', 'receipt'],
+] as const satisfies ReadonlyArray<readonly [IconName, string]>;
+
+/**
+ * Where a gift goes, as a row of icons under the hero's buttons: your gift → the partner association's
+ * account → the hospital, creditor or school → the payout receipt. The header's «الشفافية» link lands here.
+ */
+function MoneyFlow({ locale }: { locale: Locale }) {
+  const { t } = textFor(locale);
+  return (
+    <div id="transparency" className="flex scroll-mt-28 flex-col gap-2">
+      <ol className="flex flex-wrap items-center gap-x-2 gap-y-3" aria-label={t('landing.transparencyTitle')}>
+        {FLOW_STEPS.map(([icon, key], index) => (
+          <li key={key} className="inline-flex items-center gap-2">
+            <span className="inline-flex items-center gap-2 text-sm font-semibold">
+              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary-soft text-primary-soft-foreground">
+                <Icon name={icon} size={16} />
+              </span>
+              {t(`landing.flow.${key}`)}
+            </span>
+            {index < FLOW_STEPS.length - 1 && <Icon name="arrow-forward" size={15} className="text-highlight" />}
+          </li>
+        ))}
+      </ol>
+      <p className="inline-flex items-start gap-1.5 text-xs font-semibold text-primary">
+        <Icon name="shield-check" size={15} className="mt-px" />
+        {t('case.paidDirectly')}
+      </p>
+    </div>
+  );
+}
 
 const HOW_STEPS = ['submit', 'verify', 'publish', 'disburse', 'follow'] as const;
 

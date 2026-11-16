@@ -23,6 +23,51 @@ html[lang='ar'] .font-wordmark {
   font-weight: 700;
 }
 
+/* «Liquid glass» for the floating header: a strongly blurred, saturated pane of the page behind it, a
+   bright rim along its top edge, a soft inner glow and a light shadow, so it reads as a lens over the page.
+   Colours come from the theme tokens, so light and dark follow on their own. */
+.liquid-glass {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--background) 62%, transparent) 0%, color-mix(in oklab, var(--background) 40%, transparent) 100%);
+  -webkit-backdrop-filter: blur(22px) saturate(185%) brightness(1.04);
+  backdrop-filter: blur(22px) saturate(185%) brightness(1.04);
+  border: 1px solid color-mix(in oklab, var(--foreground) 10%, transparent);
+  box-shadow:
+    inset 0 1px 0 0 color-mix(in oklab, white 65%, transparent),
+    inset 0 -1px 0 0 color-mix(in oklab, white 12%, transparent),
+    inset 0 0 18px 0 color-mix(in oklab, white 10%, transparent),
+    0 10px 30px -12px color-mix(in oklab, var(--foreground) 28%, transparent);
+}
+/* The sheen: light caught along the upper half of the glass. */
+.liquid-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 140% at 15% -40%, color-mix(in oklab, white 38%, transparent) 0%, transparent 55%),
+    radial-gradient(90% 120% at 90% 140%, color-mix(in oklab, var(--primary) 14%, transparent) 0%, transparent 60%);
+  mix-blend-mode: soft-light;
+}
+.dark .liquid-glass,
+[data-theme='dark'] .liquid-glass {
+  box-shadow:
+    inset 0 1px 0 0 color-mix(in oklab, white 22%, transparent),
+    inset 0 -1px 0 0 color-mix(in oklab, white 6%, transparent),
+    inset 0 0 18px 0 color-mix(in oklab, white 5%, transparent),
+    0 12px 32px -12px rgb(0 0 0 / 0.6);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .liquid-glass {
+    background: var(--background);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;

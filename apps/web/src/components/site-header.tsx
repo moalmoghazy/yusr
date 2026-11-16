@@ -13,48 +13,50 @@ export function SiteHeader({ locale, theme, donor }: { locale: Locale; theme: Th
   const links = [
     { href: href(locale), label: t('nav.home'), exact: true },
     { href: href(locale, '/cases'), label: t('nav.cases') },
-    { href: `${href(locale)}#transparency`, label: t('nav.transparency') },
     { href: href(locale, '/submit'), label: t('nav.submitCase') },
     { href: href(locale, '/about'), label: t('nav.about') },
   ];
   return (
-    <header className="sticky top-0 z-40 border-b border-border/70 bg-background/70 backdrop-blur-[6px]">
-      <div className="container-page flex h-16 items-center justify-between gap-3">
-        <Link href={href(locale)} className="rounded-control outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
-          {/* «خطّ اليُسر» writes itself when the page opens, and again when the pointer comes back to it. */}
-          <WritingLogo label={t('a11y.logo')} height={44} loop className="max-sm:h-9 max-sm:w-auto" />
-        </Link>
-        <nav aria-label={t('nav.menu')} className="hidden items-center gap-1 md:flex">
+    // A floating pane of «liquid glass» (globals.css, `.liquid-glass`) that the page scrolls under.
+    <header className="pointer-events-none sticky top-0 z-40 px-2 pt-2.5 sm:px-4 sm:pt-3">
+      <div className="liquid-glass pointer-events-auto mx-auto max-w-[78rem] rounded-[1.75rem]">
+        <div className="flex h-16 items-center justify-between gap-3 px-3 sm:px-5">
+          <Link href={href(locale)} className="rounded-control outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
+            {/* «خطّ اليُسر» writes itself when the page opens, and again when the pointer comes back to it. */}
+            <WritingLogo label={t('a11y.logo')} height={44} loop className="max-sm:h-9 max-sm:w-auto" />
+          </Link>
+          <nav aria-label={t('nav.menu')} className="hidden items-center gap-1 md:flex">
+            {links.map((link) => (
+              <NavLink key={link.href} href={link.href} exact={link.exact}>
+                {link.label}
+              </NavLink>
+            ))}
+          </nav>
+          <div className="flex items-center gap-1.5">
+            <ThemeSwitch initial={theme} labels={{ title: t('nav.theme'), system: t('nav.system'), light: t('nav.light'), dark: t('nav.dark') }} />
+            <LocaleSwitch locale={locale} label={t('nav.switchLanguage')} />
+            <Link
+              href={href(locale, '/account')}
+              aria-label={donor ? t('nav.account') : t('common.signIn')}
+              className={buttonClasses({ variant: 'outline', size: 'sm', className: 'max-sm:size-9 max-sm:px-0' })}
+            >
+              <Icon name="user" size={16} />
+              <span className="max-sm:sr-only">{donor ? t('nav.account') : t('common.signIn')}</span>
+            </Link>
+            <Link href={href(locale, '/cases')} className={buttonClasses({ size: 'sm', className: 'max-sm:hidden' })}>
+              <Icon name="heart" size={16} />
+              {t('common.donateNow')}
+            </Link>
+          </div>
+        </div>
+        <nav aria-label={t('nav.menu')} className="-mt-1 flex gap-1 overflow-x-auto px-3 pb-2 [scrollbar-width:none] md:hidden">
           {links.map((link) => (
             <NavLink key={link.href} href={link.href} exact={link.exact}>
               {link.label}
             </NavLink>
           ))}
         </nav>
-        <div className="flex items-center gap-1.5">
-          <ThemeSwitch initial={theme} labels={{ title: t('nav.theme'), system: t('nav.system'), light: t('nav.light'), dark: t('nav.dark') }} />
-          <LocaleSwitch locale={locale} label={t('nav.switchLanguage')} />
-          <Link
-            href={href(locale, '/account')}
-            aria-label={donor ? t('nav.account') : t('common.signIn')}
-            className={buttonClasses({ variant: 'outline', size: 'sm', className: 'max-sm:size-9 max-sm:px-0' })}
-          >
-            <Icon name="user" size={16} />
-            <span className="max-sm:sr-only">{donor ? t('nav.account') : t('common.signIn')}</span>
-          </Link>
-          <Link href={href(locale, '/cases')} className={buttonClasses({ size: 'sm', className: 'max-sm:hidden' })}>
-            <Icon name="heart" size={16} />
-            {t('common.donateNow')}
-          </Link>
-        </div>
       </div>
-      <nav aria-label={t('nav.menu')} className="container-page -mt-1 flex gap-1 overflow-x-auto pb-2 md:hidden">
-        {links.map((link) => (
-          <NavLink key={link.href} href={link.href} exact={link.exact}>
-            {link.label}
-          </NavLink>
-        ))}
-      </nav>
     </header>
   );
 }
