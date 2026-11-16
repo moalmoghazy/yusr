@@ -102,6 +102,24 @@ html[lang='ar'] .font-wordmark {
   }
 }
 
+/* «تبرعات تتم الآن»: the dot breathes between the logo's two colours (still with reduced motion). */
+@keyframes live-dot {
+  0%,
+  100% {
+    background-color: var(--logo-ink);
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--logo-ink) 45%, transparent);
+  }
+  50% {
+    background-color: var(--logo-accent);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--logo-accent) 0%, transparent);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .live-dot {
+    animation: live-dot 2.4s ease-in-out infinite;
+  }
+}
+
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;

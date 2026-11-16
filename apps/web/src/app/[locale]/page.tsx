@@ -459,7 +459,7 @@ function LiveBoard({ locale, feed, featured, now }: { locale: Locale; feed: Live
     <aside aria-labelledby="live-title" className="rounded-[1.4rem] border border-border bg-card p-5 shadow-lg">
       <header className="mb-3 flex items-center justify-between">
         <h2 id="live-title" className="inline-flex items-center gap-2 font-bold">
-          <span aria-hidden className="size-2 rounded-full bg-success motion-safe:animate-pulse" />
+          <span aria-hidden className="live-dot size-2 rounded-full bg-logo-ink" />
           {t('landing.liveTitle')}
         </h2>
         <span className="text-xs text-muted-foreground">{t('common.live')}</span>

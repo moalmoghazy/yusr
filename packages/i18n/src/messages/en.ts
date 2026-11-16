@@ -339,7 +339,7 @@ export const en: Messages = {
       'Through partner associations, your donation goes straight to the hospital, creditor or school — for cases the associations researched in the field and we reviewed — with a receipt and proof of payment for every pound.',
     heroPrimary: 'Browse cases',
     heroSecondary: 'How we verify cases',
-    liveTitle: 'Happening now',
+    liveTitle: 'Donations happening now',
     liveDonation: '{name} gave {amount}',
     liveTo: 'to {title}',
     stats: {
