@@ -885,7 +885,7 @@ export const en: Messages = {
     title: 'About us',
     description: 'Yusr is a giving platform built for fair distribution and lasting, genuine giving that reaches people in need with transparency and dignity.',
     question: 'Who are we?',
-    lead: 'Yusr is a giving platform. Our aim is fair distribution and lasting, genuine giving that reaches people in need — with transparency, and with dignity.',
+    lead: 'Yusr is an Egyptian giving platform licensed by the Financial Regulatory Authority and the Ministry of Social Solidarity (Arab Republic of Egypt). We aim for fair, lasting and genuine distribution that reaches people in need with transparency and dignity.',
     body: 'We believe trust is built on clarity, and that real kindness needs no noise. So we work with registered associations that research every case in the field before it is published, review each file, follow every pound from the moment it is given until it is paid directly to the hospital, the school or the creditor, and protect the names and privacy of the people we serve, while donors keep the full right to see the documents that make giving easier, more trusted and safer. We want giving to be easy for the giver, dignified for the receiver, and honest at every step in between.',
     values: {
       fair: { title: 'Fair distribution', body: 'Those in greatest need first, by clear criteria.' },
