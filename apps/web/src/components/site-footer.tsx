@@ -17,7 +17,7 @@ const PAYMENT_METHODS: ReadonlyArray<{
 }> = [
   { key: 'card', icon: 'credit-card' },
   { key: 'vodafone_cash', logo: { src: '/payment-logos/vodafone.png', width: 20, round: 'rounded-full' } },
-  { key: 'instapay', logo: { src: '/payment-logos/instapay.png', width: 50, round: '' } },
+  { key: 'instapay', logo: { src: '/payment-logos/instapay.png?v=2', width: 20, round: 'rounded-[5px] ring-1 ring-border' } },
   { key: 'fawry', logo: { src: '/payment-logos/fawry.png', width: 20, round: 'rounded-[5px]' } },
   { key: 'apple_pay', mark: 'apple_pay' },
   { key: 'mada', mark: 'mada' },
