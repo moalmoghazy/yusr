@@ -29,21 +29,21 @@ html[lang='ar'] .font-wordmark {
 :root {
   --lg-rim: 0.75;
   --lg-glow: 0.16;
-  --lg-tint: 34%;
+  --lg-tint: 76%;
   --lg-shadow: color-mix(in oklab, var(--foreground) 22%, transparent);
 }
 :root[data-theme='dark'],
 .dark {
   --lg-rim: 0.32;
   --lg-glow: 0.07;
-  --lg-tint: 38%;
+  --lg-tint: 80%;
   --lg-shadow: rgb(0 0 0 / 0.55);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']):not(.light) {
     --lg-rim: 0.32;
     --lg-glow: 0.07;
-    --lg-tint: 38%;
+    --lg-tint: 80%;
     --lg-shadow: rgb(0 0 0 / 0.55);
   }
 }
@@ -66,17 +66,17 @@ html[lang='ar'] .font-wordmark {
 }
 /* Frosted everywhere; Chromium also bends the backdrop through the SVG filter. */
 .lg-lens {
-  -webkit-backdrop-filter: blur(10px) saturate(190%) brightness(1.06);
-  backdrop-filter: blur(10px) saturate(190%) brightness(1.06);
+  -webkit-backdrop-filter: blur(24px) saturate(190%) brightness(1.06);
+  backdrop-filter: blur(24px) saturate(190%) brightness(1.06);
 }
 .lg-pane[data-refract] .lg-lens {
-  backdrop-filter: url(#yusr-liquid-glass) blur(2.5px) saturate(190%) brightness(1.06);
+  backdrop-filter: url(#yusr-liquid-glass) blur(12px) saturate(190%) brightness(1.06);
 }
 .lg-tint {
   background: linear-gradient(
     180deg,
     color-mix(in oklab, var(--background) var(--lg-tint), transparent),
-    color-mix(in oklab, var(--background) calc(var(--lg-tint) - 14%), transparent)
+    color-mix(in oklab, var(--background) calc(var(--lg-tint) - 10%), transparent)
   );
 }
 /* The rim (bright along the top, a thin line all round, a faint inner glow) and the moving highlight. */
