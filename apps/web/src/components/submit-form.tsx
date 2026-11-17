@@ -161,21 +161,9 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
   };
   /** Shown under a field once something is typed in it, or once it has been left empty. */
   const shown = (key: FieldKey) => (errors[key] && (touched.has(key) || FILLED[key]) ? errors[key] : undefined);
+  /** What each field still needs, shown under it as a quiet instruction from the start (no warning box). */
+  const guide = (key: FieldKey) => errors[key];
   const touch = (key: FieldKey) => () => setTouched((current) => (current.has(key) ? current : new Set(current).add(key)));
-  const LABELS: Record<FieldKey, string> = {
-    orgNumber: t('submit.association.registrationNumber'),
-    yusrCode: t('submit.partner.code'),
-    contactName: t('submit.association.contactName'),
-    contactPhone: t('submit.association.contactPhone'),
-    title: t('submit.fields.title'),
-    story: t('submit.fields.story'),
-    goal: t('submit.fields.goal'),
-    pseudonym: t('submit.fields.pseudonym'),
-    nationalId: t('submit.fields.nationalId'),
-    deadline: t('submit.fields.deadline'),
-    documents: t('submit.steps.documents'),
-    consent: t('submit.errors.consentLabel'),
-  };
   const flagged = (field: string) => problem?.fields.some((name) => name === field || name.startsWith(`${field}.`)) || undefined;
   /** An API error in the form's words: a wrong code (or number) gets its own explanation. */
   const describe = (code: string, fields: string[]) => {
@@ -358,7 +346,7 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
             label={t('submit.association.registrationNumber')}
             htmlFor={`${ids}-org-number`}
             hint={t('submit.association.registrationHint')}
-            error={shown('orgNumber')}
+            error={guide('orgNumber')}
           >
             <input
               id={`${ids}-org-number`}
@@ -378,7 +366,7 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
             htmlFor={`${ids}-yusr-code`}
             hint={flagged(CODE_FIELD) ? t('submit.partner.codeInvalid') : t('submit.partner.codeHint')}
             invalid={flagged(CODE_FIELD)}
-            error={flagged(CODE_FIELD) ? undefined : shown('yusrCode')}
+            error={flagged(CODE_FIELD) ? undefined : guide('yusrCode')}
           >
             <input
               id={`${ids}-yusr-code`}
@@ -396,7 +384,7 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
               className={cn(control, 'h-11 text-start font-mono uppercase tracking-wider')}
             />
           </Field>
-          <Field label={t('submit.association.contactName')} htmlFor={`${ids}-contact`} error={shown('contactName')}>
+          <Field label={t('submit.association.contactName')} htmlFor={`${ids}-contact`} error={guide('contactName')}>
             <input
               id={`${ids}-contact`}
               maxLength={80}
@@ -415,7 +403,7 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
           label={t('submit.association.contactPhone')}
           htmlFor={`${ids}-contact-phone`}
           hint={t('submit.association.contactHint')}
-          error={shown('contactPhone')}
+          error={guide('contactPhone')}
         >
           <input
             id={`${ids}-contact-phone`}
@@ -450,7 +438,7 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
           </div>
         </fieldset>
 
-        <Field label={t('submit.fields.title')} htmlFor={`${ids}-title`} hint={`${f.number(title.length)} / ${f.number(120)}`} error={shown('title')}>
+        <Field label={t('submit.fields.title')} htmlFor={`${ids}-title`} hint={`${f.number(title.length)} / ${f.number(120)}`} error={guide('title')}>
           <input
             id={`${ids}-title`}
             maxLength={120}
@@ -472,7 +460,7 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
               ? t('submit.fields.storyMin', { count: f.number(STORY_MIN) })
               : `${f.number(story.trim().length)} / ${f.number(6000)}`
           }
-          error={shown('story')}
+          error={guide('story')}
         >
           <textarea
             id={`${ids}-story`}
@@ -515,7 +503,7 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
               min: f.money(GOAL_MIN_MINOR, currency, { fractionDigits: 0 }),
               max: f.money(GOAL_MAX_MINOR, currency, { compact: true }),
             })}
-            error={shown('goal')}
+            error={guide('goal')}
           >
             <span className="relative block">
               <input
@@ -543,7 +531,7 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label={t('submit.fields.pseudonym')} htmlFor={`${ids}-pseudonym`} hint={t('submit.fields.pseudonymHint')} error={shown('pseudonym')}>
+          <Field label={t('submit.fields.pseudonym')} htmlFor={`${ids}-pseudonym`} hint={t('submit.fields.pseudonymHint')} error={guide('pseudonym')}>
             <input
               id={`${ids}-pseudonym`}
               maxLength={60}
@@ -557,7 +545,7 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
               className={cn(control, 'h-11')}
             />
           </Field>
-          <Field label={t('submit.fields.nationalId')} htmlFor={`${ids}-nid`} hint={t('submit.fields.nationalIdHint')} error={shown('nationalId')}>
+          <Field label={t('submit.fields.nationalId')} htmlFor={`${ids}-nid`} hint={t('submit.fields.nationalIdHint')} error={guide('nationalId')}>
             <input
               id={`${ids}-nid`}
               inputMode="numeric"
@@ -580,7 +568,7 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
           {t('submit.fields.urgent')}
         </label>
         {urgent && (
-          <Field label={t('submit.fields.deadline')} htmlFor={`${ids}-deadline`} error={shown('deadline')}>
+          <Field label={t('submit.fields.deadline')} htmlFor={`${ids}-deadline`} error={guide('deadline')}>
             <input
               id={`${ids}-deadline`}
               type="date"
@@ -667,6 +655,7 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
           <input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} className="mt-1 size-4 accent-[var(--primary)]" />
           <span className="font-semibold">{t('submit.consent')}</span>
         </label>
+        {errors.consent && <FieldGuide>{errors.consent}</FieldGuide>}
         {problem && (
           <p
             id={`${ids}-problem`}
@@ -683,25 +672,6 @@ export function SubmitForm({ locale, demoPartner = null }: { locale: Locale; dem
               )}
             </span>
           </p>
-        )}
-        {!ready && (
-          <div className="flex flex-col gap-2 rounded-control bg-warning-soft p-3 text-sm text-warning-soft-foreground" role="status" aria-live="polite">
-            <p className="font-bold">{t('submit.errors.title')}</p>
-            <ul className="flex flex-col gap-1.5">
-              {(Object.keys(LABELS) as FieldKey[])
-                .filter((key) => errors[key])
-                .map((key) => (
-                  <li key={key} className="flex items-start gap-2">
-                    <Icon name="alert" size={15} className="mt-0.5 shrink-0" />
-                    {/* The length messages already name their field. */}
-                    <span>
-                      {key !== 'title' && key !== 'story' && <b>{LABELS[key]}: </b>}
-                      {errors[key]}
-                    </span>
-                  </li>
-                ))}
-            </ul>
-          </div>
         )}
         <div className="flex justify-end">
           <button type="submit" disabled={!ready || sending} className={buttonClasses({ size: 'lg' })}>
@@ -790,7 +760,7 @@ function Field({
   htmlFor: string;
   hint?: string;
   invalid?: boolean;
-  /** Shown at once under the field, in place of the hint, while what is typed is wrong. */
+  /** What the field still needs: shown under it, in place of the hint, as a quiet instruction. */
   error?: string;
   children: ReactNode;
 }) {
@@ -801,10 +771,7 @@ function Field({
       </label>
       {children}
       {error ? (
-        <p id={`${htmlFor}-hint`} className="flex items-start gap-1.5 text-xs font-semibold text-destructive" aria-live="polite">
-          <Icon name="alert" size={14} className="mt-px shrink-0" />
-          {error}
-        </p>
+        <FieldGuide id={`${htmlFor}-hint`}>{error}</FieldGuide>
       ) : (
         hint && (
           <p id={`${htmlFor}-hint`} className={cn('text-xs', invalid ? 'text-destructive' : 'text-muted-foreground')}>
@@ -813,6 +780,16 @@ function Field({
         )
       )}
     </div>
+  );
+}
+
+/** An instruction under a field: muted, with an info mark, never a warning. */
+function FieldGuide({ id, children }: { id?: string; children: ReactNode }) {
+  return (
+    <p id={id} className="flex items-start gap-1.5 text-xs text-muted-foreground" aria-live="polite">
+      <Icon name="info" size={14} className="mt-px shrink-0 text-primary" />
+      {children}
+    </p>
   );
 }
 
