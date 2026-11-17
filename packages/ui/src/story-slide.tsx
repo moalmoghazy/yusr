@@ -207,6 +207,8 @@ export function StoryVideoSlide({
             {data.photo ? labels.show : labels.illustrated}
           </span>
         )}
+        {/* It also fades in from the page at its top, so it has no hard edge above. */}
+        <span aria-hidden className={cn('pointer-events-none absolute inset-x-0 top-0 h-[30%] bg-linear-to-t from-transparent', fadeTo)} />
         {/* The video (or picture) fades into the page at its foot, where the story begins. */}
         <span aria-hidden className={cn('pointer-events-none absolute inset-x-0 bottom-0 h-[70%] bg-linear-to-b from-transparent to-90%', fadeTo)} />
       </div>
