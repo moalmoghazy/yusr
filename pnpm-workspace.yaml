@@ -14,6 +14,19 @@ overrides:
   # Security: build-time CSS tooling inside Expo's Metro config pinned an old PostCSS
   # (GHSA-fxqj-rqcc-2cmp and earlier source-map advisories). Remove once Expo ships >=8.5.23.
   '@expo/metro-config>postcss': ^8.5.31
+  # Security (2026-11-17, pnpm audit): patched releases of dependencies our dependencies pin.
+  # API (Express inside NestJS): request parsing, uploads and query strings.
+  'body-parser@>=2.0.0 <2.4.0': ^2.4.0
+  'multer@>=2.0.0 <2.5.0': ^2.5.0
+  'qs@>=6.7.0 <6.16.1': ^6.16.1
+  # Expo's command-line tools (mobile development only) and build tools.
+  'undici@>=6.0.0 <6.29.1': ^6.29.1
+  'node-forge@<1.4.3': ^1.4.3
+  'fast-uri@>=3.0.0 <3.1.9': ^3.1.9
+  'decode-uri-component@<0.5.1': ^0.5.1
+  'esbuild@>=0.27.3 <0.28.1': ^0.28.1
+  # Schema validation (the React Hooks lint rules pin an older zod 4).
+  'zod@>=4.0.0 <4.6.6': ^4.6.6
 
 # pnpm 10 blocks dependency lifecycle scripts by default; allow the native builds we rely on.
 onlyBuiltDependencies:
