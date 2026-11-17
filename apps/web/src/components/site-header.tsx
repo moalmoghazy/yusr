@@ -1,15 +1,17 @@
 import type { Locale } from '@yusr/core';
 import { buttonClasses, Icon, textFor } from '@yusr/ui';
 import Link from 'next/link';
-import { href, type ThemePreference } from '@/lib/i18n';
+import { href } from '@/lib/i18n';
 import { LiquidGlass } from './liquid-glass';
 import { LocaleSwitch } from './locale-switch';
 import { NavLink } from './nav-link';
-import { ThemeSwitch } from './theme-switch';
 import { WritingLogo } from './writing-logo';
 
-/** `donor`: the signed-in donor's name, or null; the account link reads «عطائي» or «تسجيل الدخول». */
-export function SiteHeader({ locale, theme, donor }: { locale: Locale; theme: ThemePreference; donor: { name: string } | null }) {
+/**
+ * `donor`: the signed-in donor's name, or null; the account link reads «عطائي» or «تسجيل الدخول».
+ * No light/dark switch: the website is dark only (2026-11-17).
+ */
+export function SiteHeader({ locale, donor }: { locale: Locale; donor: { name: string } | null }) {
   const { t } = textFor(locale);
   const links = [
     { href: href(locale), label: t('nav.home'), exact: true },
@@ -41,7 +43,6 @@ export function SiteHeader({ locale, theme, donor }: { locale: Locale; theme: Th
           </nav>
           <span aria-hidden className="hidden md:block md:grow" />
           <div className="flex items-center gap-1.5">
-            <ThemeSwitch initial={theme} labels={{ title: t('nav.theme'), system: t('nav.system'), light: t('nav.light'), dark: t('nav.dark') }} />
             <LocaleSwitch locale={locale} label={t('nav.switchLanguage')} />
             <Link
               href={href(locale, '/account')}

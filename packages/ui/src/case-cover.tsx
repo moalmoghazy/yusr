@@ -2,7 +2,6 @@ import { CATEGORY_META, type CaseCategory, type CategoryTone } from '@yusr/core'
 import type { CSSProperties } from 'react';
 import { cn } from './cn';
 import { ICON_NODES } from './icons';
-import { VINE } from './vine-sweep';
 
 /** Full class names per tone — Tailwind only generates what it can read in the source. */
 const TONES: Readonly<Record<CategoryTone, { root: string; bg: string; glyph: string }>> = {
@@ -28,12 +27,11 @@ const GLYPH_X = 40;
 const GLYPH_Y = (180 - 24 * GLYPH_SCALE) / 2;
 
 /**
- * The illustrated case cover. Yusr never shows beneficiaries' photos — dignity first — so
- * each category has a motif over «الغصن المتعرّش», Yusr's climbing-branch ornament. Every cover puts its motif
- * in the same place (start of the card, vertically centred) so a row of cards lines up. The motif
- * draws itself and rests, in a loop (`.cover-morph-icon`; without the animation it simply shows).
- * Deterministic: the seed only shifts the sweep
- * and the light, so the server and client draw the same cover.
+ * The illustrated case cover. Yusr never shows beneficiaries' photos — dignity first — so each category
+ * has a motif on its own plain tone (no ornament behind it since 2026-11-17). Every cover puts its motif in
+ * the same place (start of the card, vertically centred) so a row of cards lines up. The motif draws itself
+ * and rests, in a loop (`.cover-morph-icon`; without the animation it simply shows). The seed only staggers
+ * that loop, so the server and client draw the same cover.
  */
 
 /** Neighbouring covers start the loop at different moments, so a row of cards doesn't move in step. */
@@ -41,12 +39,6 @@ const morphTiming = (seed: number): CSSProperties => ({ ['--morph-delay' as stri
 
 export function CaseCover({ category, seed, className, label }: CaseCoverProps) {
   const tone = TONES[CATEGORY_META[category].tone];
-  const variant = seed % 4;
-  const orbX = 60 + (seed % 7) * 26;
-  const orbY = 40 + (seed % 5) * 22;
-  const sweepX = 40 + (seed % 5) * 12;
-  const sweepY = 10 + (seed % 3) * 12;
-  const sweepTilt = -8 + (seed % 4) * 4;
 
   return (
     <svg
@@ -59,21 +51,6 @@ export function CaseCover({ category, seed, className, label }: CaseCoverProps) 
       focusable="false"
     >
       <rect width="320" height="180" className={tone.bg} />
-      {/* «الغصن المتعرّش» behind the motif, a little different on every card. */}
-      <g transform={`translate(${sweepX} ${sweepY + 20}) rotate(${sweepTilt} 120 60) scale(1.1)`} opacity={0.18}>
-        <path d={VINE.stem} fill="none" stroke="currentColor" strokeWidth={3.2} strokeLinecap="round" />
-        {VINE.tendrils.map((d) => (
-          <path key={d} d={d} fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" />
-        ))}
-        {VINE.leaves.map((leaf) => (
-          <path key={leaf.d} d={leaf.d} fill="currentColor" />
-        ))}
-        {VINE.berries.map(([cx, cy]) => (
-          <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={4.5} fill="currentColor" />
-        ))}
-      </g>
-      <circle cx={orbX} cy={orbY} r={70 + variant * 12} fill="currentColor" opacity={0.09} />
-      <circle cx={320 - orbX / 2} cy={170 - orbY / 3} r={36 + variant * 6} fill="currentColor" opacity={0.07} />
       <g className={tone.glyph} style={morphTiming(seed)}>
         <g
           transform={`translate(${GLYPH_X} ${GLYPH_Y}) scale(${GLYPH_SCALE})`}

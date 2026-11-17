@@ -4,7 +4,6 @@ import { defaultTheme } from '@yusr/theme';
 import { cn, DemoBanner, textFor } from '@yusr/ui';
 import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Mono, IBM_Plex_Sans_Arabic, Reem_Kufi } from 'next/font/google';
-import { cookies } from 'next/headers';
 import { Suspense, type ReactNode } from 'react';
 import { PageLoading } from '@/components/page-loading';
 import { SiteFooter } from '@/components/site-footer';
@@ -12,7 +11,6 @@ import { SiteHeader } from '@/components/site-header';
 import { WhatsAppButton } from '@/components/whatsapp-button';
 import { currentDonor } from '@/lib/api';
 import { siteUrl } from '@/lib/env';
-import { THEME_COOKIE, themeFrom } from '@/lib/i18n';
 import { OG_IMAGE } from '@/lib/og';
 import { pageLocale, type LocaleParams } from '@/lib/page';
 import { site } from '@/lib/site';
@@ -49,20 +47,17 @@ export async function generateMetadata({ params }: { params: LocaleParams }): Pr
   };
 }
 
+// The website is dark only (2026-11-17): one look for everyone, whatever the device prefers.
 export const viewport: Viewport = {
-  colorScheme: 'light dark',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: defaultTheme.colors.light.background },
-    { media: '(prefers-color-scheme: dark)', color: defaultTheme.colors.dark.background },
-  ],
+  colorScheme: 'dark',
+  themeColor: defaultTheme.colors.dark.background,
 };
 
 export default async function LocaleLayout({ children, params }: { children: ReactNode; params: LocaleParams }) {
   const locale = await pageLocale(params);
-  const theme = themeFrom((await cookies()).get(THEME_COOKIE)?.value);
   const { t } = textFor(locale);
   return (
-    <html lang={locale} dir={dirOf(locale)} className={cn(sans.variable, logo.variable, mono.variable, theme !== 'system' && theme)} suppressHydrationWarning>
+    <html lang={locale} dir={dirOf(locale)} data-theme="dark" className={cn(sans.variable, logo.variable, mono.variable, 'dark')} suppressHydrationWarning>
       <body className="min-h-dvh">
         <a
           href="#main"
@@ -71,7 +66,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
           {t('a11y.skipToContent')}
         </a>
         {site.demo && <DemoBanner locale={locale} />}
-        <SiteHeader locale={locale} theme={theme} donor={await currentDonor()} />
+        <SiteHeader locale={locale} donor={await currentDonor()} />
         {/* In a public demo, stream a loading state at once while the (possibly sleeping) API wakes up.
             A real deployment renders pages whole, so missing pages keep their 404 status. */}
         <main id="main">{site.demo ? <Suspense fallback={<PageLoading locale={locale} />}>{children}</Suspense> : children}</main>

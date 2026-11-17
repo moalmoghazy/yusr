@@ -9,19 +9,7 @@ import {
   type PublicPartner,
   type SuccessStory,
 } from '@yusr/core';
-import {
-  buttonClasses,
-  CaseCard,
-  cn,
-  DonationProgress,
-  Icon,
-  storySlideData,
-  storySlideLabels,
-  textFor,
-  VineSweep,
-  type CaseCardProps,
-  type IconName,
-} from '@yusr/ui';
+import { buttonClasses, CaseCard, cn, DonationProgress, Icon, storySlideData, storySlideLabels, textFor, type CaseCardProps, type IconName } from '@yusr/ui';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { FeaturedRotator } from '@/components/featured-rotator';
@@ -29,7 +17,6 @@ import { HowReveal } from '@/components/how-reveal';
 import { NewsTicker, type NewsItem } from '@/components/news-ticker';
 import { StoryReel, type ReelStory } from '@/components/story-reel';
 import { SupervisionBadge } from '@/components/supervision-badge';
-import { VineLoop } from '@/components/vine-loop';
 import { PartnerCardButton, PartnerCardDialog } from '@/components/partner-card';
 import { catalog, fresh } from '@/lib/api';
 import { href } from '@/lib/i18n';
@@ -67,10 +54,6 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
     <>
       {/* ---------------------------------------------------------------- hero */}
       <section className="relative overflow-hidden">
-        {/* «الغصن المتعرّش» across the hero's whole background, growing, resting, fading and growing again. */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-          <VineLoop fill delayMs={300} durationMs={3600} periodMs={11000} className="absolute inset-x-0 top-[6%] bottom-[4%] text-logo-ink opacity-[0.13]" />
-        </div>
         <div className="container-page relative grid grid-cols-1 items-center gap-12 lg:items-start py-12 md:py-16 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
           <div className="flex flex-col gap-5">
             <SupervisionBadge locale={locale} />
@@ -150,14 +133,6 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
       {/* ---------------------------------------------------------------- associations: join as a partner */}
       <section className="container-page pb-6" aria-labelledby="cta-title">
         <div className="relative overflow-hidden rounded-card bg-primary px-6 py-10 text-primary-foreground md:px-10">
-          <VineSweep growing durationMs={2400} className="absolute bottom-2 end-[2%] h-28 w-auto text-white opacity-[0.18] md:h-36" />
-          <VineSweep
-            growing
-            flip
-            delayMs={900}
-            durationMs={1800}
-            className="absolute -top-2 end-[26%] hidden h-16 w-auto text-white opacity-[0.12] md:block md:h-20"
-          />
           <div className="relative flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex max-w-xl flex-col gap-2">
               <h2 id="cta-title" className="font-display text-2xl font-bold md:text-3xl">
@@ -268,8 +243,6 @@ function SectionHead({ id, title, body, children }: { id: string; title: string;
         <h2 id={id} className="font-display text-[1.9rem] font-bold leading-snug">
           {title}
         </h2>
-        {/* A small sprig of «الغصن المتعرّش» under every section title. */}
-        <VineSweep sprig growing durationMs={1200} className="-mt-0.5 h-4 w-24 text-logo-ink" />
         {body && <p className="text-muted-foreground">{body}</p>}
       </div>
       {children}
