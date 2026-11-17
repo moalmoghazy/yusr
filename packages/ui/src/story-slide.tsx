@@ -191,7 +191,7 @@ export function StoryVideoSlide({
           </span>
         )}
         {/* The video (or picture) fades into the page at its foot, where the story begins. */}
-        <span aria-hidden className={cn('pointer-events-none absolute inset-x-0 bottom-0 h-[45%] bg-linear-to-b from-transparent', fadeTo)} />
+        <span aria-hidden className={cn('pointer-events-none absolute inset-x-0 bottom-0 h-[70%] bg-linear-to-b from-transparent to-90%', fadeTo)} />
       </div>
       <div className={cn('relative -mt-16 grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]', inner)}>
         <StoryBody data={data} link={link} className="p-0 pb-6 md:p-0 md:pb-6" />
