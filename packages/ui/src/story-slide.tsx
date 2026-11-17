@@ -1,5 +1,6 @@
-import { regionByCode, type CaseCategory, type Locale, type SuccessStory } from '@yusr/core';
+import { CATEGORY_META, regionByCode, type CaseCategory, type Locale, type SuccessStory } from '@yusr/core';
 import type { CSSProperties, ReactNode } from 'react';
+import { Badge } from './badge';
 import { cn } from './cn';
 import { Icon } from './icon';
 import { StoryScene } from './story-scene';
@@ -11,6 +12,9 @@ export interface StorySlideData {
   category: CaseCategory;
   /** «علاج · الإسماعيلية» */
   meta: string;
+  /** Shown as tags like the case page's: the category («علاج») and the governorate («الإسماعيلية»). */
+  categoryLabel?: string;
+  region?: string;
   title: string;
   story: string;
   /** How it ended (the case summary once closed). */
@@ -51,9 +55,22 @@ const step = (i: number): CSSProperties => ({ ['--i' as string]: i });
 function StoryBody({ data, link, className }: { data: StorySlideData; link?: ReactNode; className?: string }) {
   return (
     <div className={cn('flex flex-col justify-center gap-4 p-6 md:p-8', className)}>
-      <p className="story-step text-xs font-semibold text-muted-foreground" style={step(1)}>
-        {data.meta}
-      </p>
+      {data.categoryLabel ? (
+        <div className="story-step flex flex-wrap items-center gap-2" style={step(1)}>
+          <Badge tone={CATEGORY_META[data.category].tone} icon={CATEGORY_META[data.category].icon}>
+            {data.categoryLabel}
+          </Badge>
+          {data.region && (
+            <Badge tone="slate" icon="map-pin">
+              {data.region}
+            </Badge>
+          )}
+        </div>
+      ) : (
+        <p className="story-step text-xs font-semibold text-muted-foreground" style={step(1)}>
+          {data.meta}
+        </p>
+      )}
       <h3 className="story-step font-display text-2xl font-bold leading-snug md:text-[1.7rem]" style={step(1)} dir="auto">
         {data.title}
       </h3>
@@ -210,6 +227,8 @@ export function storySlideData(story: SuccessStory, locale: Locale, photo: strin
   return {
     category: story.category,
     meta: `${t(`categories.${story.category}`)} · ${region ? l(region.name) : story.region}`,
+    categoryLabel: t(`categories.${story.category}`),
+    region: region ? l(region.name) : story.region,
     title: l(story.title),
     // An API from before stories carried their text answers with the summary only.
     story: l(story.story ?? story.summary),
