@@ -139,9 +139,9 @@ export function StorySlide({ data, labels, link, className }: { data: StorySlide
 }
 
 /**
- * A story that leads with a video of the person who was helped: the video across the full width (1080p,
- * no player controls, only a floating sound button), fading into the page at its foot, then the story
- * and a sample of its contributors underneath. `fadeTo` is the colour it fades into (the page behind).
+ * A story told wide: across the full width, the video of the person who was helped (1080p, no player
+ * controls, only a floating sound button), or until there is one its photo (faces blurred) or drawing;
+ * it fades into the page at its foot, then the story and a sample of its contributors underneath. `fadeTo` is the colour it fades into (the page behind).
  * `inner` wraps the text part (the website keeps it to the page width).
  */
 export function StoryVideoSlide({
@@ -154,7 +154,7 @@ export function StoryVideoSlide({
   inner,
   fadeTo = 'to-background',
 }: {
-  data: StorySlideData & { video: string };
+  data: StorySlideData;
   labels: StorySlideLabels;
   link?: ReactNode;
   active?: boolean;
@@ -165,15 +165,32 @@ export function StoryVideoSlide({
 }) {
   return (
     <div className="flex flex-col">
-      <div className="story-photo relative aspect-video max-h-[88vh] w-full overflow-hidden bg-black">
-        <StoryVideo
-          src={data.video}
-          active={active}
-          loop={loop}
-          onEnded={onEnded}
-          labels={{ unmute: labels.unmute ?? 'Sound on', mute: labels.mute ?? 'Sound off' }}
-        />
-        {/* The video fades into the page at its foot, where the story begins. */}
+      <div
+        className={cn(
+          'story-photo relative w-full overflow-hidden',
+          data.video ? 'aspect-video max-h-[88vh] bg-black' : 'aspect-[16/7] max-h-[70vh] min-h-64 bg-muted',
+        )}
+      >
+        {data.video ? (
+          <StoryVideo
+            src={data.video}
+            active={active}
+            loop={loop}
+            onEnded={onEnded}
+            labels={{ unmute: labels.unmute ?? 'Sound on', mute: labels.mute ?? 'Sound off' }}
+          />
+        ) : data.photo ? (
+          <img src={data.photo} alt="" loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover" />
+        ) : (
+          <StoryScene category={data.category} className="absolute inset-0 size-full" />
+        )}
+        {!data.video && (
+          <span className="absolute top-4 start-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1 text-[0.7rem] font-semibold text-white backdrop-blur-sm">
+            <Icon name="eye-off" size={13} />
+            {data.photo ? labels.show : labels.illustrated}
+          </span>
+        )}
+        {/* The video (or picture) fades into the page at its foot, where the story begins. */}
         <span aria-hidden className={cn('pointer-events-none absolute inset-x-0 bottom-0 h-[45%] bg-linear-to-b from-transparent', fadeTo)} />
       </div>
       <div className={cn('relative -mt-16 grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]', inner)}>

@@ -1,7 +1,7 @@
 'use client';
 
 import { STORY_PHOTO_MAX_BYTES, type Locale, type Localized, type StoryPhotoType, type StoryText } from '@yusr/core';
-import { Badge, buttonClasses, cn, Icon, STORY_SLIDE_GRID, StorySlide, StoryVideoSlide, textFor, type StorySlideData, type StorySlideLabels } from '@yusr/ui';
+import { Badge, buttonClasses, cn, Icon, StoryVideoSlide, textFor, type StorySlideData, type StorySlideLabels } from '@yusr/ui';
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { saveStory } from '@/app/(hub)/stories/actions';
 import type { ActionResult } from '@/lib/session';
@@ -174,40 +174,23 @@ export function StoryEditor({
             ))}
           </div>
         </div>
-        {shownVideo ? (
-          <div dir={view === 'ar' ? 'rtl' : 'ltr'} lang={view} className="overflow-hidden rounded-card border border-border bg-card shadow-sm">
-            <StoryVideoSlide
-              data={{ ...preview, video: shownVideo }}
-              labels={labels[view]}
-              loop
-              fadeTo="to-card"
-              inner="px-5"
-              link={
-                <span className="inline-flex items-center gap-1.5 self-start font-semibold text-primary">
-                  {tv('landing.stories.read')}
-                  <Icon name="arrow-forward" size={16} />
-                </span>
-              }
-            />
-          </div>
-        ) : (
-          <div
-            dir={view === 'ar' ? 'rtl' : 'ltr'}
-            lang={view}
-            className={cn('overflow-hidden rounded-card border border-border bg-card shadow-sm', STORY_SLIDE_GRID)}
-          >
-            <StorySlide
-              data={preview}
-              labels={labels[view]}
-              link={
-                <span className="inline-flex items-center gap-1.5 self-start font-semibold text-primary">
-                  {tv('landing.stories.read')}
-                  <Icon name="arrow-forward" size={16} />
-                </span>
-              }
-            />
-          </div>
-        )}
+        {/* As the website tells it: the video (or until there is one, the photo or drawing) across the top. */}
+        <div dir={view === 'ar' ? 'rtl' : 'ltr'} lang={view} className="overflow-hidden rounded-card border border-border bg-card shadow-sm">
+          <StoryVideoSlide
+            data={{ ...preview, video: shownVideo }}
+            key={shownVideo ?? 'still'}
+            labels={labels[view]}
+            loop
+            fadeTo="to-card"
+            inner="px-5"
+            link={
+              <span className="inline-flex items-center gap-1.5 self-start font-semibold text-primary">
+                {tv('landing.stories.read')}
+                <Icon name="arrow-forward" size={16} />
+              </span>
+            }
+          />
+        </div>
         <p className="flex flex-wrap gap-x-2 text-xs text-muted-foreground">
           <span dir="ltr" className="font-mono">
             {reference}

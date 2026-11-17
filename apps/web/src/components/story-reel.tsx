@@ -1,6 +1,6 @@
 'use client';
 
-import { cn, Icon, STORY_SLIDE_GRID, StorySlide, StoryVideoSlide, type StorySlideData, type StorySlideLabels } from '@yusr/ui';
+import { cn, Icon, StoryVideoSlide, type StorySlideData, type StorySlideLabels } from '@yusr/ui';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
@@ -95,25 +95,17 @@ export function StoryReel({ stories, labels }: { stories: ReelStory[]; labels: R
           const hidden = state === 'hidden';
           return (
             <article key={story.id} data-state={state} aria-hidden={hidden || undefined} className="story-slide">
-              {story.video ? (
-                <StoryVideoSlide
-                  data={{ ...story, video: story.video }}
-                  labels={labels}
-                  link={readLink(story, hidden)}
-                  active={!hidden}
-                  loop={stories.length < 2 || still}
-                  onEnded={() => {
-                    if (!held && !still && stories.length > 1) advance();
-                  }}
-                  inner="container-page"
-                />
-              ) : (
-                <div className="container-page">
-                  <div className={cn('overflow-hidden rounded-card border border-border bg-card shadow-sm', STORY_SLIDE_GRID)}>
-                    <StorySlide data={story} labels={labels} link={readLink(story, hidden)} />
-                  </div>
-                </div>
-              )}
+              <StoryVideoSlide
+                data={story}
+                labels={labels}
+                link={readLink(story, hidden)}
+                active={!hidden}
+                loop={stories.length < 2 || still}
+                onEnded={() => {
+                  if (!held && !still && stories.length > 1) advance();
+                }}
+                inner="container-page"
+              />
             </article>
           );
         })}
