@@ -1,7 +1,7 @@
 'use client';
 
 import { STORY_PHOTO_MAX_BYTES, type Locale, type Localized, type StoryPhotoType, type StoryText } from '@yusr/core';
-import { Badge, buttonClasses, cn, Icon, STORY_SLIDE_GRID, StorySlide, textFor, type StorySlideData, type StorySlideLabels } from '@yusr/ui';
+import { Badge, buttonClasses, cn, Icon, STORY_SLIDE_GRID, StorySlide, StoryVideoSlide, textFor, type StorySlideData, type StorySlideLabels } from '@yusr/ui';
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { saveStory } from '@/app/(hub)/stories/actions';
 import type { ActionResult } from '@/lib/session';
@@ -75,6 +75,7 @@ export function StoryEditor({
   text,
   original,
   photo,
+  video,
   slides,
   labels,
 }: {
@@ -87,6 +88,7 @@ export function StoryEditor({
   text: StoryText;
   original: StoryText;
   photo: string | null;
+  video: string | null;
   slides: Record<Locale, StorySlideData>;
   labels: Record<Locale, StorySlideLabels>;
 }) {
@@ -98,7 +100,10 @@ export function StoryEditor({
   const [reading, setReading] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [view, setView] = useState<Locale>(locale);
+  const [videoUrl, setVideoUrl] = useState(video ?? '');
   const input = useRef<HTMLInputElement>(null);
+  // Previewed only once it looks like a link the website will accept.
+  const shownVideo = /^https:\/\/\S+$/i.test(videoUrl.trim()) || /^\/story-videos\/[\w.-]+$/.test(videoUrl.trim()) ? videoUrl.trim() : null;
 
   // Saved: the page now serves the uploaded photo, so the local copy goes.
   useEffect(() => {
@@ -169,22 +174,40 @@ export function StoryEditor({
             ))}
           </div>
         </div>
-        <div
-          dir={view === 'ar' ? 'rtl' : 'ltr'}
-          lang={view}
-          className={cn('overflow-hidden rounded-card border border-border bg-card shadow-sm', STORY_SLIDE_GRID)}
-        >
-          <StorySlide
-            data={preview}
-            labels={labels[view]}
-            link={
-              <span className="inline-flex items-center gap-1.5 self-start font-semibold text-primary">
-                {tv('landing.stories.read')}
-                <Icon name="arrow-forward" size={16} />
-              </span>
-            }
-          />
-        </div>
+        {shownVideo ? (
+          <div dir={view === 'ar' ? 'rtl' : 'ltr'} lang={view} className="overflow-hidden rounded-card border border-border bg-card shadow-sm">
+            <StoryVideoSlide
+              data={{ ...preview, video: shownVideo }}
+              labels={labels[view]}
+              loop
+              fadeTo="to-card"
+              inner="px-5"
+              link={
+                <span className="inline-flex items-center gap-1.5 self-start font-semibold text-primary">
+                  {tv('landing.stories.read')}
+                  <Icon name="arrow-forward" size={16} />
+                </span>
+              }
+            />
+          </div>
+        ) : (
+          <div
+            dir={view === 'ar' ? 'rtl' : 'ltr'}
+            lang={view}
+            className={cn('overflow-hidden rounded-card border border-border bg-card shadow-sm', STORY_SLIDE_GRID)}
+          >
+            <StorySlide
+              data={preview}
+              labels={labels[view]}
+              link={
+                <span className="inline-flex items-center gap-1.5 self-start font-semibold text-primary">
+                  {tv('landing.stories.read')}
+                  <Icon name="arrow-forward" size={16} />
+                </span>
+              }
+            />
+          </div>
+        )}
         <p className="flex flex-wrap gap-x-2 text-xs text-muted-foreground">
           <span dir="ltr" className="font-mono">
             {reference}
@@ -268,6 +291,33 @@ export function StoryEditor({
         )}
         {pending && <p className="text-xs font-semibold text-warning-soft-foreground">{t('admin.stories.photoPending')}</p>}
         {removing && <p className="text-xs font-semibold text-warning-soft-foreground">{t('admin.stories.photoRemoving')}</p>}
+      </section>
+
+      <section className="flex flex-col gap-3 rounded-card border border-border bg-card p-4">
+        <h3 className="text-sm font-bold">{t('admin.stories.videoTitle')}</h3>
+        <p className="text-xs leading-relaxed text-muted-foreground">{t('admin.stories.videoHint')}</p>
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="flex min-w-64 flex-1 flex-col gap-1.5">
+            <span className="text-xs font-semibold text-muted-foreground">{t('admin.stories.videoUrl')}</span>
+            <input
+              type="url"
+              name="videoUrl"
+              dir="ltr"
+              inputMode="url"
+              placeholder="https://…/story.mp4"
+              value={videoUrl}
+              onChange={(event) => setVideoUrl(event.target.value)}
+              disabled={!canEdit}
+              className={cn(control, 'h-10 font-mono')}
+            />
+          </label>
+          {canEdit && videoUrl && (
+            <button type="button" onClick={() => setVideoUrl('')} className={buttonClasses({ variant: 'ghost', size: 'sm', className: 'h-10' })}>
+              <Icon name="x" size={15} />
+              {t('admin.stories.removeVideo')}
+            </button>
+          )}
+        </div>
       </section>
 
       <section className="flex flex-col gap-4 rounded-card border border-border bg-card p-4">

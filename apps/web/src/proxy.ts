@@ -106,6 +106,8 @@ function contentSecurityPolicy(nonce: string): string {
     // React style attributes (progress widths) and next/font need inline styles; scripts stay locked.
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
+    // «قصص نجاح» videos: our own files, or a storage service the hub links to (https only).
+    "media-src 'self' https:",
     "font-src 'self'",
     `connect-src ${connect}`,
     "object-src 'none'",

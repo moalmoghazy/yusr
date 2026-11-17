@@ -1208,7 +1208,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
   /** «قصص نجاح» text and visibility edited in the hub. */
   /** «قسم المراجعة والتدقيق»: the super admin's verdicts, newest last. */
   const oversightReviews: OversightReview[] = [];
-  const storyEdits = new Map<string, { text: StoryText; published: boolean; updatedAt: string; updatedBy: string }>();
+  const storyEdits = new Map<string, { text: StoryText; published: boolean; videoUrl: string | null; updatedAt: string; updatedBy: string }>();
   const isFollowed = (status: CaseStatus): status is FollowupCase['status'] => (FOLLOWUP_STATUSES as readonly CaseStatus[]).includes(status);
   const followupCase = (item: AdminCase): FollowupCase => {
     const entries = followupLog.filter((entry) => entry.caseId === item.id).reverse();
@@ -1369,6 +1369,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
           closedAt,
           confirmedAt: confirmed?.recordedAt ?? null,
           photoVersion: storyPhotos.get(item.id) ?? null,
+          videoUrl: edit?.videoUrl ?? null,
           contributors,
         };
         return { item, story };
@@ -2019,6 +2020,7 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
         storyEdits.set(caseId, {
           text: { title: filled(parsed.title), story: filled(parsed.story), outcome: filled(parsed.outcome) },
           published: parsed.published,
+          videoUrl: parsed.videoUrl?.trim() || null,
           updatedAt: iso(clock()),
           updatedBy: actor.name,
         });

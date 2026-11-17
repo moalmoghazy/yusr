@@ -20,8 +20,13 @@ export async function saveStory(_previous: ActionResult, form: FormData): Promis
     story: { ar: text(form, 'storyAr'), en: text(form, 'storyEn') },
     outcome: { ar: text(form, 'outcomeAr'), en: text(form, 'outcomeEn') },
     published,
+    videoUrl: text(form, 'videoUrl'),
   });
-  if (!caseId || !parsed.success) return { ok: false, message: t('admin.stories.invalid') };
+  if (!caseId || !parsed.success)
+    return {
+      ok: false,
+      message: parsed.error?.issues.some((issue) => issue.path[0] === 'videoUrl') ? t('admin.stories.videoInvalid') : t('admin.stories.invalid'),
+    };
   const photoData = text(form, 'photoData');
   const photo = photoData ? storyPhotoSchema.safeParse({ contentType: text(form, 'photoType'), dataBase64: photoData }) : null;
   if (photo && !photo.success) return { ok: false, message: t('admin.stories.photoInvalid') };

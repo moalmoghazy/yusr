@@ -336,6 +336,8 @@ export const caseStories = pgTable('case_stories', {
   story: jsonb('story').$type<Localized>().notNull(),
   outcome: jsonb('outcome').$type<Localized>().notNull(),
   published: boolean('published').notNull().default(true),
+  /** 0017_story_videos.sql */
+  videoUrl: text('video_url'),
   updatedBy: uuid('updated_by')
     .notNull()
     .references(() => users.id),

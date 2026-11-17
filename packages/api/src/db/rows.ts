@@ -193,6 +193,8 @@ export interface CaseStoryRow {
   story: Localized;
   outcome: Localized;
   published: boolean;
+  /** The story's video (0017_story_videos.sql), or null. */
+  videoUrl: string | null;
   updatedBy: Id;
   updatedAt: Timestamp;
 }

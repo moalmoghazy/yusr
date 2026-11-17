@@ -34,6 +34,14 @@ export const ICON_NODES = {
     ['path', { d: 'm9 12 2 2 4-4' }],
   ],
   shield: [['path', { d: 'M12 3 5 6v5c0 4.6 2.9 8.3 7 10 4.1-1.7 7-5.4 7-10V6l-7-3Z' }]],
+  volume: [
+    ['path', { d: 'M11 5 6 9H3v6h3l5 4V5Z' }],
+    ['path', { d: 'M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13' }],
+  ],
+  'volume-off': [
+    ['path', { d: 'M11 5 6 9H3v6h3l5 4V5Z' }],
+    ['path', { d: 'm16 9 6 6M22 9l-6 6' }],
+  ],
   clock: [
     ['circle', { cx: '12', cy: '12', r: '9' }],
     ['path', { d: 'M12 7v5l3 2' }],

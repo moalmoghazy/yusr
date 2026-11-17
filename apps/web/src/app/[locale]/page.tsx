@@ -281,13 +281,16 @@ function SectionHead({ id, title, body, children }: { id: string; title: string;
 function SuccessStories({ locale, stories }: { locale: Locale; stories: SuccessStory[] }) {
   const { t } = textFor(locale);
   return (
-    <section className="container-page py-14" aria-labelledby="stories-title">
-      <SectionHead id="stories-title" title={t('landing.storiesTitle')} body={t('landing.storiesBody')}>
-        <Link href={href(locale, '/cases?includeFunded=true')} className={buttonClasses({ variant: 'ghost', size: 'sm' })}>
-          {t('common.seeAll')}
-          <Icon name="arrow-forward" size={16} />
-        </Link>
-      </SectionHead>
+    // Full width: a story with a video shows it from edge to edge; the title and the rest keep to the page.
+    <section className="py-14" aria-labelledby="stories-title">
+      <div className="container-page">
+        <SectionHead id="stories-title" title={t('landing.storiesTitle')} body={t('landing.storiesBody')}>
+          <Link href={href(locale, '/cases?includeFunded=true')} className={buttonClasses({ variant: 'ghost', size: 'sm' })}>
+            {t('common.seeAll')}
+            <Icon name="arrow-forward" size={16} />
+          </Link>
+        </SectionHead>
+      </div>
       <StoryReel
         labels={{ read: t('landing.stories.read'), previous: t('landing.stories.previous'), next: t('landing.stories.next'), ...storySlideLabels(locale) }}
         stories={stories.map((story): ReelStory => ({

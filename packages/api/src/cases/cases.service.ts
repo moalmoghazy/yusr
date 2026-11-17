@@ -162,6 +162,7 @@ export class CasesService {
         story: filled(input.story),
         outcome: filled(input.outcome),
         published: input.published,
+        videoUrl: input.videoUrl?.trim() || null,
         updatedBy: actor.id,
         updatedAt: clock.now(),
       });
@@ -171,7 +172,7 @@ export class CasesService {
         action: 'case.story_saved',
         entityType: 'case',
         entityId: caseId,
-        after: { published: input.published },
+        after: { published: input.published, video: input.videoUrl?.trim() || null },
         ip: context.ip ?? null,
         requestId: context.requestId ?? null,
       });
@@ -202,6 +203,7 @@ export class CasesService {
           closedAt: item.closedAt.toISOString(),
           confirmedAt: confirmed?.recordedAt.toISOString() ?? null,
           photoVersion: photo ? photo.getTime().toString(36) : null,
+          videoUrl: edit?.videoUrl ?? null,
           contributors: await this.contributors(item.id),
         };
       }),

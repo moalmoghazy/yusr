@@ -403,6 +403,8 @@ export const en: Messages = {
         other: 'and {count} more donors',
       },
       noContributors: 'The names of those who gave will show here.',
+      unmute: 'Turn the sound on',
+      mute: 'Turn the sound off',
     },
     news: {
       title: 'Latest news',
@@ -1237,6 +1239,12 @@ export const en: Messages = {
       photoPending: 'The new photo shows in the preview and is uploaded when you publish.',
       photoRemoving: 'The photo will be removed and the illustration will return when you save.',
       photoInvalid: "Couldn't read that image. Try a JPG, PNG or WebP.",
+      videoTitle: 'Story video',
+      videoHint:
+        'A video of the person who was helped, with their written consent. It shows across the full width above the story, silent until the visitor turns the sound on. Upload it as a 1080p MP4 to a storage service and paste its link here (starting with https://).',
+      videoUrl: 'Video link (MP4)',
+      videoInvalid: 'The video link must start with https:// (or /story-videos/ for a file on the website).',
+      removeVideo: 'Remove the video',
       photoTooBig: 'The photo is still too large after shrinking. Try a smaller one.',
       resetText: "Use the case's own text",
       publish: 'Publish on the website',

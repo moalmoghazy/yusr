@@ -3870,6 +3870,17 @@
                   },
                   "published": {
                     "type": "boolean"
+                  },
+                  "videoUrl": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 500
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "required": [

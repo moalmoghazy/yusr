@@ -480,9 +480,9 @@ html[lang='ar'] .font-wordmark {
   grid-area: 1 / 1;
 }
 
+/* Only the story showing takes room: a story with a full-width video is much taller than one in a card. */
 .story-slide[data-state='hidden'] {
-  visibility: hidden;
-  opacity: 0;
+  display: none;
 }
 
 @media (prefers-reduced-motion: no-preference) {

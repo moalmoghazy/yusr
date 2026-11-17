@@ -55,6 +55,8 @@ export async function proxy(request: NextRequest) {
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
+    // The «قصص النجاح» preview plays the story's video from its storage service.
+    "media-src 'self' https:",
     "font-src 'self'",
     "connect-src 'self'",
     "object-src 'none'",

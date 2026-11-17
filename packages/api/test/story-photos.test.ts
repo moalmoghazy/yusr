@@ -5,6 +5,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { DomainError } from '@yusr/core';
+import { caseStorySchema } from '@yusr/core/schemas';
 import { CasesService } from '../src/cases/cases.service';
 import { FieldCipher } from '../src/common/cipher';
 import { MemoryKv } from '../src/common/kv';
@@ -87,5 +88,27 @@ describe('«قصص نجاح» photos and contributors', () => {
     assert.equal(inHub?.published, false);
     assert.equal(inHub?.edited, true);
     assert.notEqual(inHub?.original.title.ar, 'عاد أحمد إلى مدرسته');
+  });
+
+  it('keeps a story video link, and clears it when the field is emptied', async () => {
+    const { cases } = await setupStories();
+    const text = {
+      title: { ar: 'عاد أحمد إلى مدرسته', en: '' },
+      story: { ar: 'غطّى المتبرعون مصروفات العام كاملة، وعاد أحمد إلى فصله بعد انقطاع شهرين.', en: '' },
+      outcome: { ar: 'سُددت المصروفات ورُفع الإيصال.', en: '' },
+    };
+    const video = 'https://videos.example.org/ahmed-1080p.mp4';
+    await cases.saveStory(CLOSED_ID, { ...text, published: true, videoUrl: video }, moderator);
+    assert.equal((await cases.stories(6)).find((story) => story.id === CLOSED_ID)?.videoUrl, video);
+    await cases.saveStory(CLOSED_ID, { ...text, published: true, videoUrl: '' }, moderator);
+    assert.equal((await cases.stories(6)).find((story) => story.id === CLOSED_ID)?.videoUrl, null);
+  });
+
+  it('accepts only https links or the website’s own story-videos files', () => {
+    const base = { title: { ar: 'عنوان القصة' }, story: { ar: 'قصة طويلة بما يكفي لتُقبل في النموذج.' }, outcome: { ar: 'انتهت بخير' }, published: true };
+    assert.equal(caseStorySchema.safeParse({ ...base, videoUrl: 'https://cdn.example.org/a.mp4' }).success, true);
+    assert.equal(caseStorySchema.safeParse({ ...base, videoUrl: '/story-videos/ahmed.mp4' }).success, true);
+    assert.equal(caseStorySchema.safeParse({ ...base, videoUrl: 'http://cdn.example.org/a.mp4' }).success, false);
+    assert.equal(caseStorySchema.safeParse({ ...base, videoUrl: 'javascript:alert(1)' }).success, false);
   });
 });

@@ -187,6 +187,18 @@ export const caseStorySchema = z.object({
   story: storyField(20, 6000),
   outcome: storyField(3, 240),
   published: z.boolean(),
+  /**
+   * The story's video (MP4, 1080p): an https link, or a file the website serves under /story-videos/.
+   * Empty or missing: no video (the API stores null).
+   */
+  videoUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .refine((value) => value === '' || /^https:\/\/\S+$/i.test(value) || /^\/story-videos\/[\w.-]+$/.test(value), {
+      message: 'An https link or /story-videos/<file>',
+    })
+    .nullish(),
 });
 export type CaseStoryInput = z.infer<typeof caseStorySchema>;
 

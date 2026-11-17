@@ -134,6 +134,8 @@ export interface SuccessStory extends CaseSummary {
    * GET /stories/{id}/photo?v=…; null shows the illustrated scene instead.
    */
   photoVersion: string | null;
+  /** A video of the person who was helped (with consent), shown full width above the story; null: none. */
+  videoUrl?: string | null;
   /** Who gave, newest first (at most STORY_CONTRIBUTORS_SHOWN); null = a donor who chose to stay anonymous. */
   contributors: Array<string | null>;
 }

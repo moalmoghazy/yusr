@@ -93,6 +93,7 @@ export default async function StoriesPage({ searchParams }: { searchParams: Prom
             text={{ title: selected.story.title, story: selected.story.story, outcome: selected.story.summary }}
             original={selected.original}
             photo={photoUrl(selected.story.id, selected.story.photoVersion)}
+            video={selected.story.videoUrl ?? null}
             slides={{ ar: storySlideData(selected.story, 'ar', null), en: storySlideData(selected.story, 'en', null) }}
             labels={{ ar: storySlideLabels('ar'), en: storySlideLabels('en') }}
           />

@@ -1,6 +1,6 @@
 'use client';
 
-import { cn, Icon, STORY_SLIDE_GRID, StorySlide, type StorySlideData, type StorySlideLabels } from '@yusr/ui';
+import { cn, Icon, STORY_SLIDE_GRID, StorySlide, StoryVideoSlide, type StorySlideData, type StorySlideLabels } from '@yusr/ui';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
@@ -20,10 +20,11 @@ const SHOW_MS = 9_000;
 const OUT_MS = 700;
 
 /**
- * «قصص نجاح» told one at a time: the scene where the help landed (faces blurred), then its title,
- * then the story, each fading in; after a while it all fades out and the next story comes in.
- * Resting the pointer on it (or focusing inside it) holds the current story; the dots jump to one.
- * With reduced motion nothing moves on its own: the dots and arrows change the story.
+ * «قصص نجاح» told one at a time. A story with a video leads with it across the full width of the page
+ * (silent until the sound button is pressed), fading into the story and its contributors below; the next
+ * story comes when the video ends. A story without one shows its scene (faces blurred), title and story in
+ * a card, for a few seconds. Resting the pointer on it (or focusing inside it) holds the current story;
+ * the dots jump to one. With reduced motion nothing moves on its own: the dots and arrows change the story.
  */
 export function StoryReel({ stories, labels }: { stories: ReelStory[]; labels: ReelLabels }) {
   const [index, setIndex] = useState(0);
@@ -31,6 +32,8 @@ export function StoryReel({ stories, labels }: { stories: ReelStory[]; labels: R
   const [held, setHeld] = useState(false);
   const [still, setStill] = useState(false);
   const timers = useRef<number[]>([]);
+  const current = stories[index];
+  const onVideo = Boolean(current?.video);
 
   useEffect(() => {
     const query = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -40,22 +43,41 @@ export function StoryReel({ stories, labels }: { stories: ReelStory[]; labels: R
     return () => query.removeEventListener('change', update);
   }, []);
 
-  useEffect(() => {
-    if (held || still || stories.length < 2) return;
-    timers.current = [
-      window.setTimeout(() => setLeaving(true), SHOW_MS),
+  const advance = () => {
+    setLeaving(true);
+    timers.current.push(
       window.setTimeout(() => {
         setLeaving(false);
-        setIndex((current) => (current + 1) % stories.length);
-      }, SHOW_MS + OUT_MS),
-    ];
+        setIndex((value) => (value + 1) % stories.length);
+      }, OUT_MS),
+    );
+  };
+
+  // A story without a video moves on after a while; one with a video moves on when it ends.
+  useEffect(() => {
+    if (held || still || stories.length < 2 || onVideo) return;
+    timers.current = [window.setTimeout(advance, SHOW_MS)];
     return () => timers.current.forEach((timer) => window.clearTimeout(timer));
-  }, [index, held, still, stories.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- advance only reads setters and the count
+  }, [index, held, still, stories.length, onVideo]);
+
+  useEffect(() => () => timers.current.forEach((timer) => window.clearTimeout(timer)), []);
 
   const go = (next: number) => {
     setLeaving(false);
     setIndex((next + stories.length) % stories.length);
   };
+
+  const readLink = (story: ReelStory, hidden: boolean) => (
+    <Link
+      href={story.href}
+      tabIndex={hidden ? -1 : undefined}
+      className="inline-flex items-center gap-1.5 self-start font-semibold text-primary hover:underline"
+    >
+      {labels.read}
+      <Icon name="arrow-forward" size={16} />
+    </Link>
+  );
 
   return (
     <div
@@ -67,25 +89,31 @@ export function StoryReel({ stories, labels }: { stories: ReelStory[]; labels: R
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setHeld(false);
       }}
     >
-      <div className="story-reel grid overflow-hidden rounded-card border border-border bg-card shadow-sm">
+      <div className="story-reel grid">
         {stories.map((story, position) => {
           const state = position !== index ? 'hidden' : leaving ? 'out' : 'in';
+          const hidden = state === 'hidden';
           return (
-            <article key={story.id} data-state={state} aria-hidden={state === 'hidden' || undefined} className={cn('story-slide', STORY_SLIDE_GRID)}>
-              <StorySlide
-                data={story}
-                labels={labels}
-                link={
-                  <Link
-                    href={story.href}
-                    tabIndex={state === 'hidden' ? -1 : undefined}
-                    className="inline-flex items-center gap-1.5 self-start font-semibold text-primary hover:underline"
-                  >
-                    {labels.read}
-                    <Icon name="arrow-forward" size={16} />
-                  </Link>
-                }
-              />
+            <article key={story.id} data-state={state} aria-hidden={hidden || undefined} className="story-slide">
+              {story.video ? (
+                <StoryVideoSlide
+                  data={{ ...story, video: story.video }}
+                  labels={labels}
+                  link={readLink(story, hidden)}
+                  active={!hidden}
+                  loop={stories.length < 2 || still}
+                  onEnded={() => {
+                    if (!held && !still && stories.length > 1) advance();
+                  }}
+                  inner="container-page"
+                />
+              ) : (
+                <div className="container-page">
+                  <div className={cn('overflow-hidden rounded-card border border-border bg-card shadow-sm', STORY_SLIDE_GRID)}>
+                    <StorySlide data={story} labels={labels} link={readLink(story, hidden)} />
+                  </div>
+                </div>
+              )}
             </article>
           );
         })}

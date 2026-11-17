@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { cn } from './cn';
 import { Icon } from './icon';
 import { StoryScene } from './story-scene';
+import { StoryVideo } from './story-video';
 import { textFor } from './text';
 
 /** One «قصص نجاح» story, already worded for the reader. */
@@ -20,6 +21,8 @@ export interface StorySlideData {
   confirmed: string | null;
   /** A real photo staff uploaded (faces blurred), or null for the illustrated scene. */
   photo: string | null;
+  /** A video of the person who was helped (with consent): shown full width above the story. */
+  video?: string | null;
   /** Who gave, each name once (anonymous gifts already named «فاعل خير»). */
   contributors: string[];
   /** «و٢٣ متبرعًا آخر» when more gave than are named. */
@@ -33,6 +36,9 @@ export interface StorySlideLabels {
   illustrated: string;
   contributors: string;
   noContributors: string;
+  /** The video's sound button. */
+  unmute?: string;
+  mute?: string;
 }
 
 /** The grid one story lays out on: photo, story, then who gave (under both until wide screens). */
@@ -40,6 +46,67 @@ export const STORY_SLIDE_GRID =
   'grid grid-cols-1 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] xl:grid-cols-[minmax(0,0.75fr)_minmax(0,1.1fr)_minmax(0,0.65fr)]';
 
 const step = (i: number): CSSProperties => ({ ['--i' as string]: i });
+
+/** The story itself: what it is, its title, the story, how it ended, the numbers and the link. */
+function StoryBody({ data, link, className }: { data: StorySlideData; link?: ReactNode; className?: string }) {
+  return (
+    <div className={cn('flex flex-col justify-center gap-4 p-6 md:p-8', className)}>
+      <p className="story-step text-xs font-semibold text-muted-foreground" style={step(1)}>
+        {data.meta}
+      </p>
+      <h3 className="story-step font-display text-2xl font-bold leading-snug md:text-[1.7rem]" style={step(1)} dir="auto">
+        {data.title}
+      </h3>
+      <p className="story-step line-clamp-5 whitespace-pre-line leading-relaxed text-muted-foreground" style={step(2)} dir="auto">
+        {data.story}
+      </p>
+      {data.outcome !== data.story && (
+        <p className="story-step inline-flex items-start gap-2 font-semibold text-success" style={step(3)} dir="auto">
+          <Icon name="check" size={18} className="mt-0.5 shrink-0" />
+          {data.outcome}
+        </p>
+      )}
+      <div className="story-step flex flex-col gap-2 border-t border-border pt-4 text-sm" style={step(4)}>
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span className="font-bold text-primary">{data.raised}</span>
+          <span className="text-muted-foreground">{data.donors}</span>
+          <span className="text-muted-foreground">· {data.closed}</span>
+        </p>
+        {data.confirmed && (
+          <p className="inline-flex items-start gap-1.5 self-start rounded-control bg-primary-soft px-3 py-2 text-xs font-semibold text-primary-soft-foreground">
+            <Icon name="shield-check" size={15} className="mt-px shrink-0" />
+            {data.confirmed}
+          </p>
+        )}
+        {link}
+      </div>
+    </div>
+  );
+}
+
+/** «المساهمون في هذه القصة»: a sample of who gave. */
+function StoryContributors({ data, labels, className }: { data: StorySlideData; labels: StorySlideLabels; className?: string }) {
+  return (
+    <aside aria-label={labels.contributors} className={cn('story-step flex flex-col gap-3 p-6', className)} style={step(5)}>
+      <h4 className="inline-flex items-center gap-2 text-sm font-bold">
+        <Icon name="heart" size={16} className="text-highlight" />
+        {labels.contributors}
+      </h4>
+      {data.contributors.length > 0 ? (
+        <ul className="flex max-h-36 flex-wrap gap-1.5 overflow-y-auto md:max-h-none xl:max-h-80">
+          {data.contributors.map((name, position) => (
+            <li key={`${name}-${position}`} className="rounded-full border border-border bg-card px-2.5 py-1 text-xs font-semibold" dir="auto">
+              {name}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-muted-foreground">{labels.noContributors}</p>
+      )}
+      {data.others && <p className="text-xs text-muted-foreground">{data.others}</p>}
+    </aside>
+  );
+}
 
 /**
  * The inside of one «قصص نجاح» story: the website's reel shows them one at a time (its `story-photo`
@@ -65,60 +132,55 @@ export function StorySlide({ data, labels, link, className }: { data: StorySlide
           {data.photo ? labels.show : labels.illustrated}
         </span>
       </div>
-      <div className="flex flex-col justify-center gap-4 p-6 md:p-8">
-        <p className="story-step text-xs font-semibold text-muted-foreground" style={step(1)}>
-          {data.meta}
-        </p>
-        <h3 className="story-step font-display text-2xl font-bold leading-snug md:text-[1.7rem]" style={step(1)} dir="auto">
-          {data.title}
-        </h3>
-        <p className="story-step line-clamp-5 whitespace-pre-line leading-relaxed text-muted-foreground" style={step(2)} dir="auto">
-          {data.story}
-        </p>
-        {data.outcome !== data.story && (
-          <p className="story-step inline-flex items-start gap-2 font-semibold text-success" style={step(3)} dir="auto">
-            <Icon name="check" size={18} className="mt-0.5 shrink-0" />
-            {data.outcome}
-          </p>
-        )}
-        <div className="story-step flex flex-col gap-2 border-t border-border pt-4 text-sm" style={step(4)}>
-          <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="font-bold text-primary">{data.raised}</span>
-            <span className="text-muted-foreground">{data.donors}</span>
-            <span className="text-muted-foreground">· {data.closed}</span>
-          </p>
-          {data.confirmed && (
-            <p className="inline-flex items-start gap-1.5 self-start rounded-control bg-primary-soft px-3 py-2 text-xs font-semibold text-primary-soft-foreground">
-              <Icon name="shield-check" size={15} className="mt-px shrink-0" />
-              {data.confirmed}
-            </p>
-          )}
-          {link}
-        </div>
-      </div>
-      <aside
-        aria-label={labels.contributors}
-        className="story-step flex flex-col gap-3 border-t border-border bg-muted/40 p-6 md:col-span-2 xl:col-span-1 xl:border-s xl:border-t-0"
-        style={step(5)}
-      >
-        <h4 className="inline-flex items-center gap-2 text-sm font-bold">
-          <Icon name="heart" size={16} className="text-highlight" />
-          {labels.contributors}
-        </h4>
-        {data.contributors.length > 0 ? (
-          <ul className="flex max-h-36 flex-wrap gap-1.5 overflow-y-auto md:max-h-none xl:max-h-80">
-            {data.contributors.map((name, position) => (
-              <li key={`${name}-${position}`} className="rounded-full border border-border bg-card px-2.5 py-1 text-xs font-semibold" dir="auto">
-                {name}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-muted-foreground">{labels.noContributors}</p>
-        )}
-        {data.others && <p className="text-xs text-muted-foreground">{data.others}</p>}
-      </aside>
+      <StoryBody data={data} link={link} />
+      <StoryContributors data={data} labels={labels} className="border-t border-border bg-muted/40 md:col-span-2 xl:col-span-1 xl:border-s xl:border-t-0" />
     </>
+  );
+}
+
+/**
+ * A story that leads with a video of the person who was helped: the video across the full width (1080p,
+ * no player controls, only a floating sound button), fading into the page at its foot, then the story
+ * and a sample of its contributors underneath. `fadeTo` is the colour it fades into (the page behind).
+ * `inner` wraps the text part (the website keeps it to the page width).
+ */
+export function StoryVideoSlide({
+  data,
+  labels,
+  link,
+  active = true,
+  loop = false,
+  onEnded,
+  inner,
+  fadeTo = 'to-background',
+}: {
+  data: StorySlideData & { video: string };
+  labels: StorySlideLabels;
+  link?: ReactNode;
+  active?: boolean;
+  loop?: boolean;
+  onEnded?: () => void;
+  inner?: string;
+  fadeTo?: string;
+}) {
+  return (
+    <div className="flex flex-col">
+      <div className="story-photo relative aspect-video max-h-[88vh] w-full overflow-hidden bg-black">
+        <StoryVideo
+          src={data.video}
+          active={active}
+          loop={loop}
+          onEnded={onEnded}
+          labels={{ unmute: labels.unmute ?? 'Sound on', mute: labels.mute ?? 'Sound off' }}
+        />
+        {/* The video fades into the page at its foot, where the story begins. */}
+        <span aria-hidden className={cn('pointer-events-none absolute inset-x-0 bottom-0 h-[45%] bg-linear-to-b from-transparent', fadeTo)} />
+      </div>
+      <div className={cn('relative -mt-16 grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]', inner)}>
+        <StoryBody data={data} link={link} className="p-0 pb-6 md:p-0 md:pb-6" />
+        <StoryContributors data={data} labels={labels} className="h-fit rounded-card border border-border bg-card/80 backdrop-blur-sm" />
+      </div>
+    </div>
   );
 }
 
@@ -140,6 +202,7 @@ export function storySlideData(story: SuccessStory, locale: Locale, photo: strin
     closed: t('landing.stories.closedOn', { date: f.date(story.closedAt, 'medium') }),
     confirmed: story.confirmedAt ? t('landing.stories.confirmed', { date: f.date(story.confirmedAt, 'medium') }) : null,
     photo,
+    video: story.videoUrl ?? null,
     // Each name once (a donor who gave twice, or many anonymous gifts, shows a single chip).
     contributors: [...new Set(named.map((name) => name ?? t('landing.stories.anonymous')))],
     others: story.donorsCount > named.length ? t('landing.stories.others', { count: story.donorsCount - named.length }) : null,
@@ -154,5 +217,7 @@ export function storySlideLabels(locale: Locale): StorySlideLabels {
     illustrated: t('landing.stories.illustrated'),
     contributors: t('landing.stories.contributors'),
     noContributors: t('landing.stories.noContributors'),
+    unmute: t('landing.stories.unmute'),
+    mute: t('landing.stories.mute'),
   };
 }
