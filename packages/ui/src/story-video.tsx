@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Icon } from './icon';
 
 /**
@@ -14,12 +14,15 @@ export function StoryVideo({
   loop = false,
   onEnded,
   labels,
+  videoStyle,
 }: {
   src: string;
   active?: boolean;
   loop?: boolean;
   onEnded?: () => void;
   labels: { unmute: string; mute: string };
+  /** Applied to the video only (a fade mask, say), not to the sound button. */
+  videoStyle?: CSSProperties;
 }) {
   const video = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
@@ -52,6 +55,7 @@ export function StoryVideo({
         disablePictureInPicture
         controls={false}
         onEnded={onEnded}
+        style={videoStyle}
         className="absolute inset-0 size-full object-cover"
       />
       <button

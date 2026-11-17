@@ -181,7 +181,6 @@ export function StoryEditor({
             key={shownVideo ?? 'still'}
             labels={labels[view]}
             loop
-            fadeTo="to-card"
             inner="px-5"
             link={
               <span className="inline-flex items-center gap-1.5 self-start font-semibold text-primary">

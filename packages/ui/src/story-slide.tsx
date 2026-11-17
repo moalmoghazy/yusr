@@ -51,6 +51,14 @@ export const STORY_SLIDE_GRID =
 
 const step = (i: number): CSSProperties => ({ ['--i' as string]: i });
 
+/**
+ * The wide story's soft edges: the picture comes in over its top 40% and goes out over its bottom 55%,
+ * along an eased curve (several stops), so neither edge shows a line.
+ */
+const FADE_CURVE =
+  'linear-gradient(to bottom, transparent 0%, rgb(0 0 0 / 0.12) 9%, rgb(0 0 0 / 0.38) 20%, rgb(0 0 0 / 0.72) 31%, #000 40%, #000 45%, rgb(0 0 0 / 0.82) 55%, rgb(0 0 0 / 0.55) 67%, rgb(0 0 0 / 0.28) 79%, rgb(0 0 0 / 0.1) 90%, transparent 100%)';
+const FADE_MASK: CSSProperties = { maskImage: FADE_CURVE, WebkitMaskImage: FADE_CURVE };
+
 /** The story itself: what it is, its title, the story, how it ended, the numbers and the link. */
 function StoryBody({ data, link, className }: { data: StorySlideData; link?: ReactNode; className?: string }) {
   return (
@@ -158,7 +166,7 @@ export function StorySlide({ data, labels, link, className }: { data: StorySlide
 /**
  * A story told wide: across the full width, the video of the person who was helped (1080p, no player
  * controls, only a floating sound button), or until there is one its photo (faces blurred) or drawing;
- * it fades into the page at its foot, then the story and a sample of its contributors underneath. `fadeTo` is the colour it fades into (the page behind).
+ * it fades into the page at its foot, then the story and a sample of its contributors underneath.
  * `inner` wraps the text part (the website keeps it to the page width).
  */
 export function StoryVideoSlide({
@@ -169,7 +177,6 @@ export function StoryVideoSlide({
   loop = false,
   onEnded,
   inner,
-  fadeTo = 'to-background',
 }: {
   data: StorySlideData;
   labels: StorySlideLabels;
@@ -178,39 +185,36 @@ export function StoryVideoSlide({
   loop?: boolean;
   onEnded?: () => void;
   inner?: string;
-  fadeTo?: string;
 }) {
   return (
     <div className="flex flex-col">
-      <div
-        className={cn(
-          'story-photo relative w-full overflow-hidden',
-          data.video ? 'aspect-video max-h-[88vh] bg-black' : 'aspect-[16/7] max-h-[70vh] min-h-64 bg-muted',
-        )}
-      >
+      <div className={cn('story-photo relative w-full overflow-hidden', data.video ? 'aspect-video max-h-[88vh]' : 'aspect-[16/7] max-h-[70vh] min-h-64')}>
+        {/* The picture itself fades out at the top and the bottom (a soft mask, so whatever is behind
+            shows through: no colour band, no hard edge). The badge and the sound button stay solid. */}
         {data.video ? (
           <StoryVideo
             src={data.video}
             active={active}
             loop={loop}
             onEnded={onEnded}
+            videoStyle={FADE_MASK}
             labels={{ unmute: labels.unmute ?? 'Sound on', mute: labels.mute ?? 'Sound off' }}
           />
-        ) : data.photo ? (
-          <img src={data.photo} alt="" loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover" />
         ) : (
-          <StoryScene category={data.category} className="absolute inset-0 size-full" />
+          <div className="absolute inset-0" style={FADE_MASK}>
+            {data.photo ? (
+              <img src={data.photo} alt="" loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover" />
+            ) : (
+              <StoryScene category={data.category} className="absolute inset-0 size-full" />
+            )}
+          </div>
         )}
         {!data.video && (
-          <span className="absolute top-4 start-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1 text-[0.7rem] font-semibold text-white backdrop-blur-sm">
+          <span className="absolute top-[18%] start-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1 text-[0.7rem] font-semibold text-white backdrop-blur-sm">
             <Icon name="eye-off" size={13} />
             {data.photo ? labels.show : labels.illustrated}
           </span>
         )}
-        {/* It also fades in from the page at its top, so it has no hard edge above. */}
-        <span aria-hidden className={cn('pointer-events-none absolute inset-x-0 top-0 h-[30%] bg-linear-to-t from-transparent', fadeTo)} />
-        {/* The video (or picture) fades into the page at its foot, where the story begins. */}
-        <span aria-hidden className={cn('pointer-events-none absolute inset-x-0 bottom-0 h-[70%] bg-linear-to-b from-transparent to-90%', fadeTo)} />
       </div>
       <div className={cn('relative -mt-16 grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]', inner)}>
         <StoryBody data={data} link={link} className="p-0 pb-6 md:p-0 md:pb-6" />
