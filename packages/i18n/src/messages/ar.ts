@@ -452,7 +452,7 @@ export const ar = {
       closedOn: 'اكتملت في {date}',
       confirmed: 'تأكدنا من وصول الدعم في {date}',
       illustrated: 'رسم تعبيري',
-      contributors: 'المساهمون في هذه القصة',
+      contributors: 'المساهمون في هذا النجاح',
       anonymous: 'فاعل خير',
       others: {
         zero: '',

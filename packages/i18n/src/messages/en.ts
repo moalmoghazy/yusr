@@ -392,7 +392,7 @@ export const en: Messages = {
       closedOn: 'Completed on {date}',
       confirmed: 'We confirmed the help arrived on {date}',
       illustrated: 'Illustration',
-      contributors: 'Who made this story',
+      contributors: 'Who made this success',
       anonymous: 'A kind donor',
       others: {
         zero: '',
