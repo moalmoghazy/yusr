@@ -59,6 +59,8 @@ export interface SeedCase {
   payout?: 'approved' | 'paid';
   /** Follow-up calls and visits after funding («متابعة ما بعد الصرف»), oldest first. */
   followups?: Array<{ daysAgo: number; kind: FollowupKind; outcome: FollowupOutcome; note: string; by: string; nextDueInDays?: number }>;
+  /** A closed case's «قصص نجاح» video (a file the website serves under /story-videos/). */
+  storyVideo?: string;
 }
 
 /**
@@ -1073,6 +1075,8 @@ export const SEED_CASES: readonly SeedCase[] = [
     submittedBy: { name: 'والدة جنى', relation: 'family' },
     auditorId: 'u_aya',
     payout: 'paid',
+    // The owner's concept video for this story (2026-11-18), served by the website.
+    storyVideo: '/story-videos/jana.mp4',
     followups: [
       {
         daysAgo: 19,

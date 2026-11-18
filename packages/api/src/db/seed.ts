@@ -286,6 +286,19 @@ export async function seedDemo(tx: Tx, options: { now: Date; cipher: FieldCipher
     summary.cases += 1;
 
     await seedHistory(tx, seed, row, staffId);
+    // A «قصص نجاح» video set from the hub: the story keeps the case's own text.
+    if (seed.storyVideo && closedAt) {
+      await tx.cases.putStory({
+        caseId,
+        title: row.title,
+        story: row.story,
+        outcome: row.summary,
+        published: true,
+        videoUrl: seed.storyVideo,
+        updatedBy: staffId('u_youssef'),
+        updatedAt: closedAt,
+      });
+    }
     for (const [step, entry] of (seed.followups ?? []).entries()) {
       await tx.cases.insertFollowup({
         id: stableId(`followup:${seed.slug}:${step}`),
