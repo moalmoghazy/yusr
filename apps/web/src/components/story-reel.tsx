@@ -21,9 +21,9 @@ const OUT_MS = 700;
 
 /**
  * «قصص نجاح» told one at a time. A story with a video leads with it across the full width of the page
- * (silent until the sound button is pressed), fading into the story and its contributors below; the next
- * story comes when the video ends. A story without one shows its scene (faces blurred), title and story in
- * a card, for a few seconds. Resting the pointer on it (or focusing inside it) holds the current story;
+ * (silent until the sound button is pressed), fading into the story and its contributors below; the video
+ * plays again from the start when it ends, and the story stays until a visitor picks another. A story
+ * without one shows its scene (faces blurred), title and story, for a few seconds. Resting the pointer on it (or focusing inside it) holds the current story;
  * the dots jump to one. With reduced motion nothing moves on its own: the dots and arrows change the story.
  */
 export function StoryReel({ stories, labels }: { stories: ReelStory[]; labels: ReelLabels }) {
@@ -53,7 +53,7 @@ export function StoryReel({ stories, labels }: { stories: ReelStory[]; labels: R
     );
   };
 
-  // A story without a video moves on after a while; one with a video moves on when it ends.
+  // A story without a video moves on after a while; one with a video stays (its video loops).
   useEffect(() => {
     if (held || still || stories.length < 2 || onVideo) return;
     timers.current = [window.setTimeout(advance, SHOW_MS)];
@@ -100,10 +100,9 @@ export function StoryReel({ stories, labels }: { stories: ReelStory[]; labels: R
                 labels={labels}
                 link={readLink(story, hidden)}
                 active={!hidden}
-                loop={stories.length < 2 || still}
-                onEnded={() => {
-                  if (!held && !still && stories.length > 1) advance();
-                }}
+                // A story's video plays again from the start when it ends (the owner's choice, 2026-11-18);
+                // the dots and arrows move to another story.
+                loop
                 inner="container-page"
               />
             </article>
