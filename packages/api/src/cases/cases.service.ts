@@ -553,7 +553,7 @@ export class CasesService {
       if (!item) throw new DomainError('NOT_FOUND', 'Case not found');
       assertTransition(item.status, input.to, permissionsFor(actor.roles), input.reason);
       if (input.to === 'field_verified') {
-        throw new DomainError('INVALID_TRANSITION', 'Complete the field verification task to verify a case');
+        throw new DomainError('INVALID_TRANSITION', 'Complete the field verification task to verify a case', { rule: 'verification_task' });
       }
       if (input.to === 'published') await this.assertPublishable(tx, item);
       return this.move(tx, item, input.to, actor, input.reason ?? null, context);
@@ -566,6 +566,7 @@ export class CasesService {
     const planned = lines.reduce((sum, line) => sum + line.amountMinor, 0);
     if (planned !== caseNeedMinor(item)) {
       throw new DomainError('VALIDATION_FAILED', 'The disbursement plan must add up to the case need before publishing', {
+        rule: 'plan_total',
         plannedMinor: planned,
         needMinor: caseNeedMinor(item),
         goalMinor: item.goalMinor,
@@ -573,7 +574,7 @@ export class CasesService {
     }
     const documents = await tx.cases.documents(item.id);
     if (!documents.some((document) => document.redactedKey)) {
-      throw new DomainError('VALIDATION_FAILED', 'Publish at least one redacted supporting document');
+      throw new DomainError('VALIDATION_FAILED', 'Publish at least one redacted supporting document', { rule: 'redacted_document' });
     }
   }
 
@@ -676,8 +677,9 @@ export class CasesService {
     await db.transaction(async (tx) => {
       const item = await tx.cases.byId(caseId, 'update');
       if (!item) throw new DomainError('NOT_FOUND', 'Case not found');
-      if (!['under_review', 'field_verified'].includes(item.status)) throw new DomainError('VALIDATION_FAILED', 'The plan is fixed once a case is published');
-      if ((await tx.cases.lines(caseId)).length > 0) throw new DomainError('VALIDATION_FAILED', 'A plan already exists for this case');
+      if (!['under_review', 'field_verified'].includes(item.status))
+        throw new DomainError('VALIDATION_FAILED', 'The plan is fixed once a case is published', { rule: 'plan_locked' });
+      if ((await tx.cases.lines(caseId)).length > 0) throw new DomainError('VALIDATION_FAILED', 'A plan already exists for this case', { rule: 'plan_exists' });
       await tx.cases.insertLines(
         lines.map(({ payeeAccount, ...line }, position) => ({
           id: ids(),

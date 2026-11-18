@@ -58,7 +58,9 @@ export async function proxy(request: NextRequest) {
     // The «قصص النجاح» preview plays the story's video from its storage service.
     "media-src 'self' https:",
     "font-src 'self'",
-    "connect-src 'self'",
+    // Redacted copies of case documents are PUT from the browser to object storage (UPLOAD_ORIGIN); the
+    // demo API's own storage is reached through this hub's /dev-storage route instead.
+    `connect-src ${["'self'", process.env['UPLOAD_ORIGIN']].filter(Boolean).join(' ')}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

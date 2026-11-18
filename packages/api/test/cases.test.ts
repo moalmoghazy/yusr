@@ -15,6 +15,11 @@ async function rejects(promise: Promise<unknown>, code: string) {
   await assert.rejects(promise, (error: unknown) => DomainError.is(error) && error.code === code);
 }
 
+/** Refused, and the error names the rule (details.rule) so the hub can say what to do next. */
+async function rejectsRule(promise: Promise<unknown>, code: string, rule: string) {
+  await assert.rejects(promise, (error: unknown) => DomainError.is(error) && error.code === code && error.details?.['rule'] === rule);
+}
+
 async function setupCases() {
   const context = await setup();
   const cipher = new FieldCipher(FieldCipher.randomKey());
@@ -218,7 +223,7 @@ describe('verification and publishing pipeline', () => {
     const task = await verification.assign(id, { auditorId: USERS.auditor.id, visitAt: new Date('2026-09-28T10:00:00Z') }, { actor: moderator });
     assert.equal(task.status, 'scheduled');
 
-    await rejects(cases.transition(id, { to: 'field_verified' }, { actor: auditor }), 'INVALID_TRANSITION');
+    await rejectsRule(cases.transition(id, { to: 'field_verified' }, { actor: auditor }), 'INVALID_TRANSITION', 'verification_task');
     await rejects(verification.complete(task.id, { recommendedMinor: 17_500_00 }, { actor: auditor }), 'VALIDATION_FAILED');
     await verification.updateChecklist(task.id, { identity: true, residence: true, documents: true, cost: true, alternatives: true }, { actor: auditor });
     await verification.complete(task.id, { recommendedMinor: 17_500_00, notes: 'Visited; eviction notice confirmed.' }, { actor: auditor });
@@ -228,7 +233,7 @@ describe('verification and publishing pipeline', () => {
     assert.equal(verified?.platformFeeMinor, 1_750_00);
 
     await rejects(cases.transition(id, { to: 'published' }, { actor: auditor }), 'FORBIDDEN_TRANSITION');
-    await rejects(cases.transition(id, { to: 'published' }, { actor: moderator }), 'VALIDATION_FAILED');
+    await rejectsRule(cases.transition(id, { to: 'published' }, { actor: moderator }), 'VALIDATION_FAILED', 'plan_total');
     await cases.setDisbursementPlan(
       id,
       [
@@ -246,6 +251,14 @@ describe('verification and publishing pipeline', () => {
         },
       ],
       { actor: moderator },
+    );
+    await rejectsRule(cases.transition(id, { to: 'published' }, { actor: moderator }), 'VALIDATION_FAILED', 'redacted_document');
+    await rejectsRule(
+      cases.setDisbursementPlan(id, [{ payeeType: 'landlord', payee: { ar: 'س', en: 'x' }, purpose: { ar: 'س', en: 'x' }, amountMinor: 1 }], {
+        actor: moderator,
+      }),
+      'VALIDATION_FAILED',
+      'plan_exists',
     );
     await db.transaction(async (tx) => {
       const [document] = await tx.cases.documents(id);

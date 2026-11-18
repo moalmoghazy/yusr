@@ -333,6 +333,7 @@ export const disbursementPlanSchema = z.object({
     .min(1)
     .max(12),
 });
+export type DisbursementPlanInput = z.infer<typeof disbursementPlanSchema>;
 
 export const presignUploadSchema = z.object({
   kind: z.enum(DOCUMENT_KINDS),

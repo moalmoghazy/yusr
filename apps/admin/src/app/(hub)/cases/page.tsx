@@ -1,5 +1,5 @@
 import { allowedTransitions, CASE_STATUSES, type CaseStatus } from '@yusr/core';
-import { CategoryBadge, cn, Icon, ProgressBar, StatusBadge, textFor } from '@yusr/ui';
+import { buttonClasses, CategoryBadge, cn, Icon, ProgressBar, StatusBadge, textFor } from '@yusr/ui';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CaseActions } from '@/components/case-actions';
@@ -96,7 +96,8 @@ export default async function CasesPage({ searchParams }: { searchParams: Promis
               {rows.map((item) => {
                 const percent = Math.min(100, Math.floor((item.raisedMinor / item.goalMinor) * 100));
                 const options = allowedTransitions(item.status, staff.permissions)
-                  .filter((rule) => rule.permission !== 'system')
+                  // Verification is approved by completing the auditor's task (the case page says how), not here.
+                  .filter((rule) => rule.permission !== 'system' && rule.to !== 'field_verified')
                   .map((rule) => ({ to: rule.to, requiresReason: Boolean(rule.requiresReason) }));
                 return (
                   <tr key={item.id} className="align-top">
@@ -106,7 +107,9 @@ export default async function CasesPage({ searchParams }: { searchParams: Promis
                       {item.featuredAt && <Icon name="zap" size={13} className="ms-1 inline text-highlight" label={t('admin.cases.featured')} />}
                     </td>
                     <td className="max-w-[22rem] p-3">
-                      <p className="font-semibold">{l(item.title)}</p>
+                      <Link href={`/cases/${item.id}`} className="font-semibold underline-offset-4 hover:text-primary hover:underline">
+                        {l(item.title)}
+                      </Link>
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         <CategoryBadge category={item.category} locale={locale} />
                         {item.auditor && (
@@ -135,6 +138,9 @@ export default async function CasesPage({ searchParams }: { searchParams: Promis
                       <time dateTime={item.updatedAt}>{f.relative(item.updatedAt)}</time>
                     </td>
                     <td className="p-3">
+                      <Link href={`/cases/${item.id}`} className={buttonClasses({ variant: 'outline', size: 'sm', className: 'mb-2' })}>
+                        {t('admin.caseDetail.open')}
+                      </Link>
                       <CaseActions
                         locale={locale}
                         caseId={item.id}

@@ -27,6 +27,8 @@ export const DOMAIN_ERROR_CODES = [
   'OTP_INVALID',
   'OTP_EXPIRED',
   'SESSION_REVOKED',
+  /** Our own API could not be reached or failed (network, timeout, 5xx); not the payment gateway. */
+  'SERVICE_UNAVAILABLE',
 ] as const;
 
 export type DomainErrorCode = (typeof DOMAIN_ERROR_CODES)[number];

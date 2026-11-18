@@ -9,6 +9,7 @@ import type {
   RecordFollowupInput,
   StoryPhotoInput,
   CaseStoryInput,
+  DisbursementPlanInput,
   OversightReviewInput,
   UpdatePartnerInput,
 } from '@yusr/core/schemas';
@@ -99,6 +100,16 @@ export interface LedgerQuery {
 export interface AdminClient {
   overview(): Promise<AdminOverview>;
   cases(filter?: { status?: CaseStatus; q?: string }): Promise<AdminCase[]>;
+  /** One case with every document (redacted or not); null when there is no such case. */
+  getCase(caseId: string): Promise<AdminCase | null>;
+  /** The disbursement plan (cases:edit), set once while the case is under review or field verified; it must add up to the case need to publish. */
+  setDisbursementPlan(caseId: string, input: DisbursementPlanInput): Promise<AdminCase>;
+  /** A 5-minute link to a document's original (documents:read_private); every opening is audited. */
+  openOriginal(documentId: string): Promise<{ url: string; expiresInSeconds: number }>;
+  /** Step 1 of a redacted copy (documents:redact): a link to PUT the file into the public bucket. */
+  presignRedacted(documentId: string, input: { contentType: string; sizeBytes: number }): Promise<UploadTicket>;
+  /** Step 2: the redacted copy goes on the case page. */
+  confirmRedacted(documentId: string, key: string): Promise<{ publicUrl: string }>;
   transitionCase(caseId: string, to: CaseStatus, reason?: string): Promise<AdminCase>;
   setPriority(caseId: string, priority: number): Promise<AdminCase>;
   /** Shows a published case in the home page's «يحدث الآن» card, or takes it off. */

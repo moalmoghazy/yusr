@@ -103,6 +103,7 @@ import type {
   PartnerProfileInput,
   StoryPhotoInput,
   CaseStoryInput,
+  DisbursementPlanInput,
   OversightReviewInput,
   DocumentRequestInput,
   PartnerLogoInput,
@@ -1462,6 +1463,74 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
           );
       },
       transitionCase: transition,
+      getCase: (caseId: string): AdminCase | null => {
+        ensure('cases:read');
+        return state.cases.get(caseId) ?? null;
+      },
+      setDisbursementPlan: (caseId: string, input: DisbursementPlanInput) => {
+        ensure('cases:edit');
+        const item = mustCase(caseId);
+        if (!['under_review', 'field_verified'].includes(item.status)) {
+          throw new DomainError('VALIDATION_FAILED', 'The plan is fixed once a case is published', { rule: 'plan_locked' });
+        }
+        if (item.disbursements.length > 0) throw new DomainError('VALIDATION_FAILED', 'A plan already exists for this case', { rule: 'plan_exists' });
+        if (input.lines.length === 0 || input.lines.some((line) => !Number.isInteger(line.amountMinor) || line.amountMinor <= 0)) {
+          throw new DomainError('VALIDATION_FAILED', 'Each line needs a positive amount');
+        }
+        const at = iso(clock());
+        const disbursements: DisbursementLine[] = input.lines.map((line, index) => ({
+          id: `${caseId}_line_${index + 1}`,
+          payeeType: line.payeeType,
+          payee: line.payee,
+          purpose: line.purpose,
+          amountMinor: line.amountMinor,
+          status: 'planned',
+          paidAt: null,
+        }));
+        const next: AdminCase = { ...item, disbursements, updatedAt: at };
+        putCase(next);
+        const totalMinor = disbursements.reduce((sum, line) => sum + line.amountMinor, 0);
+        logAudit(actorRef, 'case.plan_set', 'case', caseId, item.reference, null, { lines: disbursements.length, totalMinor });
+        emit({ type: 'case.updated', caseId });
+        return next;
+      },
+      openOriginal: (documentId: string) => {
+        ensure('documents:read_private');
+        const owner = [...state.cases.values()].find((item) => item.documents.some((document) => document.id === documentId));
+        if (!owner) throw new DomainError('NOT_FOUND', 'Document not found');
+        logAudit(actorRef, 'document.viewed', 'case', owner.id, owner.reference, null, { documentId });
+        return { url: `https://storage.yusr.invalid/private/cases/${owner.id}/${documentId}`, expiresInSeconds: 300 };
+      },
+      presignRedacted: (documentId: string, input: { contentType: string; sizeBytes: number }): UploadTicket => {
+        ensure('documents:redact');
+        const owner = [...state.cases.values()].find((item) => item.documents.some((document) => document.id === documentId));
+        if (!owner) throw new DomainError('NOT_FOUND', 'Document not found');
+        const extension = UPLOAD_TYPES[input.contentType];
+        if (!extension || input.sizeBytes <= 0 || input.sizeBytes > 20 * 1024 * 1024) {
+          throw new DomainError('VALIDATION_FAILED', 'Upload a PDF or a photo up to 20 MB');
+        }
+        const key = `cases/${owner.id}/${documentId}.${extension}`;
+        return {
+          key,
+          url: `https://storage.yusr.invalid/public/${key}`,
+          headers: { 'content-type': input.contentType, 'content-length': String(input.sizeBytes) },
+          expiresAt: iso(clock() + 600_000),
+        };
+      },
+      confirmRedacted: (documentId: string, key: string) => {
+        ensure('documents:redact');
+        const owner = [...state.cases.values()].find((item) => item.documents.some((document) => document.id === documentId));
+        if (!owner) throw new DomainError('NOT_FOUND', 'Document not found');
+        if (!key.startsWith(`cases/${owner.id}/${documentId}.`)) throw new DomainError('VALIDATION_FAILED', 'Unexpected key for this document');
+        putCase({
+          ...owner,
+          documents: owner.documents.map((document) => (document.id === documentId ? { ...document, redacted: true } : document)),
+          updatedAt: iso(clock()),
+        });
+        logAudit(actorRef, 'document.redacted', 'case', owner.id, owner.reference, null, { documentId });
+        emit({ type: 'case.updated', caseId: owner.id });
+        return { publicUrl: `https://storage.yusr.invalid/public/${key}` };
+      },
       setPriority: (caseId: string, priority: number) => {
         ensure('cases:prioritize');
         const item = mustCase(caseId);
@@ -2090,6 +2159,11 @@ export function createMockBackend(options: MockBackendOptions = {}): MockBackend
       overview: wrap(sync.overview),
       cases: wrap(sync.cases),
       transitionCase: wrap(sync.transitionCase),
+      getCase: wrap(sync.getCase),
+      setDisbursementPlan: wrap(sync.setDisbursementPlan),
+      openOriginal: wrap(sync.openOriginal),
+      presignRedacted: wrap(sync.presignRedacted),
+      confirmRedacted: wrap(sync.confirmRedacted),
       setPriority: wrap(sync.setPriority),
       setFeatured: wrap(sync.setFeatured),
       editCase: wrap(sync.editCase),

@@ -40,7 +40,7 @@ export const adminApi = cache(async (): Promise<AdminClient> => {
 export type ActionResult = { ok: boolean; message: string } | null;
 
 /** Runs a mutation for a server action and turns API errors into the staff member's language. */
-export async function attempt(run: () => Promise<unknown>, success: string): Promise<ActionResult> {
+export async function attempt(run: () => Promise<unknown>, success: string, explain?: (error: ApiError) => string | undefined): Promise<ActionResult> {
   const { t } = textFor(await hubLocale());
   try {
     await run();
@@ -48,7 +48,7 @@ export async function attempt(run: () => Promise<unknown>, success: string): Pro
   } catch (error) {
     if (error instanceof ApiError) {
       if (error.status === 401) redirect('/login');
-      return { ok: false, message: t(`errors.${error.code}`) };
+      return { ok: false, message: explain?.(error) ?? t(`errors.${error.code}`) };
     }
     console.error(error);
     return { ok: false, message: t('errors.generic') };

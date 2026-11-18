@@ -3,13 +3,15 @@
 import { CASE_STATUSES, type CaseStatus } from '@yusr/core';
 import { textFor } from '@yusr/ui';
 import { revalidatePath } from 'next/cache';
+import { explainCaseError } from '@/lib/case-errors';
 import { formId } from '@/lib/form';
 import { hubLocale } from '@/lib/i18n';
 import { adminApi, attempt, type ActionResult } from '@/lib/session';
 
 /** Moves a case along the pipeline. The API re-checks the rule, the role and the reason. */
 export async function transitionCase(_previous: ActionResult, form: FormData): Promise<ActionResult> {
-  const { t } = textFor(await hubLocale());
+  const locale = await hubLocale();
+  const { t } = textFor(locale);
   const caseId = formId(form, 'caseId');
   const to = String(form.get('to') ?? '');
   if (!caseId || !(CASE_STATUSES as readonly string[]).includes(to)) return { ok: false, message: t('errors.VALIDATION_FAILED') };
@@ -18,8 +20,12 @@ export async function transitionCase(_previous: ActionResult, form: FormData): P
   const result = await attempt(
     () => api.transitionCase(caseId, to as CaseStatus, reason),
     t('admin.cases.transitioned', { status: t(`status.${to as CaseStatus}`) }),
+    explainCaseError(locale),
   );
-  if (result?.ok) revalidatePath('/cases');
+  if (result?.ok) {
+    revalidatePath('/cases');
+    revalidatePath(`/cases/${caseId}`);
+  }
   return result;
 }
 

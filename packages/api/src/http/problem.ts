@@ -35,6 +35,7 @@ export const STATUS_BY_CODE: Readonly<Record<DomainErrorCode, number>> = {
   REFUND_EXCEEDS_DONATION: 422,
   INSUFFICIENT_CASE_FUNDS: 409,
   SELF_APPROVAL_FORBIDDEN: 403,
+  SERVICE_UNAVAILABLE: 503,
 };
 
 export interface Problem {
@@ -71,6 +72,9 @@ const PUBLIC_DETAIL_KEYS = new Set([
   'heldMinor',
   'neededMinor',
   'plannedMinor',
+  'needMinor',
+  /** Which business rule refused the request (plan_total, redacted_document, verification_task…), so the UI can explain it. */
+  'rule',
   'goalMinor',
   'missing',
   'chargedMinor',

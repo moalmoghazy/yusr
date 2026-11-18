@@ -72,13 +72,15 @@ function createRequester(options: HttpClientOptions) {
       const payload = (await response.json().catch(() => null)) as { error?: { code?: string; message?: string; details?: Record<string, unknown> } } | null;
       if (!response.ok) {
         const raw = payload?.error?.code;
-        const code = (DOMAIN_ERROR_CODES as readonly string[]).includes(raw ?? '') ? (raw as DomainErrorCode) : 'VALIDATION_FAILED';
+        const known = (DOMAIN_ERROR_CODES as readonly string[]).includes(raw ?? '');
+        // A server failure with no domain code (a crash, a gateway timeout) is not the person's input.
+        const code = known ? (raw as DomainErrorCode) : response.status >= 500 ? 'SERVICE_UNAVAILABLE' : 'VALIDATION_FAILED';
         throw new ApiError(response.status, response.status === 429 ? 'RATE_LIMITED' : code, payload?.error?.message, payload?.error?.details);
       }
       return payload as T;
     } catch (error) {
       if (error instanceof ApiError) throw error;
-      throw new ApiError(0, 'PAYMENT_PROVIDER_ERROR', error instanceof Error ? error.message : 'Network error');
+      throw new ApiError(0, 'SERVICE_UNAVAILABLE', error instanceof Error ? error.message : 'Network error');
     } finally {
       clearTimeout(timer);
     }
@@ -118,6 +120,18 @@ export function createHttpAdminClient(options: HttpClientOptions): AdminClient {
   return {
     overview: () => request('GET', '/admin/overview'),
     cases: (filter) => request('GET', `/admin/cases${toQuery(filter)}`),
+    getCase: async (caseId) => {
+      try {
+        return await request('GET', `/admin/cases/${seg(caseId)}`);
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) return null;
+        throw error;
+      }
+    },
+    setDisbursementPlan: (caseId, input) => request('PUT', `/admin/cases/${seg(caseId)}/plan`, input),
+    openOriginal: (documentId) => request('GET', `/admin/documents/${seg(documentId)}/original`),
+    presignRedacted: (documentId, input) => post(`/admin/documents/${seg(documentId)}/redacted`, input),
+    confirmRedacted: (documentId, key) => post(`/admin/documents/${seg(documentId)}/redacted/confirm`, { key }),
     transitionCase: (caseId, to, reason) => post(`/admin/cases/${seg(caseId)}/transitions`, { to, reason }),
     setPriority: (caseId, priority) => request('PATCH', `/admin/cases/${seg(caseId)}/priority`, { priority }),
     setFeatured: (caseId, featured) => request('PUT', `/admin/cases/${seg(caseId)}/featured`, { featured }),

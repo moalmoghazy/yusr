@@ -66,3 +66,39 @@ describe('HTTP client edge headers', () => {
     assert.equal(noIp['x-yusr-client-ip'], undefined);
   });
 });
+
+describe('HTTP client failures', () => {
+  const isCode = (code: string) => (error: unknown) => error instanceof ApiError && error.code === code;
+
+  it('reports an unreachable API as SERVICE_UNAVAILABLE, not as the payment gateway', async () => {
+    const fetch: typeof globalThis.fetch = async () => {
+      throw new TypeError('fetch failed');
+    };
+    await assert.rejects(async () => createHttpClient({ baseUrl: BASE, fetch }).stats(), isCode('SERVICE_UNAVAILABLE'));
+  });
+
+  it('reports a server error without a domain code as SERVICE_UNAVAILABLE, and keeps known codes and details', async () => {
+    const answer =
+      (status: number, body: unknown): typeof globalThis.fetch =>
+      async () =>
+        new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+    await assert.rejects(
+      async () => createHttpClient({ baseUrl: BASE, fetch: answer(500, { error: { code: 'INTERNAL' } }) }).stats(),
+      isCode('SERVICE_UNAVAILABLE'),
+    );
+    await assert.rejects(
+      async () =>
+        createHttpAdminClient({ baseUrl: BASE, fetch: answer(422, { error: { code: 'VALIDATION_FAILED', details: { rule: 'plan_total' } } }) }).transitionCase(
+          'c1',
+          'published',
+        ),
+      (error: unknown) => error instanceof ApiError && error.code === 'VALIDATION_FAILED' && error.details?.['rule'] === 'plan_total',
+    );
+  });
+
+  it('reads one admin case as null when it does not exist', async () => {
+    const fetch: typeof globalThis.fetch = async () =>
+      new Response(JSON.stringify({ error: { code: 'NOT_FOUND' } }), { status: 404, headers: { 'Content-Type': 'application/json' } });
+    assert.equal(await createHttpAdminClient({ baseUrl: BASE, fetch }).getCase('missing'), null);
+  });
+});

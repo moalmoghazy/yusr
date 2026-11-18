@@ -6066,6 +6066,7 @@
                   "OTP_INVALID",
                   "OTP_EXPIRED",
                   "SESSION_REVOKED",
+                  "SERVICE_UNAVAILABLE",
                   "INTERNAL"
                 ]
               },
@@ -6108,7 +6109,8 @@
           "DONATION_NOT_REFUNDABLE": 409,
           "REFUND_EXCEEDS_DONATION": 422,
           "INSUFFICIENT_CASE_FUNDS": 409,
-          "SELF_APPROVAL_FORBIDDEN": 403
+          "SELF_APPROVAL_FORBIDDEN": 403,
+          "SERVICE_UNAVAILABLE": 503
         }
       }
     }
