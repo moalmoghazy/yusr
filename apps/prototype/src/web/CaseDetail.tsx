@@ -146,7 +146,7 @@ function DonatePanel({ item, onTransparency }: { item: CaseDetail; onTransparenc
       ) : (
         <>
           <p className="notice notice-gold">
-            <Icon name="gift" size={16} /> {progress.isFunded ? t('case.fundedNotice') : t('proto.web.fundedAlready')}
+            <Icon name="gift" size={16} /> {progress.isFunded ? `${t('case.fundedNotice')} ${t('case.fundedNoticeLink')}.` : t('proto.web.fundedAlready')}
           </p>
           <Button variant="outline" block icon="receipt" onClick={onTransparency}>
             {t('case.transparency')}

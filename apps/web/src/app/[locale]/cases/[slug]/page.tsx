@@ -106,7 +106,17 @@ export default async function CasePage({ params, searchParams }: { params: Param
         {!open && (
           <p className="flex items-start gap-2 rounded-card bg-highlight-soft p-4 text-sm text-highlight-soft-foreground">
             <Icon name="info" size={18} className="mt-0.5" />
-            {item.status === 'paused' ? t('case.pausedNotice') : t('case.fundedNotice')}
+            {item.status === 'paused' ? (
+              t('case.pausedNotice')
+            ) : (
+              <span>
+                {t('case.fundedNotice')}{' '}
+                <a href="#transparency" className="font-semibold underline underline-offset-4">
+                  {t('case.fundedNoticeLink')}
+                </a>
+                .
+              </span>
+            )}
           </p>
         )}
 

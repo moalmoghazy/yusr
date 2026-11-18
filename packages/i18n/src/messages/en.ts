@@ -301,7 +301,8 @@ export const en: Messages = {
     similar: 'Similar cases',
     notFound: 'We couldn’t find this case',
     pausedNotice: 'Donations are paused while this case’s details are updated.',
-    fundedNotice: 'This case is fully funded — thank you to everyone who gave. Follow the payouts under Transparency.',
+    fundedNotice: 'This case is fully funded. Thank you to everyone who gave. Follow the payouts in',
+    fundedNoticeLink: 'the disbursement plan on this page',
     lastUpdated: 'Updated {date}',
   },
   catalog: {

@@ -70,7 +70,7 @@ export default function CaseScreen() {
         <View style={{ padding: 20, gap: 18 }}>
           <Header item={item} />
           <DonationProgress raisedMinor={item.raisedMinor} goalMinor={item.goalMinor} currency={item.currency} donors={item.donorsCount} large />
-          {item.status === 'funded' && <Notice icon="check" text={t('case.fundedNotice')} tone="gold" />}
+          {item.status === 'funded' && <Notice icon="check" text={`${t('case.fundedNotice')} ${t('case.fundedNoticeLink')}.`} tone="gold" />}
           {item.status === 'paused' && <Notice icon="pause" text={t('case.pausedNotice')} tone="warning" />}
 
           <Section title={t('case.story')}>
