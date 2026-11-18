@@ -405,6 +405,7 @@ export const en: Messages = {
       noContributors: 'The names of those who gave will show here.',
       unmute: 'Turn the sound on',
       mute: 'Turn the sound off',
+      play: 'Play the video',
     },
     news: {
       title: 'Latest news',

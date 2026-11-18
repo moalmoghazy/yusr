@@ -465,6 +465,7 @@ export const ar = {
       noContributors: 'سنعرض أسماء المساهمين هنا.',
       unmute: 'تشغيل الصوت',
       mute: 'كتم الصوت',
+      play: 'تشغيل الفيديو',
     },
     news: {
       title: 'آخر الأخبار',

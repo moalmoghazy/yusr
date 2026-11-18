@@ -40,9 +40,10 @@ export interface StorySlideLabels {
   illustrated: string;
   contributors: string;
   noContributors: string;
-  /** The video's sound button. */
+  /** The video's sound button, and its tap-to-play button when a phone will not start it on its own. */
   unmute?: string;
   mute?: string;
+  play?: string;
 }
 
 /** The grid one story lays out on: photo, story, then who gave (under both until wide screens). */
@@ -62,6 +63,20 @@ const FADE_STYLE = `
   --ys-fade: linear-gradient(to bottom, transparent 0%, rgb(0 0 0 / 0.25) 8%, rgb(0 0 0 / 0.7) 16%, #000 22%, #000 62%, rgb(0 0 0 / 0.7) 74%, rgb(0 0 0 / 0.3) 87%, transparent 100%);
   -webkit-mask-image: var(--ys-fade);
   mask-image: var(--ys-fade);
+}
+/* A video is not masked (Safari on iPhone draws a masked video blank): the page colour is laid over its
+   top and bottom along the same curves instead. */
+.ys-cover { position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(to bottom, var(--background) 0%, color-mix(in oklab, var(--background) 75%, transparent) 8%, color-mix(in oklab, var(--background) 30%, transparent) 16%, transparent 22%),
+    linear-gradient(to top, var(--background) 0%, color-mix(in oklab, var(--background) 70%, transparent) 13%, color-mix(in oklab, var(--background) 30%, transparent) 26%, transparent 38%);
+}
+@media (min-width: 640px) {
+  .ys-cover {
+    background:
+      linear-gradient(to bottom, var(--background) 0%, color-mix(in oklab, var(--background) 88%, transparent) 9%, color-mix(in oklab, var(--background) 62%, transparent) 20%, color-mix(in oklab, var(--background) 28%, transparent) 31%, transparent 40%),
+      linear-gradient(to top, var(--background) 0%, color-mix(in oklab, var(--background) 90%, transparent) 10%, color-mix(in oklab, var(--background) 72%, transparent) 21%, color-mix(in oklab, var(--background) 45%, transparent) 33%, color-mix(in oklab, var(--background) 18%, transparent) 45%, transparent 55%);
+  }
 }
 @media (min-width: 640px) {
   .ys-fade {
@@ -215,8 +230,7 @@ export function StoryVideoSlide({
             active={active}
             loop={loop}
             onEnded={onEnded}
-            videoClassName="ys-fade"
-            labels={{ unmute: labels.unmute ?? 'Sound on', mute: labels.mute ?? 'Sound off' }}
+            labels={{ unmute: labels.unmute ?? 'Sound on', mute: labels.mute ?? 'Sound off', play: labels.play }}
           />
         ) : (
           <div className="ys-fade absolute inset-0">
@@ -227,6 +241,7 @@ export function StoryVideoSlide({
             )}
           </div>
         )}
+        {data.video && <span aria-hidden className="ys-cover" />}
         {!data.video && (
           <span className="absolute top-[18%] start-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1 text-[0.7rem] font-semibold text-white backdrop-blur-sm">
             <Icon name="eye-off" size={13} />
@@ -279,5 +294,6 @@ export function storySlideLabels(locale: Locale): StorySlideLabels {
     noContributors: t('landing.stories.noContributors'),
     unmute: t('landing.stories.unmute'),
     mute: t('landing.stories.mute'),
+    play: t('landing.stories.play'),
   };
 }
