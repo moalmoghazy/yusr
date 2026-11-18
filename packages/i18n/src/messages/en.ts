@@ -240,7 +240,7 @@ export const en: Messages = {
     requestDocs: {
       button: 'Request to view',
       title: 'Request to view the documents',
-      body: 'As a donor you have the right to see this case’s documents. Leave your name and WhatsApp number and the Yusr team sends them to you there.',
+      body: 'As a donor you have the right to see this case’s documents. Fill in the fields below and the Yusr team sends them to your WhatsApp number.',
       name: 'Your name',
       whatsapp: 'WhatsApp number',
       whatsappHint: 'Used only to send you the documents, and never shown on a public page.',
