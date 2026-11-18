@@ -10,6 +10,7 @@ import { explainCaseError } from '@/lib/case-errors';
 import { formId } from '@/lib/form';
 import { hubLocale } from '@/lib/i18n';
 import { adminApi, attempt, type ActionResult } from '@/lib/session';
+import { refreshWebsite } from '@/lib/website';
 
 /**
  * An API without object storage (the public demo, local runs) signs links to its own /dev-storage; the
@@ -71,6 +72,8 @@ export async function confirmRedactedUpload(caseId: string, documentId: string, 
   if (result?.ok) {
     revalidatePath(`/cases/${caseId}`);
     revalidatePath('/cases');
+    // A copy replaced on a published case shows on its page at once.
+    await refreshWebsite();
   }
   return result;
 }

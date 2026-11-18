@@ -672,10 +672,14 @@ node dist/db/create-staff.js --phone 01001234567 --name "اسمك" --role super_
   و`APPLE_TEAM_ID` و`ANDROID_CERT_SHA256` لروابط التطبيق.
 - `YUSR_EDGE_SECRET`: نفس قيمة `YUSR_EDGE_SECRET` في الـ API (سر خادمي، لا يبدأ بـ `NEXT_PUBLIC_`). به يمرّر
   الموقع عنوان كل زائر إلى الـ API، فتُحسب حدود الطلبات لكل زائر لا للخادم كله. بدونه لا يُرسَل شيء.
+- `YUSR_REVALIDATE_SECRET`: سر عشوائي تضعه بالقيمة نفسها هنا وفي لوحة التحكم. به تطلب اللوحة من الموقع تحديث
+  قوائم الحالات فور نشر حالة أو تعديلها، بدل الانتظار حتى ٢٠ ثانية.
 - ملاحظة: المتغيرات التي تبدأ بـ `NEXT_PUBLIC_` تُثبَّت وقت البناء؛ بعد تغييرها أعد النشر (Redeploy).
 
 **5) لوحة التحكم على Vercel** — مشروع ثانٍ بنفس الطريقة: Root Directory `apps/admin`، Build Command
-`pnpm turbo run build --filter=@yusr/admin...`، والمتغيران: `YUSR_API_URL` و`YUSR_EDGE_SECRET` (نفس قيمته في الـ API).
+`pnpm turbo run build --filter=@yusr/admin...`، والمتغيرات: `YUSR_API_URL` و`YUSR_EDGE_SECRET` (نفس قيمته في الـ API)،
+و`YUSR_WEB_URL` (عنوان الموقع، مثل `https://<نطاقك>`) و`YUSR_REVALIDATE_SECRET` (نفس قيمته في الموقع): بهما يظهر
+ما تنشره أو تعدّله في اللوحة على الموقع فورًا.
 
 **6) النطاقات (DNS)**: `<نطاقك>` للموقع، `admin.<نطاقك>` للوحة التحكم، `api.<نطاقك>` للـ API. ثم في
 متغيرات الـ API: `PUBLIC_API_URL` و`PUBLIC_WEB_URL` و`PUBLIC_ADMIN_URL` و`CORS_ORIGINS` بالعناوين الحقيقية.

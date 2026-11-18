@@ -3,6 +3,7 @@
 import { caseStorySchema, storyPhotoSchema } from '@yusr/core/schemas';
 import { textFor } from '@yusr/ui';
 import { revalidatePath } from 'next/cache';
+import { refreshWebsite } from '@/lib/website';
 import { formId, text } from '@/lib/form';
 import { hubLocale } from '@/lib/i18n';
 import { adminApi, attempt, type ActionResult } from '@/lib/session';
@@ -41,6 +42,9 @@ export async function saveStory(_previous: ActionResult, form: FormData): Promis
     },
     published ? t('admin.stories.savedPublished') : t('admin.stories.savedHidden'),
   );
-  if (result?.ok) revalidatePath('/stories');
+  if (result?.ok) {
+    revalidatePath('/stories');
+    await refreshWebsite();
+  }
   return result;
 }

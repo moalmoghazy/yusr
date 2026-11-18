@@ -67,6 +67,8 @@ ok('dependencies installed');
 
 // ------------------------------------------------------------------ 3. Local settings (.env files)
 const secret = (bytes = 32) => randomBytes(bytes).toString('base64url');
+/** The website and the hub share it, so the hub can refresh the site's case lists at once. */
+const revalidateSecret = secret();
 const ENV_FILES = [
   {
     template: 'packages/api/.env.example',
@@ -81,8 +83,16 @@ const ENV_FILES = [
         .replace(/^SIMULATOR_SECRET=.*$/m, `SIMULATOR_SECRET=${secret()}`)
         .replace(/^DATA_KEY_BASE64=.*$/m, `DATA_KEY_BASE64=${randomBytes(32).toString('base64')}`),
   },
-  { template: 'apps/web/.env.example', target: 'apps/web/.env.local' },
-  { template: 'apps/admin/.env.example', target: 'apps/admin/.env.local' },
+  {
+    template: 'apps/web/.env.example',
+    target: 'apps/web/.env.local',
+    fill: (text) => text.replace(/^YUSR_REVALIDATE_SECRET=.*$/m, `YUSR_REVALIDATE_SECRET=${revalidateSecret}`),
+  },
+  {
+    template: 'apps/admin/.env.example',
+    target: 'apps/admin/.env.local',
+    fill: (text) => text.replace(/^YUSR_REVALIDATE_SECRET=.*$/m, `YUSR_REVALIDATE_SECRET=${revalidateSecret}`),
+  },
   { template: 'apps/mobile/.env.example', target: 'apps/mobile/.env' },
 ];
 

@@ -7,6 +7,7 @@ import { explainCaseError } from '@/lib/case-errors';
 import { formId } from '@/lib/form';
 import { hubLocale } from '@/lib/i18n';
 import { adminApi, attempt, type ActionResult } from '@/lib/session';
+import { refreshWebsite } from '@/lib/website';
 
 /** Moves a case along the pipeline. The API re-checks the rule, the role and the reason. */
 export async function transitionCase(_previous: ActionResult, form: FormData): Promise<ActionResult> {
@@ -25,6 +26,8 @@ export async function transitionCase(_previous: ActionResult, form: FormData): P
   if (result?.ok) {
     revalidatePath('/cases');
     revalidatePath(`/cases/${caseId}`);
+    // Published, paused or closed: visitors see it now, not within the site's 20-second refresh.
+    await refreshWebsite();
   }
   return result;
 }
@@ -40,7 +43,10 @@ export async function saveShareText(_previous: ActionResult, form: FormData): Pr
   const shareText = ar && en ? { ar, en } : null;
   const api = await adminApi();
   const result = await attempt(() => api.editCase(caseId, { shareText }), shareText ? t('admin.cases.shareTextSaved') : t('admin.cases.shareTextCleared'));
-  if (result?.ok) revalidatePath('/cases');
+  if (result?.ok) {
+    revalidatePath('/cases');
+    await refreshWebsite();
+  }
   return result;
 }
 
@@ -51,7 +57,10 @@ export async function togglePriority(_previous: ActionResult, form: FormData): P
   const pinned = form.get('pinned') === 'true';
   const api = await adminApi();
   const result = await attempt(() => api.setPriority(caseId, pinned ? 0 : 10), pinned ? t('admin.cases.unprioritize') : t('admin.cases.pinned'));
-  if (result?.ok) revalidatePath('/cases');
+  if (result?.ok) {
+    revalidatePath('/cases');
+    await refreshWebsite();
+  }
   return result;
 }
 
@@ -63,6 +72,9 @@ export async function toggleFeatured(_previous: ActionResult, form: FormData): P
   const featured = form.get('featured') === 'true';
   const api = await adminApi();
   const result = await attempt(() => api.setFeatured(caseId, !featured), featured ? t('admin.cases.unfeatured') : t('admin.cases.featuredOn'));
-  if (result?.ok) revalidatePath('/cases');
+  if (result?.ok) {
+    revalidatePath('/cases');
+    await refreshWebsite();
+  }
   return result;
 }
