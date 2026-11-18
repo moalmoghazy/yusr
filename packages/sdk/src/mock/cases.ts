@@ -1139,6 +1139,7 @@ export const SEED_CASES: readonly SeedCase[] = [
     submittedBy: { name: 'منسق الحالات', relation: 'volunteer' },
     auditorId: 'u_mahmoud',
     payout: 'paid',
+    storyVideo: '/story-videos/hassan.mp4',
     followups: [
       {
         daysAgo: 40,
@@ -1199,6 +1200,7 @@ export const SEED_CASES: readonly SeedCase[] = [
     submittedBy: { name: 'منسق الحالات', relation: 'volunteer' },
     auditorId: 'u_aya',
     payout: 'paid',
+    storyVideo: '/story-videos/minya.mp4',
     followups: [
       {
         daysAgo: 60,
