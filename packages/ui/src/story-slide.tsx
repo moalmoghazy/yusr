@@ -52,12 +52,22 @@ export const STORY_SLIDE_GRID =
 const step = (i: number): CSSProperties => ({ ['--i' as string]: i });
 
 /**
- * The wide story's soft edges: the picture comes in over its top 40% and goes out over its bottom 55%,
- * along an eased curve (several stops), so neither edge shows a line.
+ * The wide story's soft edges (`.ys-fade`), along an eased curve so neither edge shows a line.
+ * Wide screens: the picture comes in over its top 40% and goes out over its bottom 55%.
+ * Phones (a taller, narrower frame): lighter, top 22% and bottom 38%, so the middle of the frame, where a
+ * story video keeps its subject, stays clear.
  */
-const FADE_CURVE =
-  'linear-gradient(to bottom, transparent 0%, rgb(0 0 0 / 0.12) 9%, rgb(0 0 0 / 0.38) 20%, rgb(0 0 0 / 0.72) 31%, #000 40%, #000 45%, rgb(0 0 0 / 0.82) 55%, rgb(0 0 0 / 0.55) 67%, rgb(0 0 0 / 0.28) 79%, rgb(0 0 0 / 0.1) 90%, transparent 100%)';
-const FADE_MASK: CSSProperties = { maskImage: FADE_CURVE, WebkitMaskImage: FADE_CURVE };
+const FADE_STYLE = `
+.ys-fade {
+  --ys-fade: linear-gradient(to bottom, transparent 0%, rgb(0 0 0 / 0.25) 8%, rgb(0 0 0 / 0.7) 16%, #000 22%, #000 62%, rgb(0 0 0 / 0.7) 74%, rgb(0 0 0 / 0.3) 87%, transparent 100%);
+  -webkit-mask-image: var(--ys-fade);
+  mask-image: var(--ys-fade);
+}
+@media (min-width: 640px) {
+  .ys-fade {
+    --ys-fade: linear-gradient(to bottom, transparent 0%, rgb(0 0 0 / 0.12) 9%, rgb(0 0 0 / 0.38) 20%, rgb(0 0 0 / 0.72) 31%, #000 40%, #000 45%, rgb(0 0 0 / 0.82) 55%, rgb(0 0 0 / 0.55) 67%, rgb(0 0 0 / 0.28) 79%, rgb(0 0 0 / 0.1) 90%, transparent 100%);
+  }
+}`;
 
 /** The story itself: what it is, its title, the story, how it ended, the numbers and the link. */
 function StoryBody({ data, link, className }: { data: StorySlideData; link?: ReactNode; className?: string }) {
@@ -188,7 +198,15 @@ export function StoryVideoSlide({
 }) {
   return (
     <div className="flex flex-col">
-      <div className={cn('story-photo relative w-full overflow-hidden', data.video ? 'aspect-video max-h-[88vh]' : 'aspect-[16/7] max-h-[70vh] min-h-64')}>
+      <style>{FADE_STYLE}</style>
+      {/* A video keeps its whole 16:9 frame everywhere (its titles run across the width); a picture gets a
+          taller 4:3 frame on phones. Phones also get the lighter fade, so the middle stays clear. */}
+      <div
+        className={cn(
+          'story-photo relative w-full overflow-hidden',
+          data.video ? 'aspect-video sm:max-h-[88vh]' : 'aspect-[4/3] sm:aspect-[16/7] sm:max-h-[70vh] sm:min-h-64',
+        )}
+      >
         {/* The picture itself fades out at the top and the bottom (a soft mask, so whatever is behind
             shows through: no colour band, no hard edge). The badge and the sound button stay solid. */}
         {data.video ? (
@@ -197,11 +215,11 @@ export function StoryVideoSlide({
             active={active}
             loop={loop}
             onEnded={onEnded}
-            videoStyle={FADE_MASK}
+            videoClassName="ys-fade"
             labels={{ unmute: labels.unmute ?? 'Sound on', mute: labels.mute ?? 'Sound off' }}
           />
         ) : (
-          <div className="absolute inset-0" style={FADE_MASK}>
+          <div className="ys-fade absolute inset-0">
             {data.photo ? (
               <img src={data.photo} alt="" loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover" />
             ) : (
@@ -216,7 +234,7 @@ export function StoryVideoSlide({
           </span>
         )}
       </div>
-      <div className={cn('relative -mt-16 grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]', inner)}>
+      <div className={cn('relative -mt-8 grid grid-cols-1 gap-4 sm:-mt-16 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:gap-2', inner)}>
         <StoryBody data={data} link={link} className="p-0 pb-6 md:p-0 md:pb-6" />
         <StoryContributors data={data} labels={labels} className="h-fit rounded-card border border-border bg-card/80 backdrop-blur-sm" />
       </div>
