@@ -55,7 +55,8 @@ export default async function HomePage({ params }: { params: LocaleParams }) {
       {/* ---------------------------------------------------------------- hero */}
       <section className="relative overflow-hidden">
         <div className="container-page relative grid grid-cols-1 items-center gap-12 lg:items-start py-12 md:py-16 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
-          <div className="flex flex-col gap-5">
+          {/* Room between the title, the lead, the buttons, the money flow and the news. */}
+          <div className="flex flex-col gap-7 md:gap-9">
             <SupervisionBadge locale={locale} />
             <h1
               className={cn(
@@ -173,7 +174,7 @@ const FLOW_STEPS = [
 function MoneyFlow({ locale }: { locale: Locale }) {
   const { t } = textFor(locale);
   return (
-    <div id="transparency" className="flex scroll-mt-28 flex-col gap-2">
+    <div id="transparency" className="flex scroll-mt-28 flex-col gap-3">
       {/* One row: long labels break onto a second line inside their step (narrow phones may still wrap the row). */}
       <ol className="flex flex-wrap items-center gap-x-2 gap-y-3 sm:flex-nowrap" aria-label={t('landing.transparencyTitle')}>
         {FLOW_STEPS.map(([icon, key], index) => (
