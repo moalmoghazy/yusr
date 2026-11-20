@@ -6,13 +6,20 @@
 /* The shared components are styled with utilities; let Tailwind read them. */
 @source '../../../../packages/ui/src';
 
-/* next/font (see app/[locale]/layout.tsx) self-hosts the brand fonts; put them first in the theme's stacks. */
+/* 2026-11-20 TRIAL: every face on the site is Times New Roman (Arabic and Latin, headings, body, numbers).
+   To go back, revert this commit; the previous stacks were:
+     --y-font-sans:     var(--font-plex-arabic), 'IBM Plex Sans', 'Segoe UI', Tahoma, Arial, sans-serif
+     --y-font-display:  var(--font-plex-arabic), 'IBM Plex Sans', 'Segoe UI', Tahoma, sans-serif
+     --y-font-logo:     var(--font-reem-kufi), var(--font-plex-arabic), 'Segoe UI', Tahoma, sans-serif
+     --y-font-mono:     var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace
+     --y-font-wordmark: (from @yusr/theme) */
 :root {
-  --y-font-sans: var(--font-plex-arabic), 'IBM Plex Sans', 'Segoe UI', Tahoma, Arial, sans-serif;
-  /* Headings: the text family in bold (DISPLAY_FACES.plexArabic); to switch, see docs/BRAND.md → Type. */
-  --y-font-display: var(--font-plex-arabic), 'IBM Plex Sans', 'Segoe UI', Tahoma, sans-serif;
-  --y-font-logo: var(--font-reem-kufi), var(--font-plex-arabic), 'Segoe UI', Tahoma, sans-serif;
-  --y-font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --y-font-trial: 'Times New Roman', Times, 'Liberation Serif', 'Noto Naskh Arabic', serif;
+  --y-font-sans: var(--y-font-trial);
+  --y-font-display: var(--y-font-trial);
+  --y-font-logo: var(--y-font-trial);
+  --y-font-wordmark: var(--y-font-trial);
+  --y-font-mono: var(--y-font-trial);
 }
 
 /* 2026-11-15: main titles and the stats band use the heading face (IBM Plex Sans Arabic bold), as in the
