@@ -296,6 +296,7 @@ export const en: Messages = {
       disbursement_proof: 'Payment receipt',
     },
     recentDonors: 'Recent donations',
+    feeNote: "*This amount includes Yusr's fee, which covers checking each case, following it up and making sure donations reach the people they are meant for",
     anonymous: 'Anonymous donor',
     noDonationsYet: 'Be the first to give to this case',
     similar: 'Similar cases',

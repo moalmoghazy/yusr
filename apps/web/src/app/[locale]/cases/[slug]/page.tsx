@@ -220,6 +220,7 @@ export default async function CasePage({ params, searchParams }: { params: Param
             </h2>
             {item.isUrgent && open && <CountdownBadge deadline={item.deadline} locale={locale} initialNow={Date.now()} />}
           </div>
+          <p className="text-xs leading-relaxed text-muted-foreground">{t('case.feeNote')}</p>
           <DonationProgress
             raisedMinor={item.raisedMinor}
             goalMinor={item.goalMinor}
