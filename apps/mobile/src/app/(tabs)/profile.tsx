@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
-import { Lockup } from '@/components/LogoMark';
+import { ScriptLogo } from '@/components/ScriptLogo';
 import { SupervisionBadge } from '@/components/SupervisionBadge';
 import { Text } from '@/components/Text';
 import { WEB_URL } from '@/lib/api';
@@ -90,7 +90,7 @@ export default function Profile() {
       <Group title={t('mobile.about')}>
         <View style={{ gap: 14, padding: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }} accessible accessibilityLabel={t('a11y.logo')}>
-            <Lockup size={30} />
+            <ScriptLogo height={36} />
           </View>
           <Text variant="label" weight="regular" muted>
             {t('footer.aboutBody')}

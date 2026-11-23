@@ -22,6 +22,7 @@ dots and gold ḍamma).
 | `packages/theme/assets/logo-ar.svg`, `logo-en.svg` | Mark + name: the Arabic in the approved lettering, the Latin set in Reem Kufi |
 | `packages/theme/assets/app-icon.svg` | 1024 × 1024 app icon (rendered to PNG for iOS / Android) |
 | `packages/theme/assets/backgrounds/*.svg` | 1920 × 1200 screen backgrounds: turquoise, light and dark |
+| `packages/theme/assets/mobile/*.svg` | The app's icon, Android adaptive foreground and splash: «خطّ اليُسر» in green and orange on the dark background (`scriptAppIconSvg`, `scriptLogoSvg`); rendered to `apps/mobile/assets/{icon,adaptive-icon,splash-logo}.png` |
 
 - The geometry lives in `brand.ts` (`LOGO_VARIANTS`); `<LogoMark>` on the web and on mobile both
   draw from it, so there is one logo, not copies.
@@ -40,9 +41,10 @@ dots and gold ḍamma).
   Beside «من نحن؟» the mark bends into a question mark with a gold dot. In the website's header (Arabic)
   «يُسر» slides out of the mark fading in, rests, and fades out from right to left, every 7 s (`Logo animated`, `.logo-word`, `.logo-wipe`;
   still under reduced motion).
-- **In the app and on case covers**: the bowl is drawn and turns into the category's motif and back, and the
-  home's pattern drifts behind the opening (`apps/mobile/src/lib/motion.ts`: one shared clock per loop,
-  still under reduced motion).
+- **In the app** (since 2026-11-23): like the website, the app uses only «خطّ اليُسر» (`<ScriptLogo>` in
+  `apps/mobile/src/components`), is dark only, and has no background pattern. Case covers show the category's
+  motif on its plain tone, appearing and fading in a 9 s loop (`apps/mobile/src/lib/motion.ts`; still under
+  reduced motion).
 - **Clear space**: at least the curve's stroke width on every side. **Minimum size**: 16 px (mark),
   96 px wide (mark + wordmark).
 - **Don't** recolour the light (turquoise and the highlight gold), outline the mark, rotate it, or

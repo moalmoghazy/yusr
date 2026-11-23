@@ -93,3 +93,47 @@ export const BRUSH_SWEEP = {
   height: 101,
   d: SCRIPT_LOGO.parts.find((part) => part.id === 'ra')!.fill,
 } as const;
+
+/** The logo as one SVG string (the finished word, no writing): for app icons, the splash and anything static. */
+export function scriptLogoPaths(colors: { ink?: string; accent?: string } = {}): string {
+  const ink = colors.ink ?? SCRIPT_LOGO_BRAND.ink;
+  const accent = colors.accent ?? SCRIPT_LOGO_BRAND.accent;
+  return SCRIPT_LOGO.parts.map((part) => `<path d="${part.fill}" fill="${part.color === 'accent' ? accent : ink}"/>`).join('');
+}
+
+/** The logo alone on a transparent background, cropped to the word (`width` in px; the height follows). */
+export function scriptLogoSvg(colors: { ink?: string; accent?: string } = {}, width = SCRIPT_LOGO.width): string {
+  const height = Math.round((width * SCRIPT_LOGO.height) / SCRIPT_LOGO.width);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${SCRIPT_LOGO.viewBox}" width="${width}" height="${height}" role="img" aria-label="Yusr">${scriptLogoPaths(colors)}</svg>`;
+}
+
+/** Where the word sits in a square of `size`: centred, `share` of the width across. */
+export function centreScriptLogo(size: number, share: number): string {
+  const scale = (size * share) / SCRIPT_LOGO.width;
+  const r = (value: number) => Math.round(value * 1000) / 1000;
+  return `translate(${r((size - SCRIPT_LOGO.width * scale) / 2)} ${r((size - SCRIPT_LOGO.height * scale) / 2)}) scale(${r(scale)})`;
+}
+
+/**
+ * How much of the square the word spans: the full app icon (iOS, store listing), and the adaptive icon's
+ * foreground (Android crops it to a circle or squircle inside the middle ~61%, so the word stays well inside).
+ */
+export const SCRIPT_ICON_SHARE = { icon: 0.74, adaptive: 0.56 } as const;
+
+/**
+ * The square app icon: the word in its own green and orange on `background` (the dark theme's background,
+ * as the app is dark only). Without a background the square is transparent (Android's adaptive foreground).
+ */
+export function scriptAppIconSvg(options: { size?: number; share?: number; background?: string; glow?: string } = {}): string {
+  const size = options.size ?? 1024;
+  const share = options.share ?? SCRIPT_ICON_SHARE.icon;
+  const bg = options.background
+    ? [
+        `<rect width="${size}" height="${size}" fill="${options.background}"/>`,
+        options.glow
+          ? `<defs><radialGradient id="glow" cx="0.5" cy="0.45" r="0.6"><stop offset="0" stop-color="${options.glow}" stop-opacity="0.22"/><stop offset="1" stop-color="${options.glow}" stop-opacity="0"/></radialGradient></defs><rect width="${size}" height="${size}" fill="url(#glow)"/>`
+          : '',
+      ].join('')
+    : '';
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">${bg}<g transform="${centreScriptLogo(size, share)}">${scriptLogoPaths()}</g></svg>`;
+}

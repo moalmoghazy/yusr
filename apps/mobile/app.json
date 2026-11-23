@@ -6,7 +6,7 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "ios": {
       "bundleIdentifier": "org.yusr.app",
@@ -23,7 +23,7 @@
       "package": "org.yusr.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#00707A"
+        "backgroundColor": "#08140D"
       },
       "intentFilters": [
         {
@@ -61,12 +61,9 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/splash-mark.png",
-          "imageWidth": 120,
-          "backgroundColor": "#F8F5EE",
-          "dark": {
-            "backgroundColor": "#081315"
-          }
+          "image": "./assets/splash-logo.png",
+          "imageWidth": 200,
+          "backgroundColor": "#08140D"
         }
       ],
       [
