@@ -1,14 +1,13 @@
 import { defaultTheme, toNativeTheme, type NativeTheme } from '@yusr/theme';
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
-import { useColorScheme } from 'react-native';
+import { createContext, useContext, type ReactNode } from 'react';
 
-const Context = createContext<NativeTheme>(toNativeTheme(defaultTheme, 'light'));
+/** The app is dark only, like the website (2026-11-17): one look for everyone, whatever the device prefers. */
+const DARK = toNativeTheme(defaultTheme, 'dark');
+const Context = createContext<NativeTheme>(DARK);
 
-/** The same tokens as the website (colors, radii, type scale), resolved for the device's scheme. */
+/** The same tokens as the website (colors, radii, type scale), in the dark scheme. */
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
-  const theme = useMemo(() => toNativeTheme(defaultTheme, scheme), [scheme]);
-  return <Context.Provider value={theme}>{children}</Context.Provider>;
+  return <Context.Provider value={DARK}>{children}</Context.Provider>;
 }
 
 export function useTheme(): NativeTheme {

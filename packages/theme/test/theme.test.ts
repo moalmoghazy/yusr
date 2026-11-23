@@ -23,6 +23,12 @@ import {
   patternStyleFor,
   patternTileSvg,
   appIconSvg,
+  SCRIPT_LOGO,
+  SCRIPT_LOGO_BRAND,
+  SCRIPT_ICON_SHARE,
+  centreScriptLogo,
+  scriptAppIconSvg,
+  scriptLogoSvg,
   auditContrast,
   brand,
   centreMark,
@@ -332,5 +338,30 @@ describe('brand pattern', () => {
     const lattice = patternTileSvg({ stroke: '#000', fill: '#000', detail: 'lattice' });
     assert.ok(lattice.length < full.length);
     assert.ok(cssText(defaultTheme).includes('--y-pattern: url("data:image/svg+xml,'));
+  });
+});
+
+describe('«خطّ اليُسر» for the app icon and splash', () => {
+  it('draws every part in the logo’s own green and orange', () => {
+    const svg = scriptLogoSvg();
+    assert.equal(svg.match(/<path /g)?.length, SCRIPT_LOGO.parts.length);
+    assert.equal(svg.match(new RegExp(`fill="${SCRIPT_LOGO_BRAND.accent}"`, 'g'))?.length, 1, 'only the ḍamma is orange');
+    assert.ok(svg.includes('width="400" height="196"'));
+  });
+
+  it('centres the word in the square and keeps the adaptive foreground inside Android’s safe circle', () => {
+    const [, tx, ty, scale] = /translate\(([\d.]+) ([\d.]+)\) scale\(([\d.]+)\)/.exec(centreScriptLogo(1024, 0.74))!.map(Number) as [
+      number,
+      number,
+      number,
+      number,
+    ];
+    assert.ok(Math.abs(tx + (scale * SCRIPT_LOGO.width) / 2 - 512) < 0.1 && Math.abs(ty + (scale * SCRIPT_LOGO.height) / 2 - 512) < 0.1);
+    // The word's corners stay within the 66% circle Android may keep (radius 0.33 of the square).
+    const w = SCRIPT_ICON_SHARE.adaptive;
+    const h = (w * SCRIPT_LOGO.height) / SCRIPT_LOGO.width;
+    assert.ok(Math.hypot(w / 2, h / 2) < 0.33);
+    assert.ok(!scriptAppIconSvg({ share: w }).includes('<rect'), 'the adaptive foreground is transparent');
+    assert.ok(scriptAppIconSvg({ background: '#08140D' }).includes('fill="#08140D"'));
   });
 });

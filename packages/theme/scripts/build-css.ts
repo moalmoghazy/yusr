@@ -18,6 +18,9 @@ import {
   markShine,
   patternStyleFor,
   patternTileSvg,
+  SCRIPT_ICON_SHARE,
+  scriptAppIconSvg,
+  scriptLogoSvg,
   tailwindThemeCss,
 } from '../src/index';
 
@@ -50,4 +53,12 @@ for (const tone of ['brand', 'light', 'dark'] as const) {
   writeFileSync(join(assets, 'backgrounds', `yusr-background-1920x1200-${tone}.svg`), logoBackgroundSvg({ tone }));
 }
 
-console.log('theme: wrote dist/tokens.css, dist/tailwind.css, assets/*.svg and assets/backgrounds/*.svg');
+// The mobile app's icon, Android adaptive foreground and splash: «خطّ اليُسر» on the dark theme (the app is dark only).
+// Render them to apps/mobile/assets/{icon,adaptive-icon,splash-logo}.png at 1024 px (splash: 1200 px wide).
+mkdirSync(join(assets, 'mobile'), { recursive: true });
+const { background, primary } = defaultTheme.colors.dark;
+writeFileSync(join(assets, 'mobile', 'icon.svg'), scriptAppIconSvg({ background, glow: primary }));
+writeFileSync(join(assets, 'mobile', 'adaptive-icon.svg'), scriptAppIconSvg({ share: SCRIPT_ICON_SHARE.adaptive }));
+writeFileSync(join(assets, 'mobile', 'splash-logo.svg'), scriptLogoSvg({}, 1200));
+
+console.log('theme: wrote dist/tokens.css, dist/tailwind.css, assets/*.svg, assets/backgrounds/*.svg and assets/mobile/*.svg');
